@@ -1,0 +1,54 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# JavaScript / Next.js
+node_modules/
+.pnpm-store/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Runtime data
+postgres-data/
+redis-data/
+*.pid
+*.log
+*.sqlite
+*.db
+
+# IDE and operating system
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local-only files
+*.local
+tmp/
+temp/
+artifacts/
+*.zip

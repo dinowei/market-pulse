@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: staged-diff-check
+        name: staged diff whitespace check
+        entry: git diff --check --cached
+        language: system
+        pass_filenames: false
+      - id: package-json
+        name: validate package.json
+        entry: python -m json.tool package.json
+        language: system
+        pass_filenames: false

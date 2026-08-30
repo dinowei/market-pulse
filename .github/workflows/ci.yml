@@ -1,0 +1,47 @@
+name: Foundation CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Verify required foundation files
+        shell: bash
+        run: |
+          test -s README.md
+          test -s roadmap-30-days.md
+          test -s architecture-overview.md
+          test -s financial-content-policy.md
+          test -s financial-content-boundary-plan.md
+          test -s SECURITY.md
+          test -s LICENSE
+          test -s CHANGELOG.md
+          test -s docs/PROJECT_SPEC.md
+          test -s docs/AGENTS.md
+          test -s docs/CODEOWNERS
+          test -s docs/API_VERSIONING.md
+          test -s docs/DATA_GOVERNANCE.md
+          test -s docs/SLO.md
+          test -s docs/adr/001-modular-monolith.md
+          test -s docs/adr/002-external-cron.md
+          test -s docs/adr/003-financial-content-boundary.md
+          test -s docs/adr/004-provider-licensing-matrix.md
+      - name: Validate JSON and whitespace
+        shell: bash
+        run: |
+          python -m json.tool package.json
+          git show --check --format= HEAD
+      - name: Detect high-confidence secret patterns
+        shell: bash
+        run: |
+          if git grep -I -n -E '(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|AKIA[0-9A-Z]{16}|sk_live_[0-9A-Za-z]+)' -- .; then
+            echo 'Potential secret detected'
+            exit 1
+          fi
