@@ -1,4 +1,6 @@
 packages:
   - "apps/web"
+allowBuilds:
+  unrs-resolver: true
 
 # apps/api is part of the monorepo but will be managed by uv, not pnpm.

@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --bg-canvas: #08090a;
+  --bg-panel: #111317;
+  --text-primary: #f7f7f5;
+  --text-secondary: #a7adb6;
+  --border-subtle: #2a2e35;
+  --market-flat: #60a5fa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.boot-shell { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
+.boot-panel { width: min(100%, 42rem); border: 1px solid var(--border-subtle); background: var(--bg-panel); padding: clamp(1.5rem, 5vw, 3rem); }
+.eyebrow { color: var(--text-secondary); font-size: .72rem; letter-spacing: .14em; margin: 0 0 1.5rem; }
+h1 { font-size: clamp(2rem, 7vw, 4rem); line-height: 1; margin: 0; max-width: 12ch; }
+.boot-copy { color: var(--text-secondary); line-height: 1.6; max-width: 52ch; margin: 1.5rem 0 2rem; }
+.boot-status { align-items: center; color: var(--text-secondary); display: flex; font-size: .72rem; gap: .6rem; letter-spacing: .12em; margin: 0; }
+.status-dot { background: var(--market-flat); border-radius: 50%; display: inline-block; height: .55rem; width: .55rem; }
