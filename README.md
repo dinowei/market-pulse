@@ -96,6 +96,11 @@ pnpm --filter @market-pulse/web build
 # qualidade API
 python -m uv run --directory apps/api ruff check app tests
 python -m uv run --directory apps/api python -m pytest
+python -m uv run --directory apps/api alembic upgrade head
+
+# contrato OpenAPI e cliente TypeScript
+Invoke-WebRequest http://127.0.0.1:8000/openapi.json -OutFile docs/api/openapi.json
+pnpm --filter @market-pulse/web generate:api
 
 # diagnóstico local
 Invoke-RestMethod http://127.0.0.1:8000/health
@@ -106,6 +111,11 @@ Invoke-RestMethod http://127.0.0.1:8000/health/ready
 Em Linux/macOS, use os mesmos comandos em shell POSIX (`docker compose ...`, `curl http://127.0.0.1:8000/health/live` e `curl -i http://127.0.0.1:8000/health/ready`). Para simular indisponibilidade, execute `docker compose stop postgres` ou `docker compose stop redis`; restaure com `docker compose start postgres redis`. O endpoint `/health/live` independe dos serviços; `/health/ready` retorna `503` quando qualquer dependência falha.
 
 O endpoint `/health` mantém compatibilidade e retorna diagnóstico simples. Os endpoints novos diferenciam processo vivo de dependências prontas, sem expor credenciais ou strings de conexão.
+
+A API pública usa `/api/v1`, Problem Details (`application/problem+json`) e
+`Idempotency-Key` obrigatório para eventos de carteira. O snapshot está em
+`docs/api/openapi.json`; o cliente gerado fica em `apps/web/src/generated/api.ts`.
+Valores monetários são serializados como strings decimais para preservar exatidão.
 
 ## Verificações disponíveis no Dia 1
 
