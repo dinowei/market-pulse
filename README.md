@@ -1,6 +1,6 @@
 # Market Pulse
 
-O Market Pulse é um terminal web autenticado para acompanhamento **informativo e analítico** de mercados financeiros. O beta de 30 dias terá universo limitado, dashboard, Particle Atlas acessível, Global Atlas tabular, watchlist, heatmap setorial, cotações com proveniência e freshness e Morning Call inserido por comando administrativo.
+O Market Pulse é um terminal web autenticado para acompanhamento **informativo e analítico** de mercados financeiros e carteiras próprias. O beta de 30 dias terá universo aprovado de ativos, dashboard, busca/páginas de ativo, Particle Atlas acessível, Global Atlas tabular, watchlist, carteiras informativas, heatmap setorial, cotações com proveniência e freshness e Morning Call inserido por comando administrativo.
 
 > **Conteúdo informativo. Não constitui recomendação de investimento.**
 
@@ -12,6 +12,7 @@ O repositório conclui o **Dia 1 — Fundação, governança e inicialização**
 
 - Dashboard responsivo em tema escuro.
 - Componentes selecionados do Ibovespa; dez ações americanas; Ibovespa, S&P 500 e Nasdaq; USD/BRL; ouro, Brent e WTI.
+- Ações selecionadas, ETFs e FIIs somente quando houver fonte aprovada/licenciada; fundos tradicionais são P1 condicionado.
 - Particle Atlas P0: design system, componentes/estados, metadados visíveis e acessibilidade WCAG 2.2 AA.
 - Global Atlas P0 em tabela acessível; globo 3D é P1 condicional e não bloqueia o beta.
 - API FastAPI versionada sob `/api/v1` e contrato OpenAPI.
@@ -20,19 +21,21 @@ O repositório conclui o **Dia 1 — Fundação, governança e inicialização**
 - `source`, timestamps, `DataLevel`, `Freshness` e limitações em dados financeiros.
 - Cadastro por e-mail/senha com sessão opaca em cookie `HttpOnly`.
 - Watchlist por usuário e heatmap por setor.
+- Múltiplas carteiras próprias, ledger manual e cálculos factuais de posição, custo, patrimônio, P&L, rentabilidade, proventos e performance.
 - Morning Call sem IA, inserido por comando interno e publicado após revisão humana.
 - Testes essenciais, documentação, observabilidade e artefatos de deploy, sem publicação automática.
 
 ## Limites do produto
 
-O produto não fornece compra/venda/manutenção, sinal, preço-alvo próprio, timing, alocação, suitability, promessa de resultado, execução em corretora ou orientação personalizada. Dados `DELAYED`, `EOD`, `DEMO` ou `STALE` nunca podem ser apresentados como tempo real/atual.
+O produto não fornece gestão de carteira, compra/venda/manutenção, sinal, preço-alvo próprio, timing, alocação, suitability, promessa de resultado, execução em corretora ou orientação personalizada. Carteiras são registros informativos do usuário. Dados `DELAYED`, `EOD`, `DEMO` ou `STALE` nunca podem ser apresentados como tempo real/atual.
 
-Stripe pode ser considerado no beta **somente em modo de teste**, isolado e opcional, no dia autorizado. Cobrança real, produção, assinatura comercial, paywall e planos pagos permanecem fora do escopo. Também não entram notificações, WhatsApp, Telegram, e-mail, push, IA, apps móveis, streaming tick a tick ou arquitetura de alta escala.
+Stripe pode ser considerado no beta **somente em modo de teste**, isolado e opcional, no Dia 22 e mediante novo gate. Cobrança real, produção, assinatura comercial, paywall e planos pagos permanecem fora do escopo. Também não entram notificações, WhatsApp, Telegram, e-mail, push, IA, apps móveis, streaming tick a tick ou arquitetura de alta escala.
 
 ## Arquitetura resumida
 
 - `apps/web`: Next.js App Router, React, TypeScript strict e Tailwind, a partir do Dia 2.
 - `apps/api`: FastAPI, SQLAlchemy 2 e Alembic, a partir do Dia 2.
+- Carteiras: ledger factual, append-only e isolado por usuário, com cálculos no domínio/backend.
 - PostgreSQL/Neon compatível: fonte persistente.
 - Redis/Upstash REST compatível: cache não autoritativo e locks.
 - Refresh: processo curto/idempotente acionado futuramente por GitHub Actions cron contra endpoint interno protegido.
@@ -50,6 +53,7 @@ Leia a [arquitetura canônica](docs/ARCHITECTURE.md) e as [ADRs](docs/adr/).
 | [Política financeira](docs/policies/FINANCIAL_CONTENT_POLICY.md) | Limites editoriais e publicação |
 | [Plano da fronteira financeira](docs/superpowers/plans/financial-content-boundary.md) | Tradução técnica futura da política |
 | [Matriz de licenças](docs/DATA_PROVIDER_LICENSE_MATRIX.md) | Evidências e aprovação por combinação de uso |
+| [Diretriz Particle Atlas](docs/design/PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md) | Contrato visual, de gráficos, carteiras e integração frontend |
 | [Governança de dados](docs/DATA_GOVERNANCE.md) | Proveniência, timestamps, licença e qualidade |
 | [Versionamento da API](docs/API_VERSIONING.md) | Política de `/api/v1` e compatibilidade |
 | [SLO inicial](docs/SLO.md) | Objetivos mensuráveis, ainda não SLA |

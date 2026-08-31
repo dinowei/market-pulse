@@ -14,7 +14,7 @@
 
 ## Visão e limites do produto
 
-**Decisão:** O Market Pulse é um terminal web autenticado, informativo e analítico para acompanhamento de mercados. Exibe dados atribuídos e datados, dashboard, watchlist, heatmap, Global Atlas, Morning Call e saúde dos providers.
+**Decisão:** O Market Pulse é um terminal web autenticado, informativo e analítico para acompanhamento de mercados e de carteiras próprias. Exibe dados atribuídos e datados, dashboard, busca, páginas de ativos, watchlist, carteiras informativas, heatmap, Global Atlas, Morning Call e saúde dos providers.
 
 **Decisão:** O produto não oferece recomendação de compra/venda/manutenção, sinal, timing, alocação, preço-alvo próprio, promessa de resultado, suitability, análise personalizada ou execução financeira.
 
@@ -22,9 +22,11 @@
 
 ## Universo inicial
 
-**Decisão:** O beta cobrirá componentes selecionados do Ibovespa para o heatmap; dez ações americanas; Ibovespa, S&P 500 e Nasdaq; USD/BRL; ouro, Brent e WTI.
+**Decisão:** O beta cobrirá componentes selecionados do Ibovespa para o heatmap; dez ações americanas; ações selecionadas, ETFs e FIIs com fonte aprovada; Ibovespa, S&P 500 e Nasdaq; USD/BRL; ouro, Brent e WTI.
 
 **Pendência:** A lista nominal dos componentes brasileiros e das dez ações americanas será fechada antes do primeiro adapter real.
+
+**Decisão:** Fundos tradicionais são P1 condicionado a fonte licenciada, cobertura suficiente e autorização documental. Sem licença ou fonte confiável, permanecem bloqueados.
 
 **Decisão:** O heatmap usará área por valor de mercado, cor pela variação percentual diária e agrupamento por setor. Uma tabela/lista equivalente será sempre oferecida.
 
@@ -37,12 +39,16 @@
 5. PostgreSQL como fonte persistente; Redis como cache/lock não autoritativo.
 6. Provider adapters substituíveis, license gate e fallback por ativo.
 7. Fonte, timestamps, latência/nível do dado, `Freshness` e limitações visíveis.
-8. Heatmap/treemap setorial com alternativa acessível.
-9. Cadastro por e-mail/senha e sessão opaca em cookie `HttpOnly`.
-10. Watchlist persistida e isolada por usuário.
-11. Morning Call armazenado, versionado, revisado e exibido.
-12. Comando administrativo interno para Morning Call, sem editor visual e sem IA.
-13. Testes essenciais, documentação, observabilidade e artefatos de deploy.
+8. Busca, página de ativo, preço atual/histórico, variação e eventos básicos para ativos com fonte permitida.
+9. Heatmap básico/treemap setorial com alternativa acessível; recursos avançados são P1.
+10. Cadastro por e-mail/senha e sessão opaca em cookie `HttpOnly`.
+11. Watchlist persistida e isolada por usuário.
+12. Múltiplas carteiras próprias, transações manuais e cálculo factual de patrimônio, custo, posição, P&L, rentabilidade, proventos e performance histórica.
+13. Morning Call armazenado, versionado, revisado e exibido.
+14. Comando administrativo interno para Morning Call, sem editor visual e sem IA.
+15. Testes essenciais, documentação, observabilidade e artefatos de deploy.
+
+Carteiras são registros informativos do usuário. Não constituem gestão de carteira, recomendação, suitability, alocação sugerida, execução ou promessa de retorno.
 
 ## Particle Atlas
 
@@ -58,7 +64,7 @@ O P0 inclui:
 - navegação por teclado, foco perceptível, WCAG 2.2 AA e `prefers-reduced-motion`;
 - semântica que nunca dependa somente de cor.
 
-Convenção cromática: verde para variação positiva, vermelho para negativa, âmbar para `STALE`/operação, violeta para `DEMO` e cinza para `UNAVAILABLE`. Texto, ícone ou padrão deve repetir o significado.
+Convenção cromática: preto, branco e cinzas são predominantes; verde representa alta, vermelho queda e azul estabilidade/referência. Âmbar/laranja fica restrito a status `STALE`; violeta identifica `DEMO`; cinza identifica `UNAVAILABLE`. Dourado não é identidade, foco ou seleção. Texto, sinal, ícone ou padrão deve repetir o significado.
 
 **P1 condicional:** partículas, ondas, transições avançadas, Canvas/WebGL, profundidade, animações de conexão e globo 3D leve. Exigem P0 verde, feature flag, fallback, movimento reduzido e orçamento de desempenho; não bloqueiam o beta.
 
@@ -91,7 +97,7 @@ Cada item deve informar `source`, `source_timestamp`, `fetched_at`, `DataLevel`,
 
 Os conceitos são independentes. `REAL_TIME` só pode ser alegado com comprovação técnica e contratual; `DEMO` nunca implica licença.
 
-**Decisão:** Um dado só substitui o último snapshot quando símbolo, bolsa, moeda, número, timestamps e regras de qualidade forem válidos.
+**Decisão:** Um dado só substitui o último snapshot quando símbolo, bolsa, moeda, número, timestamps e regras de qualidade forem válidos. Comparações com duas ou mais séries usam `INDEX_100` por padrão, sem esconder valores reais, moedas ou unidades.
 
 **Decisão:** Em falha, o fallback por ativo tenta cache expirado validado e PostgreSQL. O último valor válido é mostrado como `STALE`, com motivo e timestamp. Sem snapshot válido, fica `UNAVAILABLE`; nenhum valor é inventado.
 
@@ -130,10 +136,11 @@ Fora do mês: recuperação de senha, MFA, login social e verificação de e-mai
 - Stripe em produção, cobrança real, assinatura comercial, paywall e planos pagos.
 - WhatsApp, Telegram, e-mail, push, alertas e notificações.
 - Chat, conteúdo/insights produzidos por IA, recomendações, sinais e preço-alvo próprio.
-- Apps móveis, corretoras, ordens, carteira, P&L e backtesting.
+- Apps móveis, corretoras, ordens, execução financeira e backtesting.
 - WebSockets/tick streaming, microserviços, Kafka, Kubernetes e alta disponibilidade.
 - CMS/editor visual, watchlists compartilhadas e integrações não essenciais.
-- Globo 3D, Canvas/WebGL, partículas e animações avançadas como bloqueadores do beta.
+- Fundos tradicionais sem licença/cobertura/autorização; visualizações avançadas sem gate.
+- Globo 3D, WebGL, partículas densas e animações avançadas como bloqueadores do beta.
 - Deploy externo, contratação ou serviço pago sem autorização posterior.
 
 ## Pendências controladas
@@ -145,3 +152,4 @@ Fora do mês: recuperação de senha, MFA, login social e verificação de e-mai
 - Canal privado definitivo para reporte de segurança.
 - Autorização futura para contas/projetos Vercel, Render, Neon, Upstash e Stripe test mode.
 - Orçamento de desempenho que decidirá se algum item P1 do Particle Atlas entra no beta.
+- Metodologia detalhada de performance e eventos automáticos antes da primeira fonte aprovada.

@@ -31,7 +31,9 @@ Esses destinos refinam a arquitetura sem autorizar contratação, provisionament
 
 - **Identidade e sessão:** usuários, credenciais Argon2id, sessões opacas e autorização.
 - **Watchlist:** lista do usuário e seus itens, sempre isolados por identidade.
+- **Carteiras informativas:** carteiras próprias, ledger append-only de eventos manuais, posições, patrimônio e performance factual; nunca gestão ou recomendação.
 - **Dados de mercado:** catálogo, adapters, normalização, snapshots, freshness e fallback.
+- **Universo de ativos:** ações selecionadas, ETFs e FIIs somente com fonte aprovada; fundos tradicionais permanecem P1 e bloqueados sem licença, cobertura e autorização documental.
 - **Conteúdo financeiro:** blocos tipados, Morning Call, validação, revisão e publicação append-only.
 - **Entitlements:** acesso beta e eventual isolamento do Stripe em modo de teste; cobrança real fora do MVP.
 - **Observabilidade:** health, `ingestion_runs`, correlação, logs e métricas mínimas.
@@ -46,11 +48,13 @@ flowchart TD
     WEB --> API[FastAPI /api/v1]
     API --> ID[Identidade e sessão]
     API --> WL[Watchlist]
+    API --> PF[Carteiras e performance factual]
     API --> MD[Dados de mercado]
     API --> FC[Conteúdo financeiro]
     API --> OBS[Observabilidade]
     ID --> PG[(PostgreSQL / Neon compatível)]
     WL --> PG
+    PF --> PG
     MD --> PG
     FC --> PG
     MD --> RD[(Redis / Upstash compatível)]
@@ -96,9 +100,11 @@ A API usa Problem Details para erros, IDs de correlação e OpenAPI como contrat
 
 ## Particle Atlas e Global Atlas
 
-Particle Atlas é a camada visual e de interação, não fonte de dados nem motor analítico. O P0 inclui tema escuro técnico, tokens, componentes reutilizáveis, layout responsivo, estados de loading/vazio/erro/stale/unavailable, dashboard, watchlist, Morning Call, heatmap e Global Atlas em tabela acessível.
+Particle Atlas é a camada visual e de interação, não fonte de dados nem motor analítico. O P0 inclui tema escuro técnico monocromático, tokens, componentes reutilizáveis, layout responsivo, estados de loading/vazio/erro/stale/unavailable, dashboard, busca/página de ativo, watchlist, carteiras informativas, Morning Call, heatmap básico e Global Atlas em tabela acessível.
 
-Toda visualização mantém fonte, horário, latência, `DataLevel`, `Freshness`, limitações e disclaimer. Verde/vermelho/âmbar/violeta/cinza têm rótulo ou ícone redundante; nenhuma decisão depende apenas da cor.
+Toda visualização mantém fonte, horário, latência, `DataLevel`, `Freshness`, limitações e disclaimer. Preto/branco/cinza predominam; verde/vermelho/azul têm semântica UP/DOWN/FLAT e âmbar/violeta/cinza identificam estados restritos com rótulo ou ícone redundante; nenhuma decisão depende apenas da cor.
+
+Gráficos de uma série exibem uma linha real e o valor bruto. Comparações de duas ou mais séries exibem linhas reais correspondentes e usam `INDEX_100` por padrão, mantendo `actual_value`, moeda, variação e base temporal acessíveis. Preço bruto só é habilitado com compatibilidade de moeda, unidade, calendário e metodologia ou FX aprovado.
 
 Partículas, ondas, Canvas/WebGL, profundidade, transições avançadas e globo 3D leve são P1 condicionais. Devem usar feature flag, respeitar `prefers-reduced-motion`, possuir fallback sem perda informacional e não bloquear carregamento, teclado ou o beta.
 

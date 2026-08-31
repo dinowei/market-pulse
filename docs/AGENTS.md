@@ -10,6 +10,7 @@ Estas regras se somam ao [`AGENTS.md` da raiz](../AGENTS.md). Em conflito, preva
 - Arquitetura: [ARCHITECTURE.md](ARCHITECTURE.md)
 - Plano da fronteira financeira: [financial-content-boundary.md](superpowers/plans/financial-content-boundary.md)
 - Licenças operacionais: [DATA_PROVIDER_LICENSE_MATRIX.md](DATA_PROVIDER_LICENSE_MATRIX.md)
+- Frontend Particle Atlas: [PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md](design/PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.

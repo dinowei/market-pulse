@@ -28,6 +28,10 @@ Valores passam por validação de símbolo, bolsa, moeda, tipo numérico, faixa 
 
 Somente uma combinação exata com status operacional `PUBLIC_APPROVED` e classe de licença compatível, como definido na [matriz canônica](DATA_PROVIDER_LICENSE_MATRIX.md), pode ser exposta ao usuário comum. Demais estados são bloqueados pelo domínio. Gratuidade, `DEMO`, autenticação administrativa e feature flag não implicam redistribuição ou direito de uso.
 
+## Carteiras informativas
+
+Carteiras próprias são registros factuais e informativos do usuário. O ledger aceita eventos manuais de compra, venda, aporte, retirada, taxa e provento quando os campos forem válidos; esses registros não são ordem, gestão, recomendação ou suitability. Cálculos de posição, custo, patrimônio, P&L e performance devem ser reproduzíveis, preservar moeda-base, metodologia, timestamps e limitações, e marcar `PARTIAL`/`UNAVAILABLE` quando faltar preço ou FX aprovado.
+
 ## Retenção e privacidade
 
 Retenção de snapshots, sessions e ingestion runs será definida antes da produção. Minimizar dados pessoais; não colocar e-mail, tokens ou cookies em logs. Pedidos de remoção exigem processo autenticado futuro.

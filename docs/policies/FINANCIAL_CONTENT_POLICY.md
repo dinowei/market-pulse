@@ -38,6 +38,12 @@ O Market Pulse não presta:
 
 O conteúdo não deve ser adaptado para induzir uma pessoa específica a tomar uma ação financeira.
 
+### Carteiras informativas
+
+O beta pode registrar múltiplas carteiras próprias e eventos manuais informados pelo usuário, e calcular posição, custo, patrimônio, P&L, rentabilidade, proventos e performance histórica. Esses resultados são cálculos factuais baseados no ledger, snapshots, preços, FX e metodologias explicitamente identificados. Isso não constitui gestão de carteira, recomendação, suitability, ordem, alocação sugerida ou promessa de retorno.
+
+Eventos sem preço, moeda, FX, timestamp ou fonte aplicável devem permanecer `PARTIAL` ou `UNAVAILABLE`; nenhum cálculo visual pode completar silenciosamente a lacuna.
+
 ## 2. Tipos permitidos de conteúdo
 
 Todo bloco publicável deve ter exatamente um `ContentType`:

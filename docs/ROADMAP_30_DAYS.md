@@ -7,8 +7,8 @@
 
 ## Prioridades do beta
 
-- **P0 — bloqueia o beta:** fundação, API, persistência, resiliência, autenticação, dashboard, Particle Atlas básico e acessível, Global Atlas tabular, heatmap, watchlist, Morning Call, segurança, testes e artefatos de deploy.
-- **P1 — condicional:** partículas, ondas, transições avançadas, Canvas/WebGL, profundidade e globo 3D leve. Só entra após P0 verde, com feature flag, fallback e movimento reduzido.
+- **P0 — bloqueia o beta:** fundação, API, persistência, resiliência, autenticação, busca/páginas de ativos aprovados, dashboard, Particle Atlas básico e acessível, Global Atlas tabular, heatmap básico, watchlist, carteiras informativas, performance factual, Morning Call, segurança, testes e artefatos de deploy.
+- **P1 — condicional:** fundos tradicionais licenciados, heatmap avançado, partículas, ondas, transições avançadas, Canvas/WebGL, profundidade e globo 3D leve. Só entra após P0 verde, com feature flag, fallback e movimento reduzido.
 - **Pós-beta:** notificações, IA, recomendação, mobile, alta escala, integrações não essenciais e cobrança real.
 
 Stripe é exceção limitada: no beta, somente integração em modo de teste, sem cobrança real, contratação ou publicação. Sua ausência não pode comprometer o fluxo informativo principal.
@@ -35,8 +35,8 @@ Stripe é exceção limitada: no beta, somente integração em modo de teste, se
 | 9 | Normalizar ativos, bolsas, moedas, timestamps, `DataLevel` e `Freshness` | Dia 8 ou fixtures | Fixtures determinísticas cobrem universo inicial e validações sem inventar dado real |
 | 10 | Cache-aside e fallback por ativo em Redis/PostgreSQL | Snapshots válidos | Clock tests provam `FRESH`, `STALE` e `UNAVAILABLE`; stale nunca é silencioso |
 | 11 | Comando/endpoint interno idempotente de refresh e `ingestion_runs` | Dia 10 | Repetição não duplica; lock e auditoria funcionam; autenticação interna é testada |
-| 12 | API de catálogo, quotes e overview | Dia 9–11 | Resposta parcial mistura estados corretamente e preserva proveniência |
-| 13 | Agregação backend do heatmap por setor, market cap e variação | Universo/taxonomia licenciados | Pesos, agrupamentos, fonte e limitações são verificáveis |
+| 12 | API de catálogo, busca, páginas de ativo, quotes, histórico, variação e eventos permitidos | Dia 9–11 | Resposta parcial mistura estados corretamente e preserva proveniência; ativos sem licença permanecem bloqueados |
+| 13 | Agregação backend do heatmap básico por setor, market cap e variação | Universo/taxonomia licenciados | Pesos, agrupamentos, fonte e limitações são verificáveis; recursos avançados ficam P1 |
 | 14 | Gate de resiliência: timeout, rate limit, payload inválido e recuperação | Dias 8–13 | Suite determinística cobre falhas sem chamadas externas descontroladas |
 
 **Entregável semanal:** API financeira normalizada, resiliente e bloqueada por licença, com fallback observável e sem alegação indevida de tempo real.
@@ -45,11 +45,11 @@ Stripe é exceção limitada: no beta, somente integração em modo de teste, se
 
 | Dia | Objetivo e entregáveis | Dependências | Gate objetivo |
 | --- | --- | --- | --- |
-| 15 | Particle Atlas P0: tokens, tema escuro, tipografia, shell, cards e estados | Contratos da API | 360 px e 1440 px sem overflow; foco/contraste/movimento reduzido verificados |
-| 16 | Dashboard de índices, câmbio, commodities e ativos | API de mercado | Fonte, horário, latência, `DataLevel`, `Freshness` e limitações visíveis |
-| 17 | Heatmap/treemap e tabela equivalente acessível | Agregação | Área por market cap, cor por variação, texto/ícone redundante, teclado e tabela passam |
+| 15 | Particle Atlas P0: shell, estados, responsividade e tabelas equivalentes | Contratos da API | 360 px e 1440 px sem overflow; foco/contraste/movimento reduzido verificados |
+| 16 | Tokens monocromáticos e semântica `UP`/`DOWN`/`FLAT`; dashboard de índices, câmbio, commodities e ativos | API de mercado | Preto/branco/cinza predominam; fonte, horário, latência, `DataLevel`, `Freshness` e limitações visíveis; ADR-006 referenciada |
+| 17 | Heatmap/treemap básico, busca/página de ativo e gráficos comparativos | Agregação e contrato | Um ativo = uma linha; multissérie = `INDEX_100` por padrão; valores reais simultaneamente visíveis; preço bruto só com compatibilidade; tabela, fixtures e teclado passam |
 | 18 | Cadastro, login, logout e sessão opaca | Persistência | Argon2id, cookie `HttpOnly`, Origin/CSRF, expiração e revogação testados |
-| 19 | Watchlist persistida por usuário | Dia 18 | Isolamento horizontal e estados vazio/erro/stale testados |
+| 19 | Watchlist e múltiplas carteiras informativas por usuário | Dia 18 | Isolamento horizontal; ledger manual append-only; estados vazio/erro/stale; sem gestão ou recomendação |
 | 20 | Morning Call: comando admin, validação, revisão, versões e exibição | Política/plano | Conteúdo inválido não publica; humano identificado publica nova versão append-only |
 | 21 | Global Atlas P0 em tabela acessível e gate integrado de UX | Dias 15–20 | Fluxos principais por teclado; disclaimer e metadados visíveis; sem recomendação |
 
@@ -59,7 +59,7 @@ Stripe é exceção limitada: no beta, somente integração em modo de teste, se
 
 | Dia | Objetivo e entregáveis | Dependências | Gate objetivo |
 | --- | --- | --- | --- |
-| 22 | Stripe estritamente em modo de teste, isolado e opcional | P0 principal verde e autorização do dia | Nenhuma cobrança real; chaves apenas por ambiente; fluxo informativo funciona sem Stripe |
+| 22 | Stripe estritamente em modo de teste, isolado e opcional | P0 principal verde e nova autorização do dia | Demonstração/test-only; nenhuma cobrança ou paywall real; fluxo informativo funciona sem Stripe |
 | 23 | Integração compatível com Neon PostgreSQL e Upstash Redis REST | Stack local verde | Migração, TTL, lock, fallback e falha segura passam sem provisionar externamente |
 | 24 | Testes frontend/a11y; P1 visual somente se orçamento permitir | UX P0 verde | Estados críticos cobertos; P1 feature-flagged, não bloqueante e com fallback |
 | 25 | E2E de conta, dashboard, watchlist, stale e Morning Call | Integração | Cenários determinísticos passam sem provider real no CI |
@@ -90,7 +90,7 @@ O beta só é aceito quando:
 - Stripe em produção, cobrança real, assinatura comercial, paywall e planos pagos.
 - WhatsApp, Telegram, e-mail, push, alertas e automações de notificação.
 - Chat, texto/insights gerados por IA, recomendações, sinais, suitability ou preço-alvo próprio.
-- Apps móveis, corretoras, ordens, carteira, P&L e backtesting.
+- Apps móveis, corretoras, ordens, gestão de carteira, execução financeira e backtesting.
 - WebSockets/tick streaming, microserviços, Kafka, Kubernetes e alta disponibilidade.
 - Recuperação de senha, MFA, login social e verificação de e-mail.
 - CMS/editor visual, watchlists compartilhadas e integrações não essenciais.

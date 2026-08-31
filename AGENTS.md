@@ -104,3 +104,27 @@ Uma tarefa só está concluída quando:
 - riscos e pendências reais foram declarados.
 
 Consulte [docs/AGENTS.md](docs/AGENTS.md) para regras complementares de manutenção documental.
+
+<!-- PARTICLE_ATLAS_FRONTEND_ROUTING:START -->
+
+Mandatory Particle Atlas frontend contract
+
+Before planning, reviewing or modifying apps/web/**, financial charts, visual data, frontend-consumed OpenAPI contracts, portfolio performance, responsive behavior, accessibility or frontend data states, read in full:
+
+docs/design/PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md;
+
+docs/policies/FINANCIAL_CONTENT_POLICY.md;
+
+docs/ROADMAP_30_DAYS.md;
+
+relevant ADRs, especially ADR-005, ADR-006 and ADR-007;
+
+the current OpenAPI contract and generated frontend types.
+
+Treat the directive as binding within its scope. The UI is predominantly black, white and gray; gold is not an identity or focus color. Market direction is green for UP, red for DOWN and blue for FLAT, always with a non-color cue. One real series produces one financial line. Multi-series comparisons default to INDEX_100 while preserving actual values, currency, provenance and timestamps.
+
+Never invent endpoints, fields, market data, points, relationships or recommendations to satisfy a design. If design, policy, roadmap and backend conflict, stop and report the conflict, impact and safe options before changing code.
+
+Cláudio owns visual direction; Codex owns implementation quality and backend integration; the human product owner approves the result. P1 visuals never delay or silently enter P0.
+
+<!-- PARTICLE_ATLAS_FRONTEND_ROUTING:END -->
