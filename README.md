@@ -6,7 +6,7 @@ O Market Pulse é um terminal web autenticado para acompanhamento **informativo 
 
 ## Status atual
 
-O repositório conclui o **Dia 1 — Fundação, governança e inicialização**. Não há frontend, API, banco, cache, provider real, autenticação operacional, cron, Stripe ou deploy configurados. Tecnologias e serviços citados são decisões ou destinos pretendidos para dias posteriores, sempre sujeitos ao gate e à autorização correspondente.
+O repositório conclui o **Dia 2 — Scaffold técnico mínimo**. O frontend e a API possuem apenas boot visual e diagnóstico; não há banco, cache, provider real, autenticação operacional, cron, Stripe ou deploy configurados.
 
 ## Escopo P0 do beta
 
@@ -70,7 +70,34 @@ Licenciamento é `default deny` por provider, plano, endpoint, dataset, finalida
 
 `.env.example` contém somente nomes e valores vazios/fictícios. Segredos reais devem ser injetados por ambiente autorizado; `.env`, `credentials.json`, chaves e tokens não são versionados.
 
-As versões-alvo registradas no Dia 1 são Node.js 24.20.0, pnpm 11.25.0 e Python 3.14.7. Devem ser verificadas em fontes oficiais e testadas no Dia 2 antes de gerar lockfiles ou instalar dependências.
+As versões-alvo são Node.js 24.20.0, pnpm 11.25.0, Python 3.14.7 e uv 0.12.7. O ambiente usado no scaffold registrou Node.js 22.19.0 e Python 3.11.9, gerando aviso de engine no pnpm; alinhar as versões-alvo antes de promover o ambiente.
+
+## Comandos operacionais do scaffold
+
+```powershell
+# instalar dependências do workspace web e sincronizar a API
+pnpm install
+python -m uv sync --project apps/api --group dev
+
+# desenvolvimento
+pnpm --filter @market-pulse/web dev
+python -m uv run --directory apps/api uvicorn app.main:app --reload
+
+# qualidade web
+pnpm --filter @market-pulse/web lint
+pnpm --filter @market-pulse/web typecheck
+pnpm --filter @market-pulse/web test
+pnpm --filter @market-pulse/web build
+
+# qualidade API
+python -m uv run --directory apps/api ruff check app tests
+python -m uv run --directory apps/api python -m pytest
+
+# diagnóstico local
+Invoke-RestMethod http://127.0.0.1:8000/health
+```
+
+O endpoint `/health` retorna somente `status`, versão, ambiente local e timestamp UTC. Nenhum comando acima acessa provider externo ou banco de dados.
 
 ## Verificações disponíveis no Dia 1
 
@@ -94,4 +121,4 @@ O repositório não adota licença open source neste momento; consulte [LICENSE]
 
 ## Próximo passo
 
-Somente após aprovação explícita: **Dia 2 — scaffold mínimo do frontend e da API**.
+Somente após aprovação explícita: **Dia 3 — contratos iniciais da API e persistência preparatória**.
