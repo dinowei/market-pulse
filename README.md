@@ -6,7 +6,7 @@ O Market Pulse é um terminal web autenticado para acompanhamento **informativo 
 
 ## Status atual
 
-O repositório conclui o **Dia 2 — Scaffold técnico mínimo**. O frontend e a API possuem apenas boot visual e diagnóstico; não há banco, cache, provider real, autenticação operacional, cron, Stripe ou deploy configurados.
+O repositório conclui o **Dia 3 — Infraestrutura local e health model**. O frontend e a API possuem boot visual e diagnóstico; PostgreSQL e Redis são serviços locais opcionais para desenvolvimento. Não há provider real, autenticação operacional, cron, Stripe ou deploy configurados.
 
 ## Escopo P0 do beta
 
@@ -79,6 +79,10 @@ As versões-alvo são Node.js 24.20.0, pnpm 11.25.0, Python 3.14.7 e uv 0.12.7. 
 pnpm install
 python -m uv sync --project apps/api --group dev
 
+# serviços de apoio locais (Docker Desktop em execução)
+docker compose up -d postgres redis
+docker compose down
+
 # desenvolvimento
 pnpm --filter @market-pulse/web dev
 python -m uv run --directory apps/api uvicorn app.main:app --reload
@@ -95,9 +99,13 @@ python -m uv run --directory apps/api python -m pytest
 
 # diagnóstico local
 Invoke-RestMethod http://127.0.0.1:8000/health
+Invoke-RestMethod http://127.0.0.1:8000/health/live
+Invoke-RestMethod http://127.0.0.1:8000/health/ready
 ```
 
-O endpoint `/health` retorna somente `status`, versão, ambiente local e timestamp UTC. Nenhum comando acima acessa provider externo ou banco de dados.
+Em Linux/macOS, use os mesmos comandos em shell POSIX (`docker compose ...`, `curl http://127.0.0.1:8000/health/live` e `curl -i http://127.0.0.1:8000/health/ready`). Para simular indisponibilidade, execute `docker compose stop postgres` ou `docker compose stop redis`; restaure com `docker compose start postgres redis`. O endpoint `/health/live` independe dos serviços; `/health/ready` retorna `503` quando qualquer dependência falha.
+
+O endpoint `/health` mantém compatibilidade e retorna diagnóstico simples. Os endpoints novos diferenciam processo vivo de dependências prontas, sem expor credenciais ou strings de conexão.
 
 ## Verificações disponíveis no Dia 1
 
@@ -121,4 +129,4 @@ O repositório não adota licença open source neste momento; consulte [LICENSE]
 
 ## Próximo passo
 
-Somente após aprovação explícita: **Dia 3 — contratos iniciais da API e persistência preparatória**.
+Somente após aprovação explícita: **Dia 4 — contratos iniciais da API e persistência preparatória**.
