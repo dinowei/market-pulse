@@ -18,7 +18,7 @@ jobs:
           test -s README.md
           test -s roadmap-30-days.md
           test -s architecture-overview.md
-          test -s financial-content-policy.md
+          test -s docs/policies/FINANCIAL_CONTENT_POLICY.md
           test -s financial-content-boundary-plan.md
           test -s SECURITY.md
           test -s LICENSE

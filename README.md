@@ -49,7 +49,7 @@ Leia [architecture-overview.md](architecture-overview.md) e as [ADRs](docs/adr/)
 | [Especificação consolidada](docs/PROJECT_SPEC.md) | Escopo, decisões, hipóteses e pendências |
 | [Roadmap de 30 dias](roadmap-30-days.md) | Dependências, entregáveis, riscos e critérios de aceite |
 | [Arquitetura](architecture-overview.md) | Componentes, fronteiras e fluxo de dados |
-| [Política financeira](financial-content-policy.md) | Limites editoriais e publicação |
+| [Política financeira](docs/policies/FINANCIAL_CONTENT_POLICY.md) | Limites editoriais e publicação |
 | [Plano da fronteira de conteúdo](financial-content-boundary-plan.md) | Modelo append-only e validações futuras |
 | [Governança de dados](docs/DATA_GOVERNANCE.md) | Proveniência, timestamps, licença e qualidade |
 | [Versionamento da API](docs/API_VERSIONING.md) | Política de `/api/v1` e compatibilidade |

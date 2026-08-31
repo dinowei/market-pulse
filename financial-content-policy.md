@@ -1,3 +1,5 @@
+> **Documento histórico:** esta versão foi sucedida pela [Política Canônica de Conteúdo Financeiro](docs/policies/FINANCIAL_CONTENT_POLICY.md). O conteúdo original abaixo é preservado integralmente para rastreabilidade.
+
 # Política de conteúdo financeiro
 
 - **Status:** Accepted

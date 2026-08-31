@@ -18,7 +18,7 @@
 - Registre risco, pendência e evidência.
 - Não sirva provider/dataset sem licença compatível com o público.
 - A regra de licença deve ser de domínio, não lembrete manual.
-- Respeite `financial-content-policy.md` e o disclaimer obrigatório.
+- Respeite a [Política Canônica de Conteúdo Financeiro](policies/FINANCIAL_CONTENT_POLICY.md) e o disclaimer obrigatório.
 - Não faça push, deploy, login externo ou contratação sem autorização.
 - Pare quando uma decisão puder causar perda de dados, exposição indevida ou custo externo.
 
