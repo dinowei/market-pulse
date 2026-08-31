@@ -1,6 +1,6 @@
-# Market Pulse — Especificação consolidada do MVP beta
+# Market Pulse — especificação consolidada do MVP beta
 
-- **Status:** Aprovado para planejamento; implementação por dias depende de autorização
+- **Status:** Aprovado para execução pelo roadmap; cada dia depende de autorização
 - **Data:** 2026-08-30
 - **Horizonte:** 30 dias corridos
 - **Execução:** uma pessoa usando intensivamente o Codex
@@ -12,13 +12,13 @@
 - **Hipótese:** premissa que ainda precisa de validação.
 - **Pendência:** trabalho ou informação necessária posteriormente.
 
-## Visão do produto
+## Visão e limites do produto
 
-**Decisão:** O Market Pulse será um terminal web autenticado e informativo de acompanhamento de mercados. Ele exibirá dados atribuídos e datados, watchlist, heatmap, Morning Call e estado de saúde dos providers.
+**Decisão:** O Market Pulse é um terminal web autenticado, informativo e analítico para acompanhamento de mercados. Exibe dados atribuídos e datados, dashboard, watchlist, heatmap, Global Atlas, Morning Call e saúde dos providers.
 
-**Decisão:** O produto nunca apresentará recomendação de compra/venda, timing, alocação, preço-alvo próprio, promessa de resultado ou orientação personalizada.
+**Decisão:** O produto não oferece recomendação de compra/venda/manutenção, sinal, timing, alocação, preço-alvo próprio, promessa de resultado, suitability, análise personalizada ou execução financeira.
 
-> Conteúdo informativo. Não constitui recomendação de investimento.
+> **Conteúdo informativo. Não constitui recomendação de investimento.**
 
 ## Universo inicial
 
@@ -26,79 +26,122 @@
 
 **Pendência:** A lista nominal dos componentes brasileiros e das dez ações americanas será fechada antes do primeiro adapter real.
 
-**Decisão:** O heatmap usará área por valor de mercado e cor pela variação percentual diária, agrupado por setor, com alternativa acessível em tabela/lista.
+**Decisão:** O heatmap usará área por valor de mercado, cor pela variação percentual diária e agrupamento por setor. Uma tabela/lista equivalente será sempre oferecida.
 
-## Funcionalidades do MVP
+## Escopo funcional P0
 
-1. Dashboard responsivo em tema escuro.
-2. API própria e versionada em `/api/v1`.
-3. PostgreSQL como fonte persistente; Redis como cache/lock.
-4. Provider adapters substituíveis e fallback por ativo.
-5. Metadados de fonte, timestamps, nível do dado e `fresh`/`stale`.
-6. Heatmap/treemap setorial.
-7. E-mail/senha e sessão opaca em cookie `HttpOnly`.
-8. Watchlist persistida por usuário.
-9. Morning Call armazenado, versionado e exibido.
-10. Comando administrativo interno para Morning Call, sem editor visual e sem IA.
-11. Testes essenciais, documentação e artefatos de deploy.
+1. Dashboard financeiro responsivo em tema escuro.
+2. Particle Atlas P0 como sistema visual, de interação e apresentação de dados.
+3. Global Atlas P0 em tabela acessível; visual geográfico avançado não é requisito.
+4. API própria e versionada em `/api/v1` com OpenAPI.
+5. PostgreSQL como fonte persistente; Redis como cache/lock não autoritativo.
+6. Provider adapters substituíveis, license gate e fallback por ativo.
+7. Fonte, timestamps, latência/nível do dado, `Freshness` e limitações visíveis.
+8. Heatmap/treemap setorial com alternativa acessível.
+9. Cadastro por e-mail/senha e sessão opaca em cookie `HttpOnly`.
+10. Watchlist persistida e isolada por usuário.
+11. Morning Call armazenado, versionado, revisado e exibido.
+12. Comando administrativo interno para Morning Call, sem editor visual e sem IA.
+13. Testes essenciais, documentação, observabilidade e artefatos de deploy.
+
+## Particle Atlas
+
+**Decisão:** Particle Atlas é o sistema visual, de interação e apresentação de dados do frontend. É informativo e analítico; não é provider, motor de análise/recomendação/predição, promessa de tempo real nem substituto de proveniência.
+
+O P0 inclui:
+
+- design system escuro técnico, tokens e componentes reutilizáveis;
+- layout responsivo, dashboard, cards e estados de loading, vazio, erro, `STALE` e `UNAVAILABLE`;
+- fonte, horário, atraso, `DataLevel`, `Freshness`, limitações e disclaimer visíveis;
+- heatmap/treemap e Global Atlas com tabela equivalente;
+- Morning Call e watchlist;
+- navegação por teclado, foco perceptível, WCAG 2.2 AA e `prefers-reduced-motion`;
+- semântica que nunca dependa somente de cor.
+
+Convenção cromática: verde para variação positiva, vermelho para negativa, âmbar para `STALE`/operação, violeta para `DEMO` e cinza para `UNAVAILABLE`. Texto, ícone ou padrão deve repetir o significado.
+
+**P1 condicional:** partículas, ondas, transições avançadas, Canvas/WebGL, profundidade, animações de conexão e globo 3D leve. Exigem P0 verde, feature flag, fallback, movimento reduzido e orçamento de desempenho; não bloqueiam o beta.
 
 ## Arquitetura aprovada
 
-**Decisão:** Monorepo e monólito modular com Next.js/TypeScript/Tailwind em `apps/web`; FastAPI, SQLAlchemy 2 e Alembic em `apps/api`; PostgreSQL; Redis; OpenAPI; e providers atrás de interfaces.
+**Decisão:** Monorepo e monólito modular com Next.js App Router/React/TypeScript strict/Tailwind em `apps/web`; FastAPI, SQLAlchemy 2 e Alembic em `apps/api`; PostgreSQL; Redis; OpenAPI; e providers atrás de interfaces.
 
-**Decisão:** Refresh usa processo curto com o código da API, acionado futuramente por scheduler externo/gerenciado, sem daemon permanente no beta.
+**Decisão:** Refresh usa processo curto, idempotente e compartilhado com o domínio da API. O alvo de agendamento é GitHub Actions cron chamando endpoint interno protegido, sem daemon permanente no beta.
 
-**Decisão:** O frontend é preparado para Vercel. Backend, job, PostgreSQL e Redis serão preparados para serviços compatíveis, sem login, provisionamento ou publicação sem autorização posterior.
+**Decisão:** Desenvolvimento usa Docker Compose local. Destinos pretendidos, ainda não provisionados, são Vercel para web, Render para API, Neon PostgreSQL e Upstash Redis REST.
 
-## Dados financeiros
+Nenhum login, serviço, segredo, contratação, deploy ou cobrança externa está autorizado pelo documento.
 
-Cada item deve informar `source`, `source_timestamp`, `fetched_at`, `data_level`, `freshness`, motivo quando stale e limitação aplicável. `data_level` aceita `REAL_TIME`, `DELAYED`, `EOD` ou `DEMO`.
+## Dados financeiros e resiliência
 
-**Decisão:** Um dado só substitui o último snapshot se símbolo, bolsa, moeda, número e timestamp forem válidos.
+Cada item deve informar `source`, `source_timestamp`, `fetched_at`, `DataLevel`, `Freshness`, motivo quando stale e limitação aplicável.
 
-**Decisão:** Em falha, o fallback por ativo tenta cache expirado validado e depois PostgreSQL. Sem snapshot válido, o ativo fica indisponível; nenhum valor é inventado.
+`DataLevel` aceita exatamente:
+
+- `REAL_TIME`
+- `DELAYED`
+- `EOD`
+- `DEMO`
+
+`Freshness` aceita exatamente:
+
+- `FRESH`
+- `STALE`
+- `UNAVAILABLE`
+
+Os conceitos são independentes. `REAL_TIME` só pode ser alegado com comprovação técnica e contratual; `DEMO` nunca implica licença.
+
+**Decisão:** Um dado só substitui o último snapshot quando símbolo, bolsa, moeda, número, timestamps e regras de qualidade forem válidos.
+
+**Decisão:** Em falha, o fallback por ativo tenta cache expirado validado e PostgreSQL. O último valor válido é mostrado como `STALE`, com motivo e timestamp. Sem snapshot válido, fica `UNAVAILABLE`; nenhum valor é inventado.
 
 ## Providers e licenças
 
 **Decisão:** Priorizar fontes gratuitas ou delayed compatíveis com demonstração pública, sem contratar planos nem presumir redistribuição.
 
-**Decisão:** Apenas `PUBLIC_COMMERCIAL` alimenta respostas públicas. `PERSONAL_ONLY`, `DEMO_LIMITED` e `INTERNAL_FALLBACK_ONLY` são bloqueados pela regra de domínio.
+**Decisão:** Licenciamento é default deny por provider, plano, endpoint, dataset, finalidade e modalidade. Estados operacionais permitidos: `UNREVIEWED`, `REJECTED`, `DEVELOPMENT_ONLY` e `PUBLIC_APPROVED`.
 
-**Fato:** Nenhuma licença de provider foi validada documentalmente no Dia 1.
+Somente a combinação exata com `PUBLIC_APPROVED` e evidência vigente pode alimentar resposta pública. `DEMO`, autenticação administrativa, feature flag, allowlist e acesso interno não concedem direitos.
 
-**Pendência:** Validar documentação oficial, atribuição, quotas, delay, cobertura, redistribuição e preço antes de selecionar adapter real.
+**Fato:** Nenhuma licença externa foi aprovada documentalmente no Dia 1. Os candidatos permanecem `UNREVIEWED` na [matriz operacional](DATA_PROVIDER_LICENSE_MATRIX.md).
 
 ## Conteúdo financeiro e Morning Call
 
-**Decisão:** Tipos permitidos: `FACT`, `THIRD_PARTY_CONSENSUS`, `CONDITIONAL_SCENARIO`, `RISK` e `LIMITATION`.
+**Decisão:** Tipos permitidos exatamente: `FACT`, `THIRD_PARTY_CONSENSUS`, `CONDITIONAL_SCENARIO`, `RISK` e `LIMITATION`.
 
-**Decisão:** Fluxo: rascunho → validação automática → revisão humana → publicação versionada.
+**Decisão:** Fluxo normativo: `DRAFT` → `VALIDATION_FAILED` ou `VALIDATED` → `IN_REVIEW` → `PUBLISHED` → `SUPERSEDED`.
 
-**Decisão:** Publicações são append-only. Correções criam nova versão com referência, timestamp e motivo; `UPDATE`/`DELETE` serão bloqueados quando o módulo for implementado.
+Revisão humana é obrigatória. Publicações são append-only; correções criam nova versão com referência, timestamp e motivo. A [política canônica](policies/FINANCIAL_CONTENT_POLICY.md) prevalece para limites editoriais.
+
+Morning Call é inserido por comando administrativo interno. Não há editor visual, IA, recomendação ou publicação automática.
 
 ## Identidade e sessão
 
-**Decisão:** Cadastro por e-mail/senha, Argon2, sessão opaca aleatória, cookie `HttpOnly`, `Secure` em produção e `SameSite=Lax` por padrão.
+**Decisão:** Cadastro por e-mail/senha com Argon2id, sessão opaca aleatória e cookie `HttpOnly`, `Secure` em produção e `SameSite=Lax` por padrão. Logout, expiração, revogação, Origin/CSRF e autorização por usuário devem ser testados.
 
 Fora do mês: recuperação de senha, MFA, login social e verificação de e-mail.
 
+## Stripe no beta
+
+**Decisão posterior e explícita:** Stripe pode ser preparado somente em modo de teste, isolado e opcional, após o P0 principal. Não haverá cobrança real, plano comercial ativo, contratação ou dependência do fluxo financeiro principal. A integração depende da autorização do dia correspondente.
+
 ## Fora do escopo dos 30 dias
 
-- Stripe, billing, assinatura, paywall e planos pagos.
-- WhatsApp, Telegram, e-mail, push e alertas.
-- Chat, insights ou texto gerado por IA.
-- Recomendações, sinais, preço-alvo, suitability ou promessas.
+- Stripe em produção, cobrança real, assinatura comercial, paywall e planos pagos.
+- WhatsApp, Telegram, e-mail, push, alertas e notificações.
+- Chat, conteúdo/insights produzidos por IA, recomendações, sinais e preço-alvo próprio.
 - Apps móveis, corretoras, ordens, carteira, P&L e backtesting.
 - WebSockets/tick streaming, microserviços, Kafka, Kubernetes e alta disponibilidade.
-- CMS visual, watchlists compartilhadas e integrações não essenciais.
-- Deploy externo ou serviço pago sem autorização posterior.
+- CMS/editor visual, watchlists compartilhadas e integrações não essenciais.
+- Globo 3D, Canvas/WebGL, partículas e animações avançadas como bloqueadores do beta.
+- Deploy externo, contratação ou serviço pago sem autorização posterior.
 
 ## Pendências controladas
 
 - Lista nominal de ativos.
-- Licenças e termos de exposição pública dos providers.
-- Freshness por classe e horário de mercado.
-- Taxonomia setorial e fonte de market cap.
-- Owner GitHub real para ativar CODEOWNERS.
-- Canal privado de reporte de segurança.
-- Plataforma autorizada para backend, job, PostgreSQL e Redis.
+- Revisão oficial de licenças e termos por combinação de uso.
+- Janelas de freshness por classe e horário de mercado.
+- Taxonomia setorial e fonte licenciada de market cap.
+- Canal privado definitivo para reporte de segurança.
+- Autorização futura para contas/projetos Vercel, Render, Neon, Upstash e Stripe test mode.
+- Orçamento de desempenho que decidirá se algum item P1 do Particle Atlas entra no beta.

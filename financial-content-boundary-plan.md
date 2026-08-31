@@ -1,5 +1,7 @@
 # Plano técnico da fronteira de conteúdo financeiro
 
+> **Documento histórico:** este plano foi sucedido pelo [plano técnico canônico](docs/superpowers/plans/financial-content-boundary.md). O conteúdo abaixo permanece apenas para rastreabilidade e não prevalece sobre a fonte canônica ou a política financeira.
+
 - **Status:** Proposed; desenho do Dia 1, sem schema ou trigger implementado
 - **Data:** 2026-08-30
 

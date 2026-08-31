@@ -9,11 +9,11 @@
 - Dado só é persistido após validação.
 - Payload nativo permanece no adapter; logs não armazenam credenciais nem resposta sensível.
 - Timestamps são UTC na persistência e exibidos com zona explícita.
-- Fonte, timestamp da fonte, coleta, licença, `data_level` e freshness acompanham o dado.
+- Fonte, timestamp da fonte, coleta, licença, `DataLevel` e `Freshness` acompanham o dado.
 
 ## Qualidade
 
-Valores passam por validação de símbolo, bolsa, moeda, tipo numérico, faixa plausível e coerência temporal. Falha não sobrescreve snapshot válido. Fallback é por ativo e sempre explícito como stale.
+Valores passam por validação de símbolo, bolsa, moeda, tipo numérico, faixa plausível e coerência temporal. Falha não sobrescreve snapshot válido. Fallback é por ativo e sempre explícito como `STALE`; sem snapshot validado, o estado é `UNAVAILABLE`.
 
 ## Níveis
 
@@ -22,9 +22,11 @@ Valores passam por validação de símbolo, bolsa, moeda, tipo numérico, faixa 
 - `EOD`: fechamento, não intraday.
 - `DEMO`: sintético/determinístico e inequivocamente rotulado.
 
+`DataLevel` é independente de `Freshness`, cujos valores são `FRESH`, `STALE` e `UNAVAILABLE`.
+
 ## Licença e exposição
 
-Somente `PUBLIC_COMMERCIAL` pode ser exposto ao usuário comum. Demais classes são bloqueadas por serviço de domínio. Gratuidade não implica redistribuição.
+Somente uma combinação exata com status operacional `PUBLIC_APPROVED` e classe de licença compatível, como definido na [matriz canônica](DATA_PROVIDER_LICENSE_MATRIX.md), pode ser exposta ao usuário comum. Demais estados são bloqueados pelo domínio. Gratuidade, `DEMO`, autenticação administrativa e feature flag não implicam redistribuição ou direito de uso.
 
 ## Retenção e privacidade
 

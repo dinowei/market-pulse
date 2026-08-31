@@ -1,97 +1,93 @@
 # Market Pulse
 
-O Market Pulse é uma plataforma web autenticada para acompanhamento **informativo** de mercados financeiros. O beta de 30 dias exibirá um universo limitado de ativos, watchlist, heatmap setorial, cotações com proveniência e freshness, Morning Call inserido por comando administrativo e saúde dos providers.
+O Market Pulse é um terminal web autenticado para acompanhamento **informativo e analítico** de mercados financeiros. O beta de 30 dias terá universo limitado, dashboard, Particle Atlas acessível, Global Atlas tabular, watchlist, heatmap setorial, cotações com proveniência e freshness e Morning Call inserido por comando administrativo.
 
 > **Conteúdo informativo. Não constitui recomendação de investimento.**
 
 ## Status atual
 
-O repositório está no **Dia 1 — Fundação, governança e inicialização**. Não há frontend, API, banco, cache, provider real, autenticação operacional, cron, billing ou deploy configurados. As tecnologias citadas são decisões arquiteturais ou alvos para os próximos dias, não serviços já instalados.
+O repositório conclui o **Dia 1 — Fundação, governança e inicialização**. Não há frontend, API, banco, cache, provider real, autenticação operacional, cron, Stripe ou deploy configurados. Tecnologias e serviços citados são decisões ou destinos pretendidos para dias posteriores, sempre sujeitos ao gate e à autorização correspondente.
 
-## Escopo do beta
+## Escopo P0 do beta
 
 - Dashboard responsivo em tema escuro.
-- Componentes selecionados do Ibovespa para o heatmap.
-- Dez ações americanas, Ibovespa, S&P 500 e Nasdaq.
-- USD/BRL, ouro, Brent e WTI.
-- API FastAPI versionada sob `/api/v1`.
+- Componentes selecionados do Ibovespa; dez ações americanas; Ibovespa, S&P 500 e Nasdaq; USD/BRL; ouro, Brent e WTI.
+- Particle Atlas P0: design system, componentes/estados, metadados visíveis e acessibilidade WCAG 2.2 AA.
+- Global Atlas P0 em tabela acessível; globo 3D é P1 condicional e não bloqueia o beta.
+- API FastAPI versionada sob `/api/v1` e contrato OpenAPI.
 - PostgreSQL como fonte persistente e Redis como cache/lock.
-- Provider adapters substituíveis e fallback para o último snapshot válido.
-- Metadados `source`, timestamps, `data_level` e estado `fresh`/`stale`.
+- Providers substituíveis, license gate e fallback para último snapshot validado.
+- `source`, timestamps, `DataLevel`, `Freshness` e limitações em dados financeiros.
 - Cadastro por e-mail/senha com sessão opaca em cookie `HttpOnly`.
-- Watchlist por usuário.
-- Morning Call sem IA, inserido por comando administrativo interno e publicado com revisão humana.
-- Testes essenciais, documentação e artefatos de deploy, sem publicação externa automática.
+- Watchlist por usuário e heatmap por setor.
+- Morning Call sem IA, inserido por comando interno e publicado após revisão humana.
+- Testes essenciais, documentação, observabilidade e artefatos de deploy, sem publicação automática.
 
 ## Limites do produto
 
-O Market Pulse é uma plataforma informativa. Seus dados e conteúdos não constituem recomendação de investimento, promessa de resultado ou orientação personalizada.
+O produto não fornece compra/venda/manutenção, sinal, preço-alvo próprio, timing, alocação, suitability, promessa de resultado, execução em corretora ou orientação personalizada. Dados `DELAYED`, `EOD`, `DEMO` ou `STALE` nunca podem ser apresentados como tempo real/atual.
 
-O produto não fornece comandos de compra/venda, preço-alvo próprio, timing de mercado, alocação, suitability, execução em corretora ou garantia de retorno. Dados atrasados, de fechamento ou demonstração nunca podem ser apresentados como tempo real.
-
-Também estão fora do beta: Stripe/billing, notificações, WhatsApp, Telegram, e-mail, push, IA, aplicativos móveis, streaming tick a tick e arquitetura de alta escala.
+Stripe pode ser considerado no beta **somente em modo de teste**, isolado e opcional, no dia autorizado. Cobrança real, produção, assinatura comercial, paywall e planos pagos permanecem fora do escopo. Também não entram notificações, WhatsApp, Telegram, e-mail, push, IA, apps móveis, streaming tick a tick ou arquitetura de alta escala.
 
 ## Arquitetura resumida
 
-- `apps/web`: Next.js, TypeScript e Tailwind CSS, a partir do Dia 2.
+- `apps/web`: Next.js App Router, React, TypeScript strict e Tailwind, a partir do Dia 2.
 - `apps/api`: FastAPI, SQLAlchemy 2 e Alembic, a partir do Dia 2.
-- PostgreSQL: fonte persistente de dados válidos.
-- Redis: cache não autoritativo e locks.
-- Refresh: processo curto com o mesmo código da API, acionado futuramente por scheduler externo/gerenciado.
-- OpenAPI: contrato entre web e API.
+- PostgreSQL/Neon compatível: fonte persistente.
+- Redis/Upstash REST compatível: cache não autoritativo e locks.
+- Refresh: processo curto/idempotente acionado futuramente por GitHub Actions cron contra endpoint interno protegido.
+- Destinos pretendidos: Vercel para web e Render para API; nenhum serviço foi criado.
 
-Leia [architecture-overview.md](architecture-overview.md) e as [ADRs](docs/adr/).
+Leia a [arquitetura canônica](docs/ARCHITECTURE.md) e as [ADRs](docs/adr/).
 
-## Documentação
+## Documentação canônica
 
 | Documento | Finalidade |
 | --- | --- |
-| [Especificação consolidada](docs/PROJECT_SPEC.md) | Escopo, decisões, hipóteses e pendências |
-| [Roadmap de 30 dias](roadmap-30-days.md) | Dependências, entregáveis, riscos e critérios de aceite |
-| [Arquitetura](architecture-overview.md) | Componentes, fronteiras e fluxo de dados |
+| [Especificação](docs/PROJECT_SPEC.md) | Escopo, prioridades e decisões do produto |
+| [Roadmap de 30 dias](docs/ROADMAP_30_DAYS.md) | Entregáveis, dependências e gates diários |
+| [Arquitetura](docs/ARCHITECTURE.md) | Componentes, fronteiras, segurança e operação |
 | [Política financeira](docs/policies/FINANCIAL_CONTENT_POLICY.md) | Limites editoriais e publicação |
-| [Plano da fronteira de conteúdo](financial-content-boundary-plan.md) | Modelo append-only e validações futuras |
+| [Plano da fronteira financeira](docs/superpowers/plans/financial-content-boundary.md) | Tradução técnica futura da política |
+| [Matriz de licenças](docs/DATA_PROVIDER_LICENSE_MATRIX.md) | Evidências e aprovação por combinação de uso |
 | [Governança de dados](docs/DATA_GOVERNANCE.md) | Proveniência, timestamps, licença e qualidade |
 | [Versionamento da API](docs/API_VERSIONING.md) | Política de `/api/v1` e compatibilidade |
 | [SLO inicial](docs/SLO.md) | Objetivos mensuráveis, ainda não SLA |
-| [Instruções para agentes](docs/AGENTS.md) | Regras operacionais e Definition of Done |
-| [Matriz de providers](docs/adr/004-provider-licensing-matrix.md) | Licença e exposição pública |
+| [Instruções operacionais](AGENTS.md) | Hierarquia, segurança, execução e Definition of Done |
+| [ADRs](docs/adr/) | Decisões arquiteturais aceitas |
 
-Os arquivos `docs/ARCHITECTURE.md` e `docs/ROADMAP_30_DAYS.md` permanecem como índices de compatibilidade para os nomes usados na fundação anterior.
+`roadmap-30-days.md`, `architecture-overview.md`, `financial-content-policy.md`, `financial-content-boundary-plan.md` e `docs/CODEOWNERS` são registros históricos com links para suas fontes atuais.
+
+## Licenciamento de dados
+
+Licenciamento é `default deny` por provider, plano, endpoint, dataset, finalidade e modalidade. Nenhum candidato externo está aprovado no Dia 1. Apenas uma combinação `PUBLIC_APPROVED`, sustentada por evidência oficial atual, poderá alimentar exposição pública. Gratuidade, `DEMO`, autenticação administrativa ou feature flag não concedem direitos.
 
 ## Configuração futura
 
-`.env.example` contém somente nomes de variáveis e valores vazios ou claramente fictícios. Segredos reais devem ser injetados pelo shell, CI ou plataforma autorizada; nunca devem ser gravados no repositório.
+`.env.example` contém somente nomes e valores vazios/fictícios. Segredos reais devem ser injetados por ambiente autorizado; `.env`, `credentials.json`, chaves e tokens não são versionados.
 
-As versões-alvo registradas são Node.js 24.20.0, pnpm 11.25.0 e Python 3.14.7. O host atual possui Node.js 22.19.0, npm 10.9.3 e Python 3.11.9; `pnpm` e `uv` ainda não estão instalados. A compatibilidade será validada no Dia 2 antes de qualquer lockfile.
+As versões-alvo registradas no Dia 1 são Node.js 24.20.0, pnpm 11.25.0 e Python 3.14.7. Devem ser verificadas em fontes oficiais e testadas no Dia 2 antes de gerar lockfiles ou instalar dependências.
 
-## Verificações locais do Dia 1
+## Verificações disponíveis no Dia 1
 
 ```powershell
 git status --short --branch --untracked-files=all
-git diff --check --cached
+git diff --check
 python -m json.tool package.json
 ```
 
-Build, lint, typecheck e testes de aplicação só existirão após o scaffold do Dia 2. Não descreva verificações ainda indisponíveis como aprovadas.
+Build, lint, typecheck e testes de aplicação passam a existir após o scaffold. Verificação indisponível nunca deve ser descrita como aprovada.
 
-## Contribuição
+## Contribuição e segurança
 
-1. Confirme no [roadmap](roadmap-30-days.md) que a tarefa pertence ao dia autorizado.
-2. Leia as ADRs e políticas relacionadas.
-3. Faça mudanças pequenas e revisáveis.
-4. Use Conventional Commits.
-5. Preencha o template de pull request e registre testes, riscos, licença e impacto de dados.
-6. Não faça push, deploy ou contratação de serviços sem autorização explícita.
+Leia [AGENTS.md](AGENTS.md), confirme o dia no [roadmap](docs/ROADMAP_30_DAYS.md), use Conventional Commits e preencha o [template de pull request](.github/PULL_REQUEST_TEMPLATE.md). Não faça push, deploy, login externo ou contratação sem autorização explícita.
 
-## Segurança
+Não publique credenciais, dados pessoais ou vulnerabilidades exploráveis. Consulte [SECURITY.md](SECURITY.md).
 
-Não abra issue pública com credenciais, dados pessoais ou detalhes exploráveis. Consulte [SECURITY.md](SECURITY.md) para o processo inicial de reporte.
+## Licença do repositório
 
-## Licença
-
-Este repositório não adota licença open source neste momento. Consulte [LICENSE](LICENSE). Licenças de código e de dados financeiros são assuntos separados; nenhuma permissão de redistribuição de provider deve ser presumida.
+O repositório não adota licença open source neste momento; consulte [LICENSE](LICENSE). Licença de código e licença de dados são assuntos separados.
 
 ## Próximo passo
 
-Após revisão e aprovação desta fundação, o próximo trabalho é o **Dia 2 — Scaffold estrutural do frontend e da API**.
+Somente após aprovação explícita: **Dia 2 — scaffold mínimo do frontend e da API**.

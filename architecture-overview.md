@@ -1,5 +1,7 @@
 # Market Pulse — Visão de arquitetura
 
+> **Documento histórico:** a arquitetura ativa foi sucedida pela [arquitetura canônica](docs/ARCHITECTURE.md). O conteúdo abaixo permanece apenas para rastreabilidade e não prevalece sobre a fonte canônica.
+
 - **Status:** Decisões-base aceitas; integrações e infraestrutura não configuradas
 - **Data:** 2026-08-30
 

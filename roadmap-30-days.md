@@ -1,5 +1,7 @@
 # Market Pulse — Roadmap definitivo de 30 dias
 
+> **Documento histórico:** o roadmap ativo foi sucedido pelo [roadmap canônico](docs/ROADMAP_30_DAYS.md). O conteúdo abaixo permanece apenas para rastreabilidade e não prevalece sobre a fonte canônica.
+
 - **Status:** Aprovado
 - **Premissa:** 30 dias corridos, uma pessoa com uso intensivo do Codex
 - **Regra:** Cada dia exige autorização e dependências satisfeitas; gates exigem evidência reproduzível.

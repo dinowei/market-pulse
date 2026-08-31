@@ -16,16 +16,18 @@ jobs:
         shell: bash
         run: |
           test -s README.md
-          test -s roadmap-30-days.md
-          test -s architecture-overview.md
+          test -s AGENTS.md
+          test -s docs/ROADMAP_30_DAYS.md
+          test -s docs/ARCHITECTURE.md
           test -s docs/policies/FINANCIAL_CONTENT_POLICY.md
-          test -s financial-content-boundary-plan.md
+          test -s docs/superpowers/plans/financial-content-boundary.md
+          test -s docs/DATA_PROVIDER_LICENSE_MATRIX.md
           test -s SECURITY.md
           test -s LICENSE
           test -s CHANGELOG.md
           test -s docs/PROJECT_SPEC.md
           test -s docs/AGENTS.md
-          test -s docs/CODEOWNERS
+          test -s .github/CODEOWNERS
           test -s docs/API_VERSIONING.md
           test -s docs/DATA_GOVERNANCE.md
           test -s docs/SLO.md

@@ -1,54 +1,54 @@
-# Instruções para agentes e copilotos
+# Instruções complementares para documentação
 
-## Antes de alterar
+Estas regras se somam ao [`AGENTS.md` da raiz](../AGENTS.md). Em conflito, prevalece a hierarquia definida na raiz.
 
-1. Leia a especificação, arquitetura, roadmap e documentos da área.
-2. Confirme que a tarefa pertence ao dia autorizado.
-3. Verifique status/diff e preserve trabalho existente.
-4. Identifique fatos, decisões, hipóteses e pendências.
+## Fontes canônicas
 
-## Regras obrigatórias
+- Produto e escopo: [PROJECT_SPEC.md](PROJECT_SPEC.md)
+- Conteúdo financeiro: [FINANCIAL_CONTENT_POLICY.md](policies/FINANCIAL_CONTENT_POLICY.md)
+- Execução diária: [ROADMAP_30_DAYS.md](ROADMAP_30_DAYS.md)
+- Arquitetura: [ARCHITECTURE.md](ARCHITECTURE.md)
+- Plano da fronteira financeira: [financial-content-boundary.md](superpowers/plans/financial-content-boundary.md)
+- Licenças operacionais: [DATA_PROVIDER_LICENSE_MATRIX.md](DATA_PROVIDER_LICENSE_MATRIX.md)
+- Decisões históricas aceitas: [ADRs](adr/)
 
-- Não implemente feature fora do escopo sem autorização explícita.
-- Nunca exponha segredo, credencial, cookie, dado pessoal ou conexão real.
-- Não invente dado financeiro, fonte, endpoint, preço, quota ou licença.
-- Preserve ADRs; divergências materiais exigem nova ADR.
-- Atualize testes e documentação junto com comportamento.
-- Prefira mudanças pequenas, reversíveis e revisáveis.
-- Registre risco, pendência e evidência.
-- Não sirva provider/dataset sem licença compatível com o público.
-- A regra de licença deve ser de domínio, não lembrete manual.
-- Respeite a [Política Canônica de Conteúdo Financeiro](policies/FINANCIAL_CONTENT_POLICY.md) e o disclaimer obrigatório.
-- Não faça push, deploy, login externo ou contratação sem autorização.
-- Pare quando uma decisão puder causar perda de dados, exposição indevida ou custo externo.
+Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.
 
-## Dados financeiros
+## Antes de editar documentos
 
-- Exponha `source`, timestamps, `data_level` e freshness.
-- Nunca chame `DELAYED`, `EOD` ou `DEMO` de tempo real.
-- Use somente snapshots validados no fallback.
-- Preserve o conteúdo publicado por versão append-only.
-- Proíba recomendações, promessas, imperativos e preço-alvo próprio.
+1. Confirme o dia/subtarefa e leia integralmente as fontes aplicáveis.
+2. Compare fatos, decisões, hipóteses e pendências; não promova hipótese a decisão.
+3. Preserve histórico. Mudança material em ADR aceita exige nova ADR.
+4. Verifique links relativos, nomes normativos, caminhos canônicos e consistência entre documentos.
+5. Não atualize documento apenas para registrar que uma tarefa foi executada.
 
-## Git e revisão
+## Redação e evidência
 
-- Use Conventional Commits.
-- Revise diff completo e execute checks aplicáveis antes de commit.
-- Não reescreva histórico, apague trabalho ou faça push sem autorização.
-- Preencha o template de PR e registre impacto de licença, dados, privacidade e migração.
+- Não declare versão, preço, quota, plano, licença, direito, disponibilidade ou capacidade externa sem evidência atual.
+- Diferencie alvo pretendido de serviço configurado; documentação nunca autoriza login, contratação ou deploy.
+- Use enumerações exatas: `DataLevel`, `Freshness`, `ContentType` e status de licença não aceitam aliases informais em contratos normativos.
+- Registre limitação de licença e cold start sem prometer disponibilidade/tempo real.
+- Não copie conteúdo protegido nem inclua segredo, dado pessoal ou credencial em exemplo.
 
-## Definition of Done
+## Conteúdo financeiro
 
-Uma tarefa só está concluída quando:
+- A política canônica é a única fonte normativa editorial.
+- Todo exemplo financeiro deve ser simbólico ou claramente fictício.
+- Não escreva recomendação, sinal, promessa, preço-alvo próprio ou aconselhamento personalizado.
+- `DEMO` e acesso interno não concedem licença.
+- Exposição pública de provider exige `PUBLIC_APPROVED` na combinação exata e evidência oficial.
 
-- escopo e dependências do dia foram respeitados;
-- critérios de aceite possuem evidência reproduzível;
-- testes relevantes foram criados e executados;
-- lint, typecheck e build aplicáveis passaram;
-- documentação e ADRs estão consistentes;
-- nenhum segredo ou dado pessoal foi incluído;
-- licença/proveniência/freshness foram verificadas quando aplicável;
-- conteúdo financeiro passou pela política e mantém disclaimer;
-- riscos, pendências e rollback foram registrados;
-- `git status` e diff foram revisados;
-- verificações indisponíveis foram declaradas, não presumidas.
+## Particle Atlas
+
+Documente o P0 acessível antes do P1 visual. Não descreva Particle Atlas como provider, motor preditivo, recomendação ou garantia de tempo real. Globo 3D e efeitos avançados são condicionais, feature-flagged e não bloqueiam o beta.
+
+## Gate documental
+
+Uma mudança documental termina com:
+
+- `git diff --check` sem erro;
+- links relativos internos válidos;
+- documentos canônicos não vazios e reconhecidos pelo CI;
+- busca por referências antigas/contraditórias revisada;
+- varredura de segredos e confirmação de ausência de código inesperado;
+- diff e status completos relatados com comandos e exit codes.

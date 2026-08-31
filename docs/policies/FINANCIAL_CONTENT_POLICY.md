@@ -19,7 +19,7 @@ A política consolida decisões válidas de `docs/PROJECT_SPEC.md`, `financial-c
 | Atualização dos dados | Freshness aparecia em linguagem descritiva, sem enum completo | `DataLevel` e `Freshness` são conceitos separados, com valores normativos próprios |
 | Fluxo editorial | O fluxo era descrito sem todos os estados | Os estados e transições desta política são normativos |
 | Licenciamento | `DEMO` e controles internos poderiam ser confundidos com permissão | Modalidade do dado e controle de acesso não concedem direito de uso |
-| Plano complementar | `docs/superpowers/plans/financial-content-boundary.md` não existe | Ausência registrada como lacuna documental; o arquivo não foi reconstruído nesta tarefa |
+| Plano complementar | No início da canonização, `docs/superpowers/plans/financial-content-boundary.md` não existia | A lacuna foi registrada e depois resolvida no fechamento do Dia 1 pelo [plano técnico canônico](../superpowers/plans/financial-content-boundary.md) |
 
 ## 1. Natureza do produto
 

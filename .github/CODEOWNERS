@@ -1,0 +1,28 @@
+# Owner operacional confirmado para o repositório Market Pulse.
+* @dinowei
+
+# Governança e instruções
+/AGENTS.md @dinowei
+/docs/AGENTS.md @dinowei
+/.github/CODEOWNERS @dinowei
+/.github/PULL_REQUEST_TEMPLATE.md @dinowei
+/.github/workflows/ @dinowei
+
+# Fontes canônicas e decisões
+/docs/PROJECT_SPEC.md @dinowei
+/docs/ROADMAP_30_DAYS.md @dinowei
+/docs/ARCHITECTURE.md @dinowei
+/docs/policies/ @dinowei
+/docs/superpowers/plans/ @dinowei
+/docs/DATA_PROVIDER_LICENSE_MATRIX.md @dinowei
+/docs/adr/ @dinowei
+
+# Segurança, dados e configuração sensível
+/SECURITY.md @dinowei
+/.env.example @dinowei
+/.gitignore @dinowei
+/docs/DATA_GOVERNANCE.md @dinowei
+
+# Fronteiras futuras de maior risco
+/apps/api/ @dinowei
+/apps/web/ @dinowei
