@@ -16,6 +16,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Licenças operacionais: [DATA_PROVIDER_LICENSE_MATRIX.md](DATA_PROVIDER_LICENSE_MATRIX.md)
 - Framework de providers: [PROVIDER_FRAMEWORK.md](PROVIDER_FRAMEWORK.md)
 - Onboarding de providers: [PROVIDER_ONBOARDING_MATRIX.md](providers/PROVIDER_ONBOARDING_MATRIX.md)
+- Adapters de mercado: [ADAPTERS_DAY_9.md](providers/ADAPTERS_DAY_9.md)
 - Catálogo mestre: [MASTER_INSTRUMENT_CATALOG.md](instruments/MASTER_INSTRUMENT_CATALOG.md)
 - Universo operacional: [P0_OPERATIONAL_UNIVERSE.md](instruments/P0_OPERATIONAL_UNIVERSE.md)
 - Backlog de candidatos: [CANDIDATE_UNIVERSE_BACKLOG.md](instruments/CANDIDATE_UNIVERSE_BACKLOG.md)
