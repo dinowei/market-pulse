@@ -43,6 +43,7 @@ Stripe pode ser considerado no beta **somente em modo de teste**, isolado e opci
 
 Leia a [arquitetura canônica](docs/ARCHITECTURE.md) e as [ADRs](docs/adr/).
 A [baseline enterprise de engenharia](docs/engineering/ENTERPRISE_ENGINEERING_BASELINE.md) é a constituição técnica para qualquer alteração futura.
+O gate operacional da Semana 1 está documentado em [WEEK_1_GATE.md](docs/engineering/WEEK_1_GATE.md).
 
 ## Documentação canônica
 
