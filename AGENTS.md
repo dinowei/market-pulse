@@ -105,6 +105,14 @@ Uma tarefa só está concluída quando:
 
 Consulte [docs/AGENTS.md](docs/AGENTS.md) para regras complementares de manutenção documental.
 
+## Baseline enterprise
+
+Sempre que a tarefa envolver backend, frontend, banco, API, testes, infraestrutura, segurança, contratos, providers, jobs, autenticação, CI ou integração entre módulos, leia docs/engineering/ENTERPRISE_ENGINEERING_BASELINE.md antes de alterar arquivos.
+
+- Tarefas de frontend também exigem a leitura de `docs/design/PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md`.
+- Consulte o `AGENTS.md` local de `apps/api` ou `apps/web` quando existir.
+- O OpenAPI e o cliente gerado são contratos; não altere o cliente gerado manualmente.
+
 <!-- PARTICLE_ATLAS_FRONTEND_ROUTING:START -->
 
 Mandatory Particle Atlas frontend contract

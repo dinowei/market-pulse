@@ -42,6 +42,7 @@ Stripe pode ser considerado no beta **somente em modo de teste**, isolado e opci
 - Destinos pretendidos: Vercel para web e Render para API; nenhum serviço foi criado.
 
 Leia a [arquitetura canônica](docs/ARCHITECTURE.md) e as [ADRs](docs/adr/).
+A [baseline enterprise de engenharia](docs/engineering/ENTERPRISE_ENGINEERING_BASELINE.md) é a constituição técnica para qualquer alteração futura.
 
 ## Documentação canônica
 

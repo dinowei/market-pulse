@@ -7,11 +7,14 @@ Estas regras complementam o `AGENTS.md` da raiz e nunca reduzem as exigências d
 Antes de planejar, revisar ou alterar frontend, leia integralmente:
 
 - `../../AGENTS.md`;
+- `../../docs/engineering/ENTERPRISE_ENGINEERING_BASELINE.md`;
 - `../../docs/design/PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md`;
 - `../../docs/policies/FINANCIAL_CONTENT_POLICY.md`;
 - `../../docs/ROADMAP_30_DAYS.md`;
 - ADRs relevantes, especialmente ADR-005, ADR-006 e ADR-007;
 - tipos gerados do contrato e o OpenAPI atual do backend.
+
+O cliente canônico é `src/generated/api.ts`; regenere-o quando `docs/api/openapi.json` mudar.
 
 Se uma fonte estiver ausente ou contraditória, pare e reporte; não invente substituição.
 

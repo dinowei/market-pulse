@@ -2,7 +2,11 @@
 
 Estas regras se somam ao [`AGENTS.md` da raiz](../AGENTS.md). Em conflito, prevalece a hierarquia definida na raiz.
 
+A baseline enterprise é o documento canônico de engenharia. Se a implementação divergir da baseline, pare antes de escrever e reporte o conflito, impacto e opção segura.
+
 ## Fontes canônicas
+
+- Engenharia enterprise: [ENTERPRISE_ENGINEERING_BASELINE.md](engineering/ENTERPRISE_ENGINEERING_BASELINE.md)
 
 - Produto e escopo: [PROJECT_SPEC.md](PROJECT_SPEC.md)
 - Conteúdo financeiro: [FINANCIAL_CONTENT_POLICY.md](policies/FINANCIAL_CONTENT_POLICY.md)
