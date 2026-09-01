@@ -69,7 +69,10 @@ def test_demo_provider_declares_capability_and_demo_provenance() -> None:
 
 
 def test_gateway_rejects_missing_capability_and_unapproved_dataset() -> None:
-    gateway = ProviderGateway([DemoProvider()])
+    class QuoteOnlyProvider:
+        capabilities = frozenset({ProviderCapability.LATEST_QUOTE})
+
+    gateway = ProviderGateway([QuoteOnlyProvider()])
     with pytest.raises(LookupError):
         gateway.request(ProviderCapability.HISTORICAL_BARS, dataset("PUBLIC_APPROVED", True), "X")
     with pytest.raises(PermissionError):
