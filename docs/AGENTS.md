@@ -10,6 +10,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 
 - Produto e escopo: [PROJECT_SPEC.md](PROJECT_SPEC.md)
 - Conteúdo financeiro: [FINANCIAL_CONTENT_POLICY.md](policies/FINANCIAL_CONTENT_POLICY.md)
+- Integridade de dados financeiros e carteiras: [FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md](policies/FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md)
 - Execução diária: [ROADMAP_30_DAYS.md](ROADMAP_30_DAYS.md)
 - Arquitetura: [ARCHITECTURE.md](ARCHITECTURE.md)
 - Plano da fronteira financeira: [financial-content-boundary.md](superpowers/plans/financial-content-boundary.md)
@@ -18,6 +19,8 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Onboarding de providers: [PROVIDER_ONBOARDING_MATRIX.md](providers/PROVIDER_ONBOARDING_MATRIX.md)
 - Adapters de mercado: [ADAPTERS_DAY_9.md](providers/ADAPTERS_DAY_9.md)
 - Normalização de mercado: [NORMALIZATION_DAY_10.md](market_data/NORMALIZATION_DAY_10.md)
+- Integridade financeira: [FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md](policies/FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md)
+- Hardening retroativo: [DAY_10_1_RETROACTIVE_HARDENING.md](engineering/DAY_10_1_RETROACTIVE_HARDENING.md)
 - Catálogo mestre: [MASTER_INSTRUMENT_CATALOG.md](instruments/MASTER_INSTRUMENT_CATALOG.md)
 - Universo operacional: [P0_OPERATIONAL_UNIVERSE.md](instruments/P0_OPERATIONAL_UNIVERSE.md)
 - Backlog de candidatos: [CANDIDATE_UNIVERSE_BACKLOG.md](instruments/CANDIDATE_UNIVERSE_BACKLOG.md)
@@ -44,7 +47,7 @@ Arquivos equivalentes na raiz marcados como históricos servem apenas à rastrea
 
 ## Conteúdo financeiro
 
-- A política canônica é a única fonte normativa editorial.
+- A política canônica de conteúdo é a única fonte normativa editorial; a política de integridade de dados financeiros e carteiras é obrigatória para dados, cálculos e exibição.
 - Todo exemplo financeiro deve ser simbólico ou claramente fictício.
 - Não escreva recomendação, sinal, promessa, preço-alvo próprio ou aconselhamento personalizado.
 - `DEMO` e acesso interno não concedem licença.

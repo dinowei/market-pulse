@@ -13,6 +13,8 @@ Antes de alterar a API, leia integralmente:
 - `../../docs/policies/FINANCIAL_CONTENT_POLICY.md`;
 - ADRs e OpenAPI aplicáveis.
 
+Sempre que a tarefa envolver cotações, histórico, FX, dados de mercado, providers, carteiras, rentabilidade, P&L, TWR, gráficos financeiros, Morning Call ou exibição de preço, leia docs/policies/FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md antes de alterar arquivos.
+
 ## Regras locais
 
 - Preserve o monólito modular e os limites de domínio; não acople providers ao domínio.

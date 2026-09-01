@@ -14,6 +14,8 @@ Antes de planejar, revisar ou alterar frontend, leia integralmente:
 - ADRs relevantes, especialmente ADR-005, ADR-006 e ADR-007;
 - tipos gerados do contrato e o OpenAPI atual do backend.
 
+Sempre que a tarefa envolver cotações, histórico, FX, dados de mercado, providers, carteiras, rentabilidade, P&L, TWR, gráficos financeiros, Morning Call ou exibição de preço, leia docs/policies/FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md antes de alterar arquivos.
+
 O cliente canônico é `src/generated/api.ts`; regenere-o quando `docs/api/openapi.json` mudar.
 
 Se uma fonte estiver ausente ou contraditória, pare e reporte; não invente substituição.

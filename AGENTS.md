@@ -9,9 +9,10 @@ Em caso de conflito, siga nesta ordem:
 3. `AGENTS.md` aplicável no subdiretório;
 4. [especificação do produto](docs/PROJECT_SPEC.md);
 5. [política canônica de conteúdo financeiro](docs/policies/FINANCIAL_CONTENT_POLICY.md);
-6. [roadmap canônico](docs/ROADMAP_30_DAYS.md);
-7. [arquitetura canônica](docs/ARCHITECTURE.md);
-8. ADRs aceitas em `docs/adr/`.
+6. [política de integridade de dados financeiros e carteiras](docs/policies/FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md);
+7. [roadmap canônico](docs/ROADMAP_30_DAYS.md);
+8. [arquitetura canônica](docs/ARCHITECTURE.md);
+9. ADRs aceitas em `docs/adr/`.
 
 Uma fonte inferior não pode ampliar autorização concedida por uma fonte superior. Divergência material com ADR aceita exige nova ADR; não edite a decisão histórica silenciosamente.
 
@@ -108,6 +109,8 @@ Consulte [docs/AGENTS.md](docs/AGENTS.md) para regras complementares de manuten�
 ## Baseline enterprise
 
 Sempre que a tarefa envolver backend, frontend, banco, API, testes, infraestrutura, segurança, contratos, providers, jobs, autenticação, CI ou integração entre módulos, leia docs/engineering/ENTERPRISE_ENGINEERING_BASELINE.md antes de alterar arquivos.
+
+Sempre que a tarefa envolver cotações, histórico, FX, dados de mercado, providers, carteiras, rentabilidade, P&L, TWR, gráficos financeiros, Morning Call ou exibição de preço, leia docs/policies/FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md antes de alterar arquivos.
 
 Para mudanças no CI ou supply chain, consulte também `docs/engineering/WEEK_1_GATE.md`.
 
