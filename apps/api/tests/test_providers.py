@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 
+from app.providers.adapters import CANDIDATE_ADAPTERS, ProviderNotConfigured
 from app.providers.demo import DemoProvider
 from app.providers.gateway import ProviderGateway
 from app.providers.licensing import LicenseDecision, LicenseService
@@ -100,3 +101,11 @@ def test_retry_policy_is_bounded_and_uses_explicit_attempts() -> None:
 
     assert retry_call(operation, RetryPolicy(max_attempts=3, base_delay_seconds=0)) == "ok"
     assert attempts == 3
+
+
+def test_candidate_adapters_are_disabled_without_credentials() -> None:
+    assert len(CANDIDATE_ADAPTERS) == 7
+    for adapter in CANDIDATE_ADAPTERS:
+        assert adapter.enabled is False
+        with pytest.raises(ProviderNotConfigured):
+            adapter.ensure_configured()
