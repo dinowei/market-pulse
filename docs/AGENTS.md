@@ -15,6 +15,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Plano da fronteira financeira: [financial-content-boundary.md](superpowers/plans/financial-content-boundary.md)
 - Licenças operacionais: [DATA_PROVIDER_LICENSE_MATRIX.md](DATA_PROVIDER_LICENSE_MATRIX.md)
 - Framework de providers: [PROVIDER_FRAMEWORK.md](PROVIDER_FRAMEWORK.md)
+- Onboarding de providers: [PROVIDER_ONBOARDING_MATRIX.md](providers/PROVIDER_ONBOARDING_MATRIX.md)
 - Frontend Particle Atlas: [PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md](design/PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 

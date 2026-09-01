@@ -49,6 +49,13 @@ Os nomes abaixo vieram da ADR-004 como candidatos históricos. Nenhum plano, end
 | Twelve Data | — | — | — | Avaliação futura | — | `UNREVIEWED` | — | — | — | Bloqueado |
 | yfinance | — | — | — | Avaliação futura | — | `UNREVIEWED` | — | — | — | Bloqueado |
 
+| brapi | — | — | — | Avaliação futura | — | `UNREVIEWED` | — | [Docs oficiais](https://brapi.dev/docs) | 2026-08-31 / pesquisa inicial | Bloqueado; termos comerciais pendentes |
+| HG Brasil | — | — | — | Avaliação futura | — | `UNREVIEWED` | — | [Docs oficiais](https://hgbrasil.com/docs/guide/key) | 2026-08-31 / pesquisa inicial | Bloqueado; plano e redistribuição pendentes |
+| Twelve Data | — | — | — | Avaliação futura | — | `UNREVIEWED` | — | [Docs oficiais](https://twelvedata.com/docs/introduction/quickstart) | 2026-08-31 / pesquisa inicial | Bloqueado; planos individuais não presumem uso comercial |
+| Open Exchange Rates | — | — | — | Avaliação futura | — | `UNREVIEWED` | — | [Docs oficiais](https://docs.openexchangerates.org/reference/authentication) | 2026-08-31 / pesquisa inicial | Bloqueado; limites e direitos dependem do plano |
+| Massive (Polygon) | — | — | — | Avaliação futura | — | `UNREVIEWED` | — | [Docs oficiais](https://massive.com/docs) | 2026-08-31 / pesquisa inicial | Bloqueado; redistribuição exige plano/licença adequada |
+| B3 for Developers | — | — | — | Avaliação futura | — | `UNREVIEWED` | — | [Portal oficial](https://developers.b3.com.br/apis) | 2026-08-31 / pesquisa inicial | Bloqueado; contrato e certificados obrigatórios |
+
 Fixtures sintéticas internas não são aprovação de provider. Elas podem ser usadas como `DEMO` somente quando determinísticas, rotuladas, sem cópia de dados reais protegidos e sem sugerir mercado atual.
 
 ## Processo de revisão
