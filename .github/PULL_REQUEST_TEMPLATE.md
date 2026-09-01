@@ -23,6 +23,16 @@ Liste comandos, versões relevantes, resultados e exit codes. Não marque verifi
 
 ## Checklist obrigatório
 
+### Gate da Semana 1
+
+- [ ] Lint, typecheck, testes e build passaram.
+- [ ] Migrations `upgrade/downgrade/upgrade` passaram.
+- [ ] OpenAPI e cliente gerado foram verificados.
+- [ ] Secret scan e licença de dependências foram executados.
+- [ ] Provider default deny e imutabilidade foram preservados.
+- [ ] Não há recomendação financeira, provider real não aprovado ou float financeiro.
+- [ ] Não houve push/deploy não autorizado.
+
 ### Escopo e qualidade
 
 - [ ] A mudança pertence somente ao dia/subtarefa autorizada.

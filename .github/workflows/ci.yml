@@ -1,49 +1,66 @@
-name: Foundation CI
-
+name: Week 1 Gate
 on:
   push:
   pull_request:
-
 permissions:
   contents: read
-
 jobs:
-  foundation:
+  quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: market_pulse
+          POSTGRES_USER: market_pulse
+          POSTGRES_PASSWORD: market_pulse_local_only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U market_pulse -d market_pulse"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Verify required foundation files
-        shell: bash
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v6.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install web dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Web checks
         run: |
-          test -s README.md
-          test -s AGENTS.md
-          test -s docs/ROADMAP_30_DAYS.md
-          test -s docs/ARCHITECTURE.md
-          test -s docs/policies/FINANCIAL_CONTENT_POLICY.md
-          test -s docs/superpowers/plans/financial-content-boundary.md
-          test -s docs/DATA_PROVIDER_LICENSE_MATRIX.md
-          test -s SECURITY.md
-          test -s LICENSE
-          test -s CHANGELOG.md
-          test -s docs/PROJECT_SPEC.md
-          test -s docs/AGENTS.md
-          test -s .github/CODEOWNERS
-          test -s docs/API_VERSIONING.md
-          test -s docs/DATA_GOVERNANCE.md
-          test -s docs/SLO.md
-          test -s docs/adr/001-modular-monolith.md
-          test -s docs/adr/002-external-cron.md
-          test -s docs/adr/003-financial-content-boundary.md
-          test -s docs/adr/004-provider-licensing-matrix.md
-      - name: Validate JSON and whitespace
-        shell: bash
+          pnpm --filter @market-pulse/web lint
+          pnpm --filter @market-pulse/web typecheck
+          pnpm --filter @market-pulse/web test
+          pnpm --filter @market-pulse/web build
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+      - name: Install API dependencies
+        run: uv sync --project apps/api --group dev
+      - name: API checks and migrations
+        env:
+          MARKET_PULSE_DATABASE_URL: postgresql://market_pulse:market_pulse_local_only@127.0.0.1:5432/market_pulse
+          MARKET_PULSE_REDIS_URL: redis://127.0.0.1:6379/0
+          PYTHONPATH: apps/api
         run: |
-          python -m json.tool package.json
-          git show --check --format= HEAD
-      - name: Detect high-confidence secret patterns
-        shell: bash
+          uv run --directory apps/api ruff check apps/api/app apps/api/tests
+          uv run --directory apps/api alembic upgrade head
+          uv run --directory apps/api alembic downgrade base
+          uv run --directory apps/api alembic upgrade head
+          uv run --directory apps/api pytest
+      - name: Contract and repository checks
         run: |
-          if git grep -I -n -E '(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|AKIA[0-9A-Z]{16}|sk_live_[0-9A-Za-z]+)' -- .; then
-            echo 'Potential secret detected'
-            exit 1
-          fi
+          python -m json.tool docs/api/openapi.json > /dev/null
+          python scripts/week1_gate.py supply-chain
+          python scripts/week1_gate.py secrets
+          git diff --check
+          git grep -n -E 'FLOAT|REAL|DOUBLE PRECISION' -- apps/api/app apps/api/migrations || true

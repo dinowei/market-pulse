@@ -109,6 +109,8 @@ Consulte [docs/AGENTS.md](docs/AGENTS.md) para regras complementares de manuten�
 
 Sempre que a tarefa envolver backend, frontend, banco, API, testes, infraestrutura, segurança, contratos, providers, jobs, autenticação, CI ou integração entre módulos, leia docs/engineering/ENTERPRISE_ENGINEERING_BASELINE.md antes de alterar arquivos.
 
+Para mudanças no CI ou supply chain, consulte também `docs/engineering/WEEK_1_GATE.md`.
+
 - Tarefas de frontend também exigem a leitura de `docs/design/PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md`.
 - Consulte o `AGENTS.md` local de `apps/api` ou `apps/web` quando existir.
 - O OpenAPI e o cliente gerado são contratos; não altere o cliente gerado manualmente.
