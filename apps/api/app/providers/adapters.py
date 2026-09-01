@@ -22,35 +22,63 @@ class CandidateAdapter:
 
 CANDIDATE_ADAPTERS = (
     CandidateAdapter(
-        "brapi", "BRAPI_API_TOKEN",
-        frozenset({ProviderCapability.LATEST_QUOTE, ProviderCapability.HISTORICAL_BARS,
-                   ProviderCapability.DIVIDENDS}),
+        "brapi",
+        "BRAPI_API_TOKEN",
+        frozenset(
+            {
+                ProviderCapability.LATEST_QUOTE,
+                ProviderCapability.HISTORICAL_BARS,
+                ProviderCapability.DIVIDENDS,
+            }
+        ),
     ),
     CandidateAdapter(
-        "hg_brasil", "HG_BRASIL_API_KEY",
+        "hg_brasil",
+        "HG_BRASIL_API_KEY",
         frozenset({ProviderCapability.LATEST_QUOTE, ProviderCapability.FX_RATES}),
     ),
     CandidateAdapter(
-        "twelve_data", "TWELVE_DATA_API_KEY",
-        frozenset({ProviderCapability.LATEST_QUOTE, ProviderCapability.HISTORICAL_BARS,
-                   ProviderCapability.FX_RATES}),
+        "twelve_data",
+        "TWELVE_DATA_API_KEY",
+        frozenset(
+            {
+                ProviderCapability.LATEST_QUOTE,
+                ProviderCapability.HISTORICAL_BARS,
+                ProviderCapability.FX_RATES,
+            }
+        ),
     ),
     CandidateAdapter(
-        "alpha_vantage", "ALPHA_VANTAGE_API_KEY",
-        frozenset({ProviderCapability.LATEST_QUOTE, ProviderCapability.HISTORICAL_BARS,
-                   ProviderCapability.FX_RATES}),
+        "alpha_vantage",
+        "ALPHA_VANTAGE_API_KEY",
+        frozenset(
+            {
+                ProviderCapability.LATEST_QUOTE,
+                ProviderCapability.HISTORICAL_BARS,
+                ProviderCapability.FX_RATES,
+            }
+        ),
     ),
     CandidateAdapter(
-        "open_exchange_rates", "OPEN_EXCHANGE_RATES_APP_ID",
+        "open_exchange_rates",
+        "OPEN_EXCHANGE_RATES_APP_ID",
         frozenset({ProviderCapability.FX_RATES}),
     ),
     CandidateAdapter(
-        "massive", "MASSIVE_API_KEY",
-        frozenset({ProviderCapability.LATEST_QUOTE, ProviderCapability.HISTORICAL_BARS,
-                   ProviderCapability.DIVIDENDS, ProviderCapability.CORPORATE_ACTIONS}),
+        "massive",
+        "MASSIVE_API_KEY",
+        frozenset(
+            {
+                ProviderCapability.LATEST_QUOTE,
+                ProviderCapability.HISTORICAL_BARS,
+                ProviderCapability.DIVIDENDS,
+                ProviderCapability.CORPORATE_ACTIONS,
+            }
+        ),
     ),
     CandidateAdapter(
-        "b3_developers", "B3_DEVELOPERS_CLIENT_ID",
+        "b3_developers",
+        "B3_DEVELOPERS_CLIENT_ID",
         frozenset({ProviderCapability.INSTRUMENT_METADATA}),
     ),
 )

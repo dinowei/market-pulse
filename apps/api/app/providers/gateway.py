@@ -35,3 +35,25 @@ class ProviderGateway:
             except Exception as exc:
                 raise ProviderError("PROVIDER_UNAVAILABLE", "Provider unavailable") from exc
         raise LookupError(f"No provider supports capability {capability.value}")
+
+    def request_with_fallback(
+        self,
+        capability: ProviderCapability,
+        datasets: list[ProviderDatasetRef],
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        """Try only explicitly public-approved datasets, failing closed otherwise."""
+        last_error: Exception | None = None
+        for dataset in datasets:
+            if self._licensing.decide(dataset) is not LicenseDecision.ALLOW:
+                continue
+            try:
+                return self.request(capability, dataset, *args, **kwargs)
+            except (ProviderError, LookupError) as exc:
+                last_error = exc
+        if last_error:
+            raise ProviderError(
+                "PROVIDER_UNAVAILABLE", "No approved provider is available"
+            ) from last_error
+        raise PermissionError("No provider dataset is approved for public use")
