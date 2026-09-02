@@ -12,12 +12,12 @@ O Market Pulse usa monorepo e monólito modular porque há uma pessoa, prazo cur
 
 | Camada | Decisão do MVP | Estado no Dia 1 |
 | --- | --- | --- |
-| Web | Next.js App Router, React, TypeScript strict e Tailwind CSS | Planejado; não instalado |
-| API | FastAPI e Python | Planejado; não instalado |
+| Web | Next.js App Router, React, TypeScript strict e Tailwind CSS | Shell inicial e cliente OpenAPI gerado; UX P0 ainda pendente |
+| API | FastAPI e Python | Contratos, health, providers candidatos, normalização, cache e refresh interno implementados |
 | Persistência | SQLAlchemy 2, Alembic e PostgreSQL | Planejado; sem banco criado |
-| Cache/lock | Redis; compatibilidade alvo com Upstash Redis REST | Planejado; sem instância criada |
+| Cache/lock | Redis; compatibilidade alvo com Upstash Redis REST | Cache-aside, stale-if-error, negative cache e lock distribuído locais |
 | Contrato | OpenAPI e API versionada em `/api/v1` | Planejado |
-| Job | Processo curto e idempotente usando o código da API | Planejado |
+| Job | Processo curto e idempotente usando o código da API | Orquestrador interno implementado; endpoint/agendamento público ainda pendente |
 | Agendamento | GitHub Actions cron chamando endpoint interno protegido | Planejado; sem workflow de produção ou segredo |
 | Frontend externo | Vercel | Destino pretendido; sem login/projeto/deploy |
 | API externa | Render | Destino pretendido; sem login/serviço/deploy |

@@ -31,12 +31,15 @@ Stripe é exceção limitada: no beta, somente integração em modo de teste, se
 
 | Dia | Objetivo e entregáveis | Dependências | Gate objetivo |
 | --- | --- | --- | --- |
-| 8 | Selecionar primeiro adapter somente após revisão oficial da licença | Matriz `PUBLIC_APPROVED` | Evidência registra provider/plano/endpoint/dataset/finalidade/modalidade; caso contrário permanece fake |
-| 9 | Normalizar ativos, bolsas, moedas, timestamps, `DataLevel` e `Freshness` | Dia 8 ou fixtures | Fixtures determinísticas cobrem universo inicial e validações sem inventar dado real |
-| 10 | Cache-aside e fallback por ativo em Redis/PostgreSQL | Snapshots válidos | Clock tests provam `FRESH`, `STALE` e `UNAVAILABLE`; stale nunca é silencioso |
+| 8 | Catálogo mestre, universo P0 e backlog de candidatos, com status explícito | Dia 7 | Catálogo amplo não implica suporte de dados; `canonical_id` e default deny documentados |
+| 9 | Adapters candidatos, normalização inicial e payload bruto sanitizado | Dia 8 ou fixtures | Adapters não expõem payload externo; fixtures determinísticas e sem rede real |
+| 10 | Normalizar OHLC/FX, ajustes, upsert e quarentena | Dia 9 | Decimal, invariantes, provenance e quarentena cobrem payloads inválidos |
+| 10.1 | Integridade financeira e separação de DataLevel/Freshness | Dia 10 | Política, contratos e testes bloqueiam floats, timestamps ingênuos e proveniência incompleta |
 | 11 | Pipeline de eventos corporativos: dividendos, JCP, splits, grupamentos e reconciliação auditável | Dia 10 | Eventos normalizados com Decimal, status controlado, idempotência externa, versionamento, correção/cancelamento e quarentena; nenhum crédito automático em carteira |
-| 12 | API de catálogo, busca, páginas de ativo, quotes, histórico, variação e eventos permitidos | Dia 9–11 | Resposta parcial mistura estados corretamente e preserva proveniência; ativos sem licença permanecem bloqueados |
-| 12.1 | Comando/endpoint interno idempotente de refresh e `ingestion_runs` (realocado da descrição anterior do Dia 11) | Dia 10 e contratos de ingestão | Repetição não duplica; lock e auditoria funcionam; autenticação interna é testada |
+| 11.1 | Reconciliação documental do roadmap com eventos corporativos executados | Dia 11 | Histórico preservado e refresh idempotente realocado para Dia 12.1 |
+| 12 | Cache-aside, freshness, stale-if-error, negative cache, invalidação granular e locks | Dias 9–11 | Clock tests provam `FRESH`, `STALE` e `UNAVAILABLE`; stale nunca é silencioso |
+| 12.1 | Reconciliação estrutural e refresh interno idempotente | Dia 12 e contratos de ingestão | Gaps de identidade/provenance/licença corrigidos; repetição não duplica; lock e invalidação granular funcionam |
+| 13 | API de catálogo, busca, páginas de ativo, quotes, histórico, variação e eventos permitidos | Dias 8–12.1 | Resposta parcial mistura estados corretamente e preserva proveniência; ativos sem licença permanecem bloqueados |
 | 13 | Agregação backend do heatmap básico por setor, market cap e variação | Universo/taxonomia licenciados | Pesos, agrupamentos, fonte e limitações são verificáveis; recursos avançados ficam P1 |
 | 14 | Gate de resiliência: timeout, rate limit, payload inválido e recuperação | Dias 8–13 | Suite determinística cobre falhas sem chamadas externas descontroladas |
 
