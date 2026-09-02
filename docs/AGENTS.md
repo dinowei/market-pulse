@@ -20,6 +20,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Adapters de mercado: [ADAPTERS_DAY_9.md](providers/ADAPTERS_DAY_9.md)
 - Normalização de mercado: [NORMALIZATION_DAY_10.md](market_data/NORMALIZATION_DAY_10.md)
 - Eventos corporativos: [CORPORATE_ACTIONS_DAY_11.md](market_data/CORPORATE_ACTIONS_DAY_11.md)
+- Cache e freshness do Dia 12: [CACHE_FRESHNESS_DAY_12.md](market_data/CACHE_FRESHNESS_DAY_12.md)
 - Reconciliação do roadmap do Dia 11: [DAY_11_1_ROADMAP_RECONCILIATION.md](engineering/DAY_11_1_ROADMAP_RECONCILIATION.md)
 - Integridade financeira: [FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md](policies/FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md)
 - Hardening retroativo: [DAY_10_1_RETROACTIVE_HARDENING.md](engineering/DAY_10_1_RETROACTIVE_HARDENING.md)
