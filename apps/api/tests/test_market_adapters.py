@@ -39,7 +39,15 @@ def test_quote_payload_is_normalized_to_decimal_and_canonical_identity() -> None
 
 def test_history_payload_normalizes_ohlcv_and_rejects_invalid_data() -> None:
     result = normalize_ohlcv(
-        {"t": "2026-09-01T12:00:00Z", "o": "10", "h": "11", "l": "9", "c": "10.5", "v": "100"},
+        {
+            "t": "2026-09-01T12:00:00Z",
+            "o": "10",
+            "h": "11",
+            "l": "9",
+            "c": "10.5",
+            "v": "100",
+            "currency": "BRL",
+        },
         "equity.br.b3.petr4",
         "brapi",
         "history",

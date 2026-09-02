@@ -42,6 +42,8 @@ def envelope(
         fresh_until=now + timedelta(minutes=5),
         stale_until=now + timedelta(hours=1),
         currency="BRL",
+        license_status="PUBLIC_APPROVED",
+        license_evidence=True,
     )
 
 
