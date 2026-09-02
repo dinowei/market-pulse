@@ -1,0 +1,24 @@
+name: Market Pulse refresh
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger protected internal refresh (dry run)
+        env:
+          API_BASE_URL: ${{ secrets.MARKET_PULSE_API_BASE_URL }}
+          CRON_SECRET: ${{ secrets.MARKET_PULSE_CRON_SECRET }}
+        run: |
+          test -n "$API_BASE_URL"
+          test -n "$CRON_SECRET"
+          curl --fail-with-body --silent --show-error --request POST \
+            --url "${API_BASE_URL%/}/api/v1/internal/refresh-quotes" \
+            --header "X-Cron-Secret: $CRON_SECRET" \
+            --header "Content-Type: application/json" \
+            --data '{"dataset":"demo-quotes","capability":"latest_quote","canonical_ids":["equity.br.b3.petr4"],"mode":"DRY_RUN"}'
