@@ -42,6 +42,13 @@ class ProviderDatasetRef(BaseModel):
     license_status: str = Field(min_length=1)
     public_approved: bool = False
     evidence: bool = False
+    # Licensing dimensions are explicit so a dataset cannot be reused in an
+    # unreviewed plan, endpoint, purpose, modality, or environment.
+    plan: str | None = None
+    endpoint: str | None = None
+    purpose: str | None = None
+    modality: str | None = None
+    environment: str | None = None
 
 
 class ProviderProvenance(BaseModel):

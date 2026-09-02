@@ -1,7 +1,7 @@
 from typing import Any
 
-from app.providers.licensing import LicenseDecision, LicenseService
-from app.providers.models import ProviderCapability, ProviderDatasetRef, ProviderError
+from app.providers.licensing import DatasetAccessRequest, LicenseDecision, LicenseService
+from app.providers.models import DataLevel, ProviderCapability, ProviderDatasetRef, ProviderError
 
 
 class ProviderGateway:
@@ -18,7 +18,25 @@ class ProviderGateway:
     def request(
         self, capability: ProviderCapability, dataset: ProviderDatasetRef, *args: Any, **kwargs: Any
     ) -> Any:
-        if self._licensing.decide(dataset) is not LicenseDecision.ALLOW:
+        purpose = kwargs.pop("purpose", None)
+        modality = kwargs.pop("modality", None)
+        environment = kwargs.pop("environment", None)
+        data_level = kwargs.pop("data_level", None)
+        if any(value is not None for value in (purpose, modality, environment, data_level)):
+            decision = self._licensing.decide_access(
+                DatasetAccessRequest(
+                    dataset=dataset,
+                    capability=capability,
+                    purpose=purpose or "public_api",
+                    modality=modality or "api",
+                    environment=environment or "production",
+                    data_level=data_level or DataLevel.DELAYED,
+                )
+            )
+            allowed = decision.allowed
+        else:
+            allowed = self._licensing.decide(dataset) is LicenseDecision.ALLOW
+        if not allowed:
             raise PermissionError("Provider dataset is not approved for public use")
         for provider in self._providers:
             if capability not in provider.capabilities:

@@ -26,7 +26,9 @@ def _timestamp(value: Any) -> datetime:
 def _provenance(
     provider: str, dataset: str, currency: str, timestamp: datetime
 ) -> ProviderProvenance:
-    now = datetime.now(timestamp.tzinfo)
+    if not isinstance(currency, str) or len(currency) != 3 or currency.upper() != currency:
+        raise ValueError("Invalid currency")
+    now = timestamp
     return ProviderProvenance(
         provider=provider,
         dataset=dataset,
@@ -85,6 +87,13 @@ def normalize_ohlcv(
         key: _decimal(payload.get(short), key)
         for key, short in (("open", "o"), ("high", "h"), ("low", "l"), ("close", "c"))
     }
+    currency = payload.get("currency")
+    if not isinstance(currency, str) or len(currency) != 3 or currency.upper() != currency:
+        raise ValueError("Invalid currency")
+    if values["high"] < max(values["open"], values["close"]) or values["low"] > min(
+        values["open"], values["close"]
+    ) or values["high"] < values["low"]:
+        raise ValueError("Invalid OHLC invariants")
     volume = None if payload.get("v") is None else _decimal(payload.get("v"), "volume")
     values_dict = {**values, **({"volume": volume} if volume is not None else {})}
     return NormalizedOHLCV(
@@ -92,5 +101,5 @@ def normalize_ohlcv(
         canonical_id=canonical_id,
         **values,
         volume=volume,
-        provenance=_provenance(provider, dataset, payload.get("currency", "USD"), timestamp),
+        provenance=_provenance(provider, dataset, currency, timestamp),
     )

@@ -92,6 +92,8 @@ class CacheEnvelope:
     stale_until: datetime
     currency: str
     limitations: tuple[str, ...] = ()
+    license_status: str | None = None
+    license_evidence: bool = False
 
     def to_json(self) -> str:
         payload = _encode(
@@ -108,6 +110,8 @@ class CacheEnvelope:
                 "stale_until": self.stale_until,
                 "currency": self.currency,
                 "limitations": self.limitations,
+                "license_status": self.license_status,
+                "license_evidence": self.license_evidence,
             }
         )
         return json.dumps(payload, separators=(",", ":"), ensure_ascii=True)
@@ -128,6 +132,8 @@ class CacheEnvelope:
             stale_until=payload["stale_until"],
             currency=payload["currency"],
             limitations=tuple(payload.get("limitations", ())),
+            license_status=payload.get("license_status"),
+            license_evidence=bool(payload.get("license_evidence", False)),
         )
 
 
@@ -219,23 +225,32 @@ class CacheAsideService:
         self.last_error_code = None
         self.last_error_message = None
         cached: CacheEnvelope | None = None
+        blocked_cache = False
         try:
             cached = self.backend.get(key)
         except Exception:
             cached = None
         if cached is not None:
-            now = self._now()
-            if now <= cached.fresh_until:
-                return cached
-            if now <= cached.stale_until:
-                # Keep the stale candidate while attempting a refresh.  It is
-                # served only when the source fails, with an explicit STALE
-                # marker.
-                stale = _with_freshness(cached, Freshness.STALE)
+            if not _cache_allowed(cached):
+                blocked_cache = True
+                cached = None
+        if blocked_cache:
+            self.last_error_code = LICENSE_BLOCKED
+            self.last_error_message = "cached data is not approved"
+            return _unavailable_envelope(self._now())
+        now = self._now()
+        if cached is not None and now <= cached.fresh_until:
+            return cached
+        if cached is not None and now <= cached.stale_until:
+            # Keep the stale candidate while attempting a refresh. It is
+            # served only when the source fails, with an explicit STALE marker.
+            stale = _with_freshness(cached, Freshness.STALE)
         try:
             loaded = loader()
             if not isinstance(loaded, CacheEnvelope):
                 raise TypeError("loader must return CacheEnvelope")
+            if not _cache_allowed(loaded):
+                raise PermissionError("cache envelope is not approved")
             try:
                 ttl = max(1, int((loaded.stale_until - self._now()).total_seconds()))
                 self.backend.set(key, loaded, ttl)
@@ -251,19 +266,30 @@ class CacheAsideService:
             self.last_error_code = "SOURCE_UNAVAILABLE"
             self.last_error_message = "data unavailable"
             now = self._now()
-            return CacheEnvelope(
-                value=None,
-                source="unknown",
-                dataset="unknown",
-                data_level=DataLevel.DEMO,
-                freshness=Freshness.UNAVAILABLE,
-                source_timestamp=None,
-                collected_at=now,
-                cached_at=now,
-                fresh_until=now,
-                stale_until=now,
-                currency="XXX",
-            )
+            return _unavailable_envelope(now)
+
+
+def _cache_allowed(envelope: CacheEnvelope) -> bool:
+    """Every cached envelope carries an explicit approval decision."""
+    return envelope.license_status == "PUBLIC_APPROVED" and envelope.license_evidence
+
+
+def _unavailable_envelope(now: datetime) -> CacheEnvelope:
+    return CacheEnvelope(
+        value=None,
+        source="unknown",
+        dataset="unknown",
+        data_level=DataLevel.DEMO,
+        freshness=Freshness.UNAVAILABLE,
+        source_timestamp=None,
+        collected_at=now,
+        cached_at=now,
+        fresh_until=now,
+        stale_until=now,
+        currency="XXX",
+        license_status="UNAVAILABLE",
+        license_evidence=False,
+    )
 
 
 def _with_freshness(envelope: CacheEnvelope, freshness: Freshness) -> CacheEnvelope:

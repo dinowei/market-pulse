@@ -17,10 +17,12 @@ class ExternalProviderAdapter:
         dataset: ProviderDatasetRef,
         token: str | None,
         transport: Callable[..., ProviderHttpResponse] | None = None,
+        normalizer: Callable[[dict[str, Any], str, str, str], Any] | None = None,
     ) -> None:
         self.dataset = dataset
         self.token = token
         self.transport = transport
+        self.normalizer = normalizer
 
     def ensure_configured(self) -> None:
         if not self.token or not self.transport:
@@ -42,7 +44,7 @@ class ExternalProviderAdapter:
         if response.status_code >= 400:
             raise ProviderError("PROVIDER_ERROR", f"{self.name} request failed ({request_id})")
 
-    def request(self, request_id: str, **params: Any) -> Any:
+    def _request_payload(self, request_id: str, **params: Any) -> dict[str, Any]:
         self.ensure_configured()
         try:
             response = self.transport(**params)  # type: ignore[misc]
@@ -51,10 +53,17 @@ class ExternalProviderAdapter:
                 "PROVIDER_TIMEOUT", f"{self.name} timed out ({request_id})", retryable=True
             ) from exc
         self.raise_for_status(response, request_id)
+        if not isinstance(response.payload, dict):
+            raise ProviderError(
+                "PROVIDER_PAYLOAD_INVALID", f"{self.name} payload invalid ({request_id})"
+            )
         return response.payload
 
     def latest_quote(self, canonical_id: str) -> Any:
-        return self.request(canonical_id, symbol=canonical_id)
+        if self.normalizer is None:
+            raise ProviderNotConfigured(f"{self.name} normalizer not configured")
+        payload = self._request_payload(canonical_id, symbol=canonical_id)
+        return self.normalizer(payload, canonical_id, self.name, self.dataset.dataset)
 
 
 class BrapiAdapter(ExternalProviderAdapter):
