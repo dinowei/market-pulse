@@ -65,8 +65,17 @@ _TTL_SECONDS: dict[DataLevel, dict[str, tuple[int, int]]] = {
 }
 
 
-def ttl_for(data_level: DataLevel, data_type: str = "quote") -> int:
-    """Return the fresh TTL in seconds for a declared data level."""
+def ttl_for(
+    data_level: DataLevel,
+    data_type: str = "quote",
+    freshness: Freshness | None = None,
+) -> int:
+    """Return the TTL in seconds for a declared level and freshness state."""
+
+    if freshness is Freshness.UNAVAILABLE:
+        return 30
+    if freshness is Freshness.STALE:
+        return _TTL_SECONDS[data_level].get(data_type, _TTL_SECONDS[data_level]["default"])[1]
 
     policy = _TTL_SECONDS[data_level]
     return policy.get(data_type, policy["default"])[0]

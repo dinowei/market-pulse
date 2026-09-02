@@ -50,6 +50,7 @@ def test_key_is_granular_and_has_no_secret_material():
     assert key == "market_data:quote:quotes:equity.br.b3.petr4"
     assert "secret" not in key.lower()
     assert CacheKey.history("quotes", "equity.br.b3.petr4", "1d", "raw") != key
+    assert CacheKey.negative("PETR4").startswith("market_data:negative:instrument_search:")
 
 
 def test_cache_miss_loads_and_stores_value():
@@ -90,6 +91,7 @@ def test_eod_is_never_promoted_to_realtime_and_demo_remains_demo():
     assert demo.data_level is DataLevel.DEMO
     assert compute_freshness(DataLevel.DEMO, demo.source_timestamp).freshness is Freshness.STALE
     assert ttl_for(DataLevel.EOD, "quote") > 0
+    assert ttl_for(DataLevel.DELAYED, "quote", Freshness.UNAVAILABLE) == 30
 
 
 def test_freshness_uses_explicit_ttl_and_marks_stale_then_unavailable():

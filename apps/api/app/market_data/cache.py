@@ -43,9 +43,9 @@ class CacheKey:
         return f"market_data:fx:{dataset}:{base.upper()}-{quote.upper()}"
 
     @staticmethod
-    def negative(query: str) -> str:
+    def negative(query: str, namespace: str = "instrument_search") -> str:
         digest = hashlib.sha256(query.strip().lower().encode("utf-8")).hexdigest()[:24]
-        return f"market_data:negative:{digest}"
+        return f"market_data:negative:{namespace}:{digest}"
 
     @staticmethod
     def lock(dataset: str, identity: str) -> str:
@@ -182,6 +182,9 @@ class RedisCacheBackend:
 
     def delete(self, key: str) -> None:
         self.client.delete(key)
+
+    def invalidate(self, key: str) -> None:
+        self.delete(key)
 
     def set_if_absent(self, key: str, value: Any, ttl: int) -> bool:
         return bool(self.client.set(key, value, ex=max(1, ttl), nx=True))
