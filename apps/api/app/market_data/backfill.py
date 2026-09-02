@@ -9,7 +9,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Callable, Iterable
 
-from app.market_data.cache import CacheKey
+from app.market_data.cache import CacheKey, DistributedLock, MemoryCacheBackend
 from app.providers.models import DataLevel
 
 
@@ -17,6 +17,7 @@ class BackfillStatus(StrEnum):
     SUCCESS = "SUCCESS"
     PARTIAL = "PARTIAL"
     LICENSE_BLOCKED = "LICENSE_BLOCKED"
+    SKIPPED_LOCKED = "SKIPPED_LOCKED"
     FAILED = "FAILED"
 
 
@@ -52,6 +53,8 @@ class BackfillRequest:
             raise ValueError("canonical_ids must use canonical identity, not ticker-only")
         if len(set(ids)) != len(ids):
             raise ValueError("canonical_ids must be unique")
+        if len(ids) > 100:
+            raise ValueError("backfill supports at most 100 instruments")
         if end_date < start_date:
             raise ValueError("end_date must not precede start_date")
         if (end_date - start_date).days + 1 > 31:
@@ -80,6 +83,7 @@ class BackfillResult:
 
 
 _RUNS: dict[str, BackfillResult] = {}
+_LOCK_BACKEND = MemoryCacheBackend()
 
 
 def _run_id(request: BackfillRequest) -> str:
@@ -98,6 +102,7 @@ def run_backfill(
     request: BackfillRequest,
     *,
     provider: Callable[[str, date, date], Iterable[Decimal | int | str]] | None = None,
+    lock_backend: MemoryCacheBackend | None = None,
 ) -> BackfillResult:
     """Run a bounded backfill; provider invocation is denied by default."""
     run_id = _run_id(request)
@@ -131,9 +136,17 @@ def run_backfill(
         )
         _RUNS[run_id] = result
         return result
-    succeeded = failed = 0
+    succeeded = failed = skipped = 0
     invalidated: list[str] = []
     for canonical_id in request.canonical_ids:
+        lock = DistributedLock(
+            lock_backend or _LOCK_BACKEND,
+            CacheKey.lock(request.dataset, f"backfill:{canonical_id}"),
+            owner=run_id,
+        )
+        if not lock.acquire():
+            skipped += 1
+            continue
         try:
             list(provider(canonical_id, request.start_date, request.end_date))
             succeeded += 1
@@ -144,13 +157,18 @@ def run_backfill(
             )
         except Exception:
             failed += 1
-    status = (
-        BackfillStatus.SUCCESS
-        if failed == 0
-        else (BackfillStatus.PARTIAL if succeeded else BackfillStatus.FAILED)
-    )
+        finally:
+            lock.release()
+    if failed == 0 and skipped == 0:
+        status = BackfillStatus.SUCCESS
+    elif succeeded:
+        status = BackfillStatus.PARTIAL
+    elif skipped and failed == 0:
+        status = BackfillStatus.SKIPPED_LOCKED
+    else:
+        status = BackfillStatus.FAILED
     result = BackfillResult(
-        status, run_id, len(request.canonical_ids), succeeded, failed, 0, tuple(invalidated)
+        status, run_id, len(request.canonical_ids), succeeded, failed, skipped, tuple(invalidated)
     )
     _RUNS[run_id] = result
     return result
