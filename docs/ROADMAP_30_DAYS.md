@@ -41,15 +41,23 @@ Stripe é exceção limitada: no beta, somente integração em modo de teste, se
 | 12.1 | Reconciliação estrutural e refresh interno idempotente | Dia 12 e contratos de ingestão | Gaps de identidade/provenance/licença corrigidos; repetição não duplica; lock e invalidação granular funcionam |
 | 13 | API de catálogo, busca, páginas de ativo, quotes, histórico, variação e eventos permitidos | Dias 8–12.1 | Resposta parcial mistura estados corretamente e preserva proveniência; ativos sem licença permanecem bloqueados |
 | 13 | Serviço `refresh_market_data` e endpoint interno protegido `POST /api/v1/internal/refresh-quotes` | Dia 12.1 | Segredo `X-Cron-Secret`, comparação em tempo constante, limites, lock, idempotência, falhas parciais e DEMO seguro; nenhum provider real |
-| 14 | Agregação backend do heatmap básico e gate de resiliência | Universo/taxonomia licenciados e Dia 13 | Pesos, agrupamentos, fonte, limitações e falhas são verificáveis; recursos avançados ficam P1 |
+| 14 | Automação operacional: workflow agendado/manual, backfill controlado, reconciliação diária e gate da Semana 2 | Dia 13 e contratos de ingestão | Cron/manual usa apenas secrets; backfill limitado, idempotente e default-deny; gaps, provenance e falhas parciais são auditáveis |
 
 **Entregável semanal:** API financeira normalizada, resiliente e bloqueada por licença, com fallback observável e sem alegação indevida de tempo real.
+
+### Adendo operacional do Dia 14
+
+O Dia 14 executado corresponde à automação operacional de mercado: workflow
+agendado/manual, backfill controlado, reconciliação diária e fechamento do
+gate da Semana 2. O registro anterior de agregação do heatmap permanece como
+histórico e foi realocado para o Dia 15 junto ao Particle Atlas P0; recursos
+avançados de heatmap continuam P1.
 
 ## Semana 3 — produto e experiência
 
 | Dia | Objetivo e entregáveis | Dependências | Gate objetivo |
 | --- | --- | --- | --- |
-| 15 | Particle Atlas P0: shell, estados, responsividade e tabelas equivalentes | Contratos da API | 360 px e 1440 px sem overflow; foco/contraste/movimento reduzido verificados |
+| 15 | Particle Atlas P0 e heatmap/treemap básico: shell, estados, responsividade e tabelas equivalentes | Contratos da API e agregação licenciada | 360 px e 1440 px sem overflow; heatmap básico verificável; foco/contraste/movimento reduzido verificados |
 | 16 | Tokens monocromáticos e semântica `UP`/`DOWN`/`FLAT`; dashboard de índices, câmbio, commodities e ativos | API de mercado | Preto/branco/cinza predominam; fonte, horário, latência, `DataLevel`, `Freshness` e limitações visíveis; ADR-006 referenciada |
 | 17 | Heatmap/treemap básico, busca/página de ativo e gráficos comparativos | Agregação e contrato | Um ativo = uma linha; multissérie = `INDEX_100` por padrão; valores reais simultaneamente visíveis; preço bruto só com compatibilidade; tabela, fixtures e teclado passam |
 | 18 | Cadastro, login, logout e sessão opaca | Persistência | Argon2id, cookie `HttpOnly`, Origin/CSRF, expiração e revogação testados |

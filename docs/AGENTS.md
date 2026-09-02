@@ -28,6 +28,8 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Universo operacional: [P0_OPERATIONAL_UNIVERSE.md](instruments/P0_OPERATIONAL_UNIVERSE.md)
 - Backlog de candidatos: [CANDIDATE_UNIVERSE_BACKLOG.md](instruments/CANDIDATE_UNIVERSE_BACKLOG.md)
 - Frontend Particle Atlas: [PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md](design/PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md)
+- Automação operacional de mercado: [AUTOMATION_DAY_14.md](market_data/AUTOMATION_DAY_14.md)
+- Gate da Semana 2: [WEEK_2_GATE.md](engineering/WEEK_2_GATE.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.
