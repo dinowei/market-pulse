@@ -19,6 +19,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Onboarding de providers: [PROVIDER_ONBOARDING_MATRIX.md](providers/PROVIDER_ONBOARDING_MATRIX.md)
 - Adapters de mercado: [ADAPTERS_DAY_9.md](providers/ADAPTERS_DAY_9.md)
 - Normalização de mercado: [NORMALIZATION_DAY_10.md](market_data/NORMALIZATION_DAY_10.md)
+- Eventos corporativos: [CORPORATE_ACTIONS_DAY_11.md](market_data/CORPORATE_ACTIONS_DAY_11.md)
 - Integridade financeira: [FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md](policies/FINANCIAL_DATA_AND_PORTFOLIO_INTEGRITY_POLICY.md)
 - Hardening retroativo: [DAY_10_1_RETROACTIVE_HARDENING.md](engineering/DAY_10_1_RETROACTIVE_HARDENING.md)
 - Catálogo mestre: [MASTER_INSTRUMENT_CATALOG.md](instruments/MASTER_INSTRUMENT_CATALOG.md)
