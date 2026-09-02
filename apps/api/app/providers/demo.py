@@ -79,13 +79,30 @@ class DemoProvider:
     def dividends(self, instrument_id: str) -> ProviderResult[Sequence[dict[str, object]]]:
         del instrument_id
         return ProviderResult(
-            value=({"amount": Decimal("0.10"), "currency": "BRL"},),
+            value=(
+                {
+                    "action_type": "CASH_DIVIDEND",
+                    "external_id": "demo-dividend-001",
+                    "ex_date": "2026-01-10",
+                    "payment_date": "2026-01-20",
+                    "amount": Decimal("0.10"),
+                    "currency": "BRL",
+                },
+            ),
             provenance=self._provenance("demo-dividends"),
         )
 
     def corporate_actions(self, instrument_id: str) -> ProviderResult[Sequence[dict[str, object]]]:
         del instrument_id
         return ProviderResult(
-            value=({"action_type": "SPLIT", "ratio": Decimal("1")},),
+            value=(
+                {
+                    "action_type": "SPLIT",
+                    "external_id": "demo-split-001",
+                    "effective_date": "2026-01-15",
+                    "split_ratio_from": Decimal("1"),
+                    "split_ratio_to": Decimal("2"),
+                },
+            ),
             provenance=self._provenance("demo-corporate-actions"),
         )

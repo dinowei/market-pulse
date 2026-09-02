@@ -1,0 +1,76 @@
+"""Extend corporate actions with controlled ingestion and reconciliation metadata."""
+
+from alembic import op
+
+revision = "20260902_0004"
+down_revision = "20260901_0003"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    op.execute("ALTER TABLE corporate_actions ALTER COLUMN effective_date DROP NOT NULL")
+    op.execute("ALTER TABLE corporate_actions ALTER COLUMN source_timestamp DROP NOT NULL")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN dataset_id UUID REFERENCES datasets(id)")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN external_id TEXT")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN external_event_key TEXT")
+    op.execute("UPDATE corporate_actions SET external_event_key = 'legacy:' || id::text WHERE external_event_key IS NULL")
+    op.execute("ALTER TABLE corporate_actions ALTER COLUMN external_event_key SET NOT NULL")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN status VARCHAR(32) NOT NULL DEFAULT 'PENDING'")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN announced_date DATE")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN ex_date DATE")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN record_date DATE")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN payment_date DATE")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN gross_amount_per_share NUMERIC(24,8)")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN net_amount_per_share NUMERIC(24,8)")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN withholding_tax_rate NUMERIC(12,8)")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN split_ratio_from NUMERIC(24,10)")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN split_ratio_to NUMERIC(24,10)")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN ingestion_batch_id UUID REFERENCES ingestion_batches(id)")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN raw_payload_record_id UUID REFERENCES raw_payload_records(id)")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN version INTEGER NOT NULL DEFAULT 1")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN supersedes_event_id UUID REFERENCES corporate_actions(id)")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN corrected_event_id UUID REFERENCES corporate_actions(id)")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN cancellation_reason TEXT")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN correction_reason TEXT")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT now()")
+    op.execute("ALTER TABLE corporate_actions ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now()")
+    op.execute("ALTER TABLE corporate_actions ADD CONSTRAINT corporate_actions_status_check CHECK (status IN ('PENDING','CONFIRMED','CORRECTED','CANCELLED','UNAVAILABLE'))")
+    op.execute("ALTER TABLE corporate_actions ADD CONSTRAINT corporate_actions_action_type_check CHECK (action_type IN ('CASH_DIVIDEND','JCP','SPLIT','REVERSE_SPLIT'))")
+    op.execute("ALTER TABLE corporate_actions ADD CONSTRAINT corporate_actions_amount_positive_check CHECK (gross_amount_per_share IS NULL OR gross_amount_per_share > 0)")
+    op.execute("ALTER TABLE corporate_actions ADD CONSTRAINT corporate_actions_ratios_positive_check CHECK ((split_ratio_from IS NULL OR split_ratio_from > 0) AND (split_ratio_to IS NULL OR split_ratio_to > 0))")
+    op.execute("CREATE UNIQUE INDEX uq_corporate_actions_external_identity ON corporate_actions (provider_id, COALESCE(dataset_id, '00000000-0000-0000-0000-000000000000'::uuid), instrument_id, external_event_key, version)")
+    op.execute("CREATE TABLE corporate_actions_quarantine (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), reason_code VARCHAR(64) NOT NULL, provider_id UUID REFERENCES providers(id), dataset_id UUID REFERENCES datasets(id), instrument_id UUID REFERENCES instruments(id), external_event_key TEXT, raw_payload_record_id UUID REFERENCES raw_payload_records(id), payload JSONB, created_at TIMESTAMPTZ NOT NULL DEFAULT now())")
+
+
+def downgrade() -> None:
+    op.execute("DROP TABLE IF EXISTS corporate_actions_quarantine")
+    op.execute("DROP INDEX IF EXISTS uq_corporate_actions_external_identity")
+    op.execute("ALTER TABLE corporate_actions DROP CONSTRAINT IF EXISTS corporate_actions_ratios_positive_check")
+    op.execute("ALTER TABLE corporate_actions DROP CONSTRAINT IF EXISTS corporate_actions_amount_positive_check")
+    op.execute("ALTER TABLE corporate_actions DROP CONSTRAINT IF EXISTS corporate_actions_action_type_check")
+    op.execute("ALTER TABLE corporate_actions DROP CONSTRAINT IF EXISTS corporate_actions_status_check")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS correction_reason")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS updated_at")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS created_at")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS cancellation_reason")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS corrected_event_id")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS supersedes_event_id")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS version")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS raw_payload_record_id")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS ingestion_batch_id")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS split_ratio_to")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS split_ratio_from")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS withholding_tax_rate")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS net_amount_per_share")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS gross_amount_per_share")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS payment_date")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS record_date")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS ex_date")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS announced_date")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS status")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS external_event_key")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS external_id")
+    op.execute("ALTER TABLE corporate_actions DROP COLUMN IF EXISTS dataset_id")
+    op.execute("ALTER TABLE corporate_actions ALTER COLUMN source_timestamp SET NOT NULL")
+    op.execute("ALTER TABLE corporate_actions ALTER COLUMN effective_date SET NOT NULL")
