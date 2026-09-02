@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     redis_url: str = "redis://127.0.0.1:6379/0"
     database_timeout_seconds: float = 2.0
     cache_timeout_seconds: float = 1.0
+    internal_refresh_secret: str | None = None
+    refresh_max_items: int = 20
+    refresh_item_timeout_seconds: float = 5.0
+    refresh_total_timeout_seconds: float = 30.0
 
 
 @lru_cache

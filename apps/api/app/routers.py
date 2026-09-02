@@ -1,13 +1,52 @@
 import hashlib
 import json
+import secrets
 
 import psycopg
 from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 
 from app.contracts import InstrumentList, PageMeta, PortfolioEventAccepted, PortfolioEventCreate
 from app.core.config import get_settings
+from app.errors import request_id as request_id_for
+from app.market_data.refresh_application import (
+    RefreshBatchRequest,
+    RefreshBatchResponse,
+    refresh_market_data,
+)
 
 router = APIRouter(prefix="/api/v1")
+
+
+def _authorize_internal_refresh(provided: str | None, expected: str | None) -> bool:
+    if not expected or not provided:
+        return False
+    return secrets.compare_digest(provided, expected)
+
+
+@router.post(
+    "/internal/refresh-quotes",
+    response_model=RefreshBatchResponse,
+    tags=["internal"],
+)
+def internal_refresh_quotes(
+    payload: RefreshBatchRequest,
+    request: Request,
+    cron_secret: str | None = Header(default=None, alias="X-Cron-Secret"),
+) -> RefreshBatchResponse:
+    settings = get_settings()
+    if not _authorize_internal_refresh(cron_secret, settings.internal_refresh_secret):
+        raise HTTPException(status_code=401, detail="Internal refresh unauthorized")
+    max_items = payload.max_items or settings.refresh_max_items
+    if (
+        max_items > settings.refresh_max_items
+        or len(payload.canonical_ids) > settings.refresh_max_items
+    ):
+        raise HTTPException(status_code=422, detail="Refresh batch exceeds configured limit")
+    return refresh_market_data(
+        payload=payload,
+        settings=settings,
+        request_id=request_id_for(request),
+    )
 
 
 @router.get("/instruments", response_model=InstrumentList, tags=["instruments"])

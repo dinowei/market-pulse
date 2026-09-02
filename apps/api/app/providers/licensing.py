@@ -79,6 +79,17 @@ class LicenseService:
                 "dataset environment is not approved",
             )
         if dataset.license_status != "PUBLIC_APPROVED":
+            if (
+                request.data_level is DataLevel.DEMO
+                and dataset.license_status == "DEMO_SYNTHETIC"
+                and dataset.provider == "demo"
+                and request.environment in {"local", "test"}
+            ):
+                return DatasetAccessDecision(
+                    LicenseDecision.ALLOW,
+                    "DEMO_SYNTHETIC_ALLOWED",
+                    "synthetic demo data is restricted to local/test",
+                )
             return DatasetAccessDecision(
                 LicenseDecision.BLOCK,
                 "LICENSE_STATUS_BLOCKED",
