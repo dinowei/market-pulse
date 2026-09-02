@@ -34,8 +34,9 @@ Stripe é exceção limitada: no beta, somente integração em modo de teste, se
 | 8 | Selecionar primeiro adapter somente após revisão oficial da licença | Matriz `PUBLIC_APPROVED` | Evidência registra provider/plano/endpoint/dataset/finalidade/modalidade; caso contrário permanece fake |
 | 9 | Normalizar ativos, bolsas, moedas, timestamps, `DataLevel` e `Freshness` | Dia 8 ou fixtures | Fixtures determinísticas cobrem universo inicial e validações sem inventar dado real |
 | 10 | Cache-aside e fallback por ativo em Redis/PostgreSQL | Snapshots válidos | Clock tests provam `FRESH`, `STALE` e `UNAVAILABLE`; stale nunca é silencioso |
-| 11 | Comando/endpoint interno idempotente de refresh e `ingestion_runs` | Dia 10 | Repetição não duplica; lock e auditoria funcionam; autenticação interna é testada |
+| 11 | Pipeline de eventos corporativos: dividendos, JCP, splits, grupamentos e reconciliação auditável | Dia 10 | Eventos normalizados com Decimal, status controlado, idempotência externa, versionamento, correção/cancelamento e quarentena; nenhum crédito automático em carteira |
 | 12 | API de catálogo, busca, páginas de ativo, quotes, histórico, variação e eventos permitidos | Dia 9–11 | Resposta parcial mistura estados corretamente e preserva proveniência; ativos sem licença permanecem bloqueados |
+| 12.1 | Comando/endpoint interno idempotente de refresh e `ingestion_runs` (realocado da descrição anterior do Dia 11) | Dia 10 e contratos de ingestão | Repetição não duplica; lock e auditoria funcionam; autenticação interna é testada |
 | 13 | Agregação backend do heatmap básico por setor, market cap e variação | Universo/taxonomia licenciados | Pesos, agrupamentos, fonte e limitações são verificáveis; recursos avançados ficam P1 |
 | 14 | Gate de resiliência: timeout, rate limit, payload inválido e recuperação | Dias 8–13 | Suite determinística cobre falhas sem chamadas externas descontroladas |
 
