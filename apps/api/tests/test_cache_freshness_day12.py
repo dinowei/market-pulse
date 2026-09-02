@@ -88,6 +88,7 @@ def test_eod_is_never_promoted_to_realtime_and_demo_remains_demo():
     demo = envelope(level=DataLevel.DEMO)
     assert eod.data_level is DataLevel.EOD
     assert demo.data_level is DataLevel.DEMO
+    assert compute_freshness(DataLevel.DEMO, demo.source_timestamp).freshness is Freshness.STALE
     assert ttl_for(DataLevel.EOD, "quote") > 0
 
 

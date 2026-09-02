@@ -102,6 +102,10 @@ def compute_freshness(
         age = computed_at - source
         if age.total_seconds() < 0:
             status, reason = Freshness.UNAVAILABLE, "FUTURE_SOURCE_TIMESTAMP"
+        elif data_level is DataLevel.DEMO:
+            # Demo values are never presented as operationally fresh market
+            # data, even when their local cache timestamp is recent.
+            status, reason = Freshness.STALE, "DEMO_DATA"
         elif age <= fresh_after:
             status, reason = Freshness.FRESH, "WITHIN_TTL"
         elif age <= stale_after:

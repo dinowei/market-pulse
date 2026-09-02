@@ -85,7 +85,7 @@ class CacheEnvelope:
     dataset: str
     data_level: DataLevel
     freshness: Freshness
-    source_timestamp: datetime
+    source_timestamp: datetime | None
     collected_at: datetime
     cached_at: datetime
     fresh_until: datetime
@@ -254,7 +254,7 @@ class CacheAsideService:
                 dataset="unknown",
                 data_level=DataLevel.DEMO,
                 freshness=Freshness.UNAVAILABLE,
-                source_timestamp=now,
+                source_timestamp=None,
                 collected_at=now,
                 cached_at=now,
                 fresh_until=now,
