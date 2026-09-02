@@ -40,8 +40,8 @@ Stripe é exceção limitada: no beta, somente integração em modo de teste, se
 | 12 | Cache-aside, freshness, stale-if-error, negative cache, invalidação granular e locks | Dias 9–11 | Clock tests provam `FRESH`, `STALE` e `UNAVAILABLE`; stale nunca é silencioso |
 | 12.1 | Reconciliação estrutural e refresh interno idempotente | Dia 12 e contratos de ingestão | Gaps de identidade/provenance/licença corrigidos; repetição não duplica; lock e invalidação granular funcionam |
 | 13 | API de catálogo, busca, páginas de ativo, quotes, histórico, variação e eventos permitidos | Dias 8–12.1 | Resposta parcial mistura estados corretamente e preserva proveniência; ativos sem licença permanecem bloqueados |
-| 13 | Agregação backend do heatmap básico por setor, market cap e variação | Universo/taxonomia licenciados | Pesos, agrupamentos, fonte e limitações são verificáveis; recursos avançados ficam P1 |
-| 14 | Gate de resiliência: timeout, rate limit, payload inválido e recuperação | Dias 8–13 | Suite determinística cobre falhas sem chamadas externas descontroladas |
+| 13 | Serviço `refresh_market_data` e endpoint interno protegido `POST /api/v1/internal/refresh-quotes` | Dia 12.1 | Segredo `X-Cron-Secret`, comparação em tempo constante, limites, lock, idempotência, falhas parciais e DEMO seguro; nenhum provider real |
+| 14 | Agregação backend do heatmap básico e gate de resiliência | Universo/taxonomia licenciados e Dia 13 | Pesos, agrupamentos, fonte, limitações e falhas são verificáveis; recursos avançados ficam P1 |
 
 **Entregável semanal:** API financeira normalizada, resiliente e bloqueada por licença, com fallback observável e sem alegação indevida de tempo real.
 

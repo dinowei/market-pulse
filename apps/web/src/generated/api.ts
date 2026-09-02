@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/internal/refresh-quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Internal Refresh Quotes */
+        post: operations["internal_refresh_quotes_api_v1_internal_refresh_quotes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/instruments": {
         parameters: {
             query?: never;
@@ -232,6 +249,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * DataLevel
+         * @enum {string}
+         */
+        DataLevel: "REAL_TIME" | "DELAYED" | "EOD" | "DEMO";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -305,6 +327,61 @@ export interface components {
          * @enum {string}
          */
         PortfolioEventType: "BUY" | "SELL" | "CASH_DEPOSIT" | "CASH_WITHDRAWAL" | "FEE" | "DIVIDEND" | "SPLIT" | "ADJUSTMENT" | "REVERSAL";
+        /**
+         * ProviderCapability
+         * @enum {string}
+         */
+        ProviderCapability: "latest_quote" | "historical_bars" | "fx_rates" | "instrument_metadata" | "dividends" | "corporate_actions";
+        /** RefreshBatchRequest */
+        RefreshBatchRequest: {
+            /** Dataset */
+            dataset: string;
+            capability: components["schemas"]["ProviderCapability"];
+            /** Canonical Ids */
+            canonical_ids: string[];
+            mode: components["schemas"]["RefreshMode"];
+            /** Max Items */
+            max_items?: number | null;
+        };
+        /** RefreshBatchResponse */
+        RefreshBatchResponse: {
+            /** Run Id */
+            run_id: string;
+            /** Status */
+            status: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Finished At
+             * Format: date-time
+             */
+            finished_at: string;
+            /** Total Items */
+            total_items: number;
+            /** Succeeded Items */
+            succeeded_items: number;
+            /** Failed Items */
+            failed_items: number;
+            /** Skipped Items */
+            skipped_items: number;
+            /** Quarantined Items */
+            quarantined_items: number;
+            /** Cache Invalidated Items */
+            cache_invalidated_items: number;
+            data_level: components["schemas"]["DataLevel"];
+            /** Warnings */
+            warnings: string[];
+            /** Request Id */
+            request_id: string;
+        };
+        /**
+         * RefreshMode
+         * @enum {string}
+         */
+        RefreshMode: "DEMO_ONLY" | "LICENSED_ONLY" | "DRY_RUN";
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -327,6 +404,41 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    internal_refresh_quotes_api_v1_internal_refresh_quotes_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Cron-Secret"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefreshBatchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_instruments_api_v1_instruments_get: {
         parameters: {
             query?: {
