@@ -50,14 +50,14 @@ Stripe é exceção limitada: no beta, somente integração em modo de teste, se
 O Dia 14 executado corresponde à automação operacional de mercado: workflow
 agendado/manual, backfill controlado, reconciliação diária e fechamento do
 gate da Semana 2. O registro anterior de agregação do heatmap permanece como
-histórico e foi realocado para o Dia 15 junto ao Particle Atlas P0; recursos
+histórico e permanece explicitamente no Dia 17 junto à página de ativo; recursos
 avançados de heatmap continuam P1.
 
 ## Semana 3 — produto e experiência
 
 | Dia | Objetivo e entregáveis | Dependências | Gate objetivo |
 | --- | --- | --- | --- |
-| 15 | Particle Atlas P0 e heatmap/treemap básico: shell, estados, responsividade e tabelas equivalentes | Contratos da API e agregação licenciada | 360 px e 1440 px sem overflow; heatmap básico verificável; foco/contraste/movimento reduzido verificados |
+| 15 | Particle Atlas P0: shell, estados, responsividade e tabelas equivalentes | Contratos da API | 360 px e 1440 px sem overflow; foco/contraste/movimento reduzido verificados |
 | 16 | Tokens monocromáticos e semântica `UP`/`DOWN`/`FLAT`; dashboard de índices, câmbio, commodities e ativos | API de mercado | Preto/branco/cinza predominam; fonte, horário, latência, `DataLevel`, `Freshness` e limitações visíveis; ADR-006 referenciada |
 | 17 | Heatmap/treemap básico, busca/página de ativo e gráficos comparativos | Agregação e contrato | Um ativo = uma linha; multissérie = `INDEX_100` por padrão; valores reais simultaneamente visíveis; preço bruto só com compatibilidade; tabela, fixtures e teclado passam |
 | 18 | Cadastro, login, logout e sessão opaca | Persistência | Argon2id, cookie `HttpOnly`, Origin/CSRF, expiração e revogação testados |
