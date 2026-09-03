@@ -3,7 +3,17 @@ import json
 import secrets
 
 import psycopg
-from fastapi import APIRouter, Cookie, Header, HTTPException, Query, Request, Response, status
+from fastapi import (
+    APIRouter,
+    Cookie,
+    Depends,
+    Header,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    status,
+)
 
 from app.auth.service import (
     AuthConflict,
@@ -25,6 +35,13 @@ from app.contracts import (
     PublicQuote,
     RegisterRequest,
     SeriesMode,
+    WatchlistCreateRequest,
+    WatchlistItemCreateRequest,
+    WatchlistItemResponse,
+    WatchlistListResponse,
+    WatchlistPatchRequest,
+    WatchlistReorderRequest,
+    WatchlistResponse,
 )
 from app.core.config import get_settings
 from app.errors import request_id as request_id_for
@@ -41,12 +58,22 @@ from app.market_data.refresh_application import (
     RefreshBatchResponse,
     refresh_market_data,
 )
+from app.watchlists.service import (
+    PostgresWatchlistService,
+    WatchlistConflict,
+    WatchlistInvalid,
+    WatchlistNotFound,
+)
 
 router = APIRouter(prefix="/api/v1")
 
 
 def get_auth_service() -> AuthService:
     return AuthService()
+
+
+def get_watchlist_service() -> PostgresWatchlistService:
+    return PostgresWatchlistService()
 
 
 def _client_ip(request: Request) -> str:
@@ -264,9 +291,166 @@ def historical_series() -> dict[str, list]:
     return {"items": []}
 
 
-@router.get("/watchlists", tags=["watchlists"])
-def list_watchlists() -> dict[str, list]:
-    return {"items": []}
+def _watchlist_error(error: Exception) -> HTTPException:
+    if isinstance(error, WatchlistConflict):
+        return HTTPException(status_code=409, detail="Watchlist already exists")
+    if isinstance(error, WatchlistNotFound):
+        return HTTPException(status_code=404, detail="Watchlist or item not found")
+    return HTTPException(status_code=422, detail=str(error))
+
+
+@router.get("/watchlists", response_model=WatchlistListResponse, tags=["watchlists"])
+def list_watchlists(
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresWatchlistService = Depends(get_watchlist_service),
+) -> WatchlistListResponse:
+    return WatchlistListResponse(items=service.list(current_user.id))
+
+
+@router.post(
+    "/watchlists",
+    response_model=WatchlistResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["watchlists"],
+)
+def create_watchlist(
+    payload: WatchlistCreateRequest,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresWatchlistService = Depends(get_watchlist_service),
+) -> WatchlistResponse:
+    try:
+        return service.create(current_user.id, payload.name)
+    except (WatchlistConflict, WatchlistNotFound, WatchlistInvalid) as exc:
+        raise _watchlist_error(exc) from exc
+
+
+@router.get("/watchlists/{watchlist_id}", response_model=WatchlistResponse, tags=["watchlists"])
+def get_watchlist(
+    watchlist_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresWatchlistService = Depends(get_watchlist_service),
+) -> WatchlistResponse:
+    try:
+        return service.get(current_user.id, watchlist_id)
+    except WatchlistNotFound as exc:
+        raise _watchlist_error(exc) from exc
+
+
+@router.patch("/watchlists/{watchlist_id}", response_model=WatchlistResponse, tags=["watchlists"])
+def rename_watchlist(
+    watchlist_id: str,
+    payload: WatchlistPatchRequest,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresWatchlistService = Depends(get_watchlist_service),
+) -> WatchlistResponse:
+    try:
+        return service.rename(current_user.id, watchlist_id, payload.name)
+    except (WatchlistConflict, WatchlistNotFound, WatchlistInvalid) as exc:
+        raise _watchlist_error(exc) from exc
+
+
+@router.delete(
+    "/watchlists/{watchlist_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["watchlists"],
+)
+def delete_watchlist(
+    watchlist_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresWatchlistService = Depends(get_watchlist_service),
+) -> None:
+    try:
+        service.delete(current_user.id, watchlist_id)
+    except (WatchlistNotFound, WatchlistInvalid) as exc:
+        raise _watchlist_error(exc) from exc
+
+
+@router.post(
+    "/watchlists/{watchlist_id}/items",
+    response_model=WatchlistItemResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["watchlists"],
+)
+def add_watchlist_item(
+    watchlist_id: str,
+    payload: WatchlistItemCreateRequest,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresWatchlistService = Depends(get_watchlist_service),
+) -> WatchlistItemResponse:
+    try:
+        item = service.add_item(current_user.id, watchlist_id, payload.canonical_id)
+        return item
+    except (WatchlistNotFound, WatchlistInvalid) as exc:
+        if isinstance(exc, WatchlistInvalid) and "already" in str(exc).lower():
+            return service.add_item(current_user.id, watchlist_id, payload.canonical_id)
+        raise _watchlist_error(exc) from exc
+
+
+@router.delete(
+    "/watchlists/{watchlist_id}/items/{canonical_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["watchlists"],
+)
+def remove_watchlist_item(
+    watchlist_id: str,
+    canonical_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresWatchlistService = Depends(get_watchlist_service),
+) -> None:
+    try:
+        service.remove_item(current_user.id, watchlist_id, canonical_id)
+    except (WatchlistNotFound, WatchlistInvalid) as exc:
+        raise _watchlist_error(exc) from exc
+
+
+@router.patch(
+    "/watchlists/{watchlist_id}/items/reorder",
+    response_model=WatchlistResponse,
+    tags=["watchlists"],
+)
+def reorder_watchlist_items(
+    watchlist_id: str,
+    payload: WatchlistReorderRequest,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresWatchlistService = Depends(get_watchlist_service),
+) -> WatchlistResponse:
+    try:
+        return service.reorder(current_user.id, watchlist_id, payload.canonical_ids)
+    except (WatchlistNotFound, WatchlistInvalid) as exc:
+        raise _watchlist_error(exc) from exc
+
+
+@router.post(
+    "/watchlists/favorites/{canonical_id}",
+    response_model=WatchlistItemResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["watchlists"],
+)
+def favorite_instrument(
+    canonical_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresWatchlistService = Depends(get_watchlist_service),
+) -> WatchlistItemResponse:
+    try:
+        return service.favorite(current_user.id, canonical_id)
+    except (WatchlistNotFound, WatchlistInvalid) as exc:
+        raise _watchlist_error(exc) from exc
+
+
+@router.delete(
+    "/watchlists/favorites/{canonical_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["watchlists"],
+)
+def unfavorite_instrument(
+    canonical_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresWatchlistService = Depends(get_watchlist_service),
+) -> None:
+    try:
+        service.unfavorite(current_user.id, canonical_id)
+    except (WatchlistNotFound, WatchlistInvalid) as exc:
+        raise _watchlist_error(exc) from exc
 
 
 @router.get("/portfolios", tags=["portfolios"])

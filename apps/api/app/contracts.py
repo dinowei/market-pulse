@@ -88,6 +88,63 @@ class AuthSessionResponse(AuthUserResponse):
     expires_at: datetime
 
 
+class WatchlistCreateRequest(StrictModel):
+    name: str = Field(min_length=1, max_length=120)
+
+    @model_validator(mode="after")
+    def normalize_name(self) -> "WatchlistCreateRequest":
+        self.name = " ".join(self.name.split())
+        if not self.name:
+            raise ValueError("watchlist name is required")
+        return self
+
+
+class WatchlistPatchRequest(StrictModel):
+    name: str = Field(min_length=1, max_length=120)
+
+    @model_validator(mode="after")
+    def normalize_name(self) -> "WatchlistPatchRequest":
+        self.name = " ".join(self.name.split())
+        if not self.name:
+            raise ValueError("watchlist name is required")
+        return self
+
+
+class WatchlistItemCreateRequest(StrictModel):
+    canonical_id: str = Field(min_length=3, max_length=160)
+
+
+class WatchlistReorderRequest(StrictModel):
+    canonical_ids: list[str] = Field(min_length=1, max_length=100)
+
+
+class WatchlistItemResponse(StrictModel):
+    id: str
+    canonical_id: str
+    symbol: str
+    display_symbol: str
+    name: str
+    instrument_type: str
+    exchange: str | None = None
+    currency: str = Field(pattern="^[A-Z]{3}$")
+    timezone: str
+    support_state: str
+    position: int = Field(ge=0)
+
+
+class WatchlistResponse(StrictModel):
+    id: str
+    name: str
+    is_system: bool
+    items: list[WatchlistItemResponse]
+    created_at: datetime
+    updated_at: datetime
+
+
+class WatchlistListResponse(StrictModel):
+    items: list[WatchlistResponse]
+
+
 class Pagination(StrictModel):
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
