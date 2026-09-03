@@ -122,3 +122,30 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 @media (max-width: 1050px) { .topbar { grid-template-columns: auto 1fr auto; } nav { grid-column: 1 / -1; order: 4; } .terminal-grid { grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); } .asset-context { grid-column: 1 / -1; border-top: 1px solid var(--pa-border-hairline); } }
 @media (max-width: 700px) { .topbar { grid-template-columns: 1fr auto; padding: .8rem; } .search { grid-column: 1 / -1; grid-row: 2; } nav { grid-column: 1 / -1; grid-row: 3; gap: .55rem; } .terminal-grid { display: block; min-height: auto; } .left-rail, .main-panel, .asset-context { border-bottom: 1px solid var(--pa-border-hairline); padding: 1rem; } .controls { display: block; } .control-group + .control-group { margin-top: 1rem; } footer { align-items: flex-start; flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+.watchlists-page { min-height: 100vh; padding: clamp(1rem, 4vw, 3rem); }
+.watchlists-header { align-items: flex-start; display: flex; gap: 1rem; justify-content: space-between; margin: 0 auto 1rem; max-width: 74rem; }
+.watchlists-back { color: var(--pa-market-flat); font-size: .8rem; }
+.watchlists-disclaimer { border-left: 2px solid var(--pa-market-flat); color: var(--pa-text-secondary); margin: 0 auto 1.5rem; max-width: 74rem; padding: .6rem .8rem; }
+.watchlists-toolbar, .watchlists-grid { display: grid; gap: 1rem; margin: 0 auto 1rem; max-width: 74rem; }
+.watchlists-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.watchlist-form { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); padding: 1rem; }
+.watchlist-form label { color: var(--pa-text-secondary); display: block; font-size: .75rem; margin-bottom: .45rem; }
+.watchlist-form-row { display: flex; gap: .5rem; }
+.watchlist-form input { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-hairline); color: var(--pa-text-primary); min-width: 0; padding: .6rem; width: 100%; }
+.watchlist-form button, .watchlist-select, .watchlist-item-actions button, .watchlist-danger { background: transparent; border: 1px solid var(--pa-border-hairline); color: var(--pa-text-primary); cursor: pointer; padding: .55rem .7rem; white-space: nowrap; }
+.watchlist-form button:hover, .watchlist-select:hover, .watchlist-item-actions button:hover { border-color: var(--pa-text-secondary); }
+.watchlist-form button:disabled, .watchlist-item-actions button:disabled { cursor: not-allowed; opacity: .45; }
+.watchlists-grid { grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); }
+.watchlists-card { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); padding: 1rem; }
+.watchlist-card-heading { align-items: flex-start; display: flex; justify-content: space-between; }
+.watchlist-danger { color: var(--pa-market-down); font-size: .72rem; }
+.watchlist-select { color: var(--pa-market-flat); font-size: .72rem; margin-bottom: 1rem; }
+.watchlist-items { list-style: none; margin: 0; padding: 0; }
+.watchlist-items li { align-items: flex-start; border-top: 1px solid var(--pa-border-hairline); display: flex; gap: .8rem; justify-content: space-between; padding: .8rem 0; }
+.watchlist-items li > div:first-child { display: grid; gap: .2rem; min-width: 0; }
+.watchlist-items strong { font-size: 1rem; }
+.watchlist-items span, .watchlist-items small { color: var(--pa-text-secondary); font-size: .72rem; overflow-wrap: anywhere; }
+.watchlist-item-actions { display: flex; flex-wrap: wrap; gap: .3rem; justify-content: flex-end; }
+.watchlist-item-actions button { font-size: .68rem; }
+.watchlists-link { display: inline-block; text-align: center; text-decoration: none; }
+@media (max-width: 700px) { .watchlists-header { display: block; } .watchlists-back { display: inline-block; margin-top: .5rem; } .watchlists-toolbar { grid-template-columns: 1fr; } .watchlists-grid { grid-template-columns: 1fr; } .watchlist-items li { display: block; } .watchlist-item-actions { justify-content: flex-start; margin-top: .7rem; } }
