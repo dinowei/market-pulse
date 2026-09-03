@@ -36,6 +36,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Shell Particle Atlas do Dia 16: [PARTICLE_ATLAS_DAY_16_SHELL.md](design/PARTICLE_ATLAS_DAY_16_SHELL.md)
 - Semântica canônica de gráficos Particle Atlas: [PARTICLE_ATLAS_CHART_SEMANTICS.md](design/PARTICLE_ATLAS_CHART_SEMANTICS.md)
 - Gráficos Particle Atlas do Dia 17: [PARTICLE_ATLAS_DAY_17_CHARTS.md](design/PARTICLE_ATLAS_DAY_17_CHARTS.md)
+- Autenticação e sessões do Dia 18: [AUTH_SESSIONS_DAY_18.md](security/AUTH_SESSIONS_DAY_18.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.
