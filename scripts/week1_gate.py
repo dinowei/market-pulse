@@ -59,7 +59,11 @@ def supply_chain() -> int:
         print("Missing lock/manifests:", ", ".join(missing))
         return 1
     yfinance_locations: list[str] = []
-    scan_paths = [ROOT / "pyproject.toml", ROOT / "apps/api/pyproject.toml", ROOT / "apps/api/uv.lock"]
+    scan_paths = [
+        path
+        for path in (ROOT / "pyproject.toml", ROOT / "apps/api/pyproject.toml", ROOT / "apps/api/uv.lock")
+        if path.is_file()
+    ]
     scan_paths += [path for path in (ROOT / "apps/api/app").rglob("*.py") if path.is_file()]
     for path in scan_paths:
         if "yfinance" in path.read_text(encoding="utf-8", errors="ignore").casefold():
