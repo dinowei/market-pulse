@@ -114,11 +114,13 @@ def compute_freshness(
         status, reason = Freshness.UNAVAILABLE, "MISSING_SOURCE_TIMESTAMP"
     else:
         age = computed_at - source
-        active_calendar = calendar or WeekdayMarketCalendar(timezone_name)
-        source_local_date = source.astimezone(active_calendar.timezone).date()
+        active_calendar = calendar
+        source_local_date = (
+            source.astimezone(active_calendar.timezone).date() if active_calendar else None
+        )
         if age.total_seconds() < 0:
             status, reason = Freshness.UNAVAILABLE, "FUTURE_SOURCE_TIMESTAMP"
-        elif not active_calendar.is_trading_day(source_local_date):
+        elif active_calendar and not active_calendar.is_trading_day(source_local_date):
             status, reason = Freshness.UNAVAILABLE, "NON_TRADING_DAY_SOURCE"
         elif data_level is DataLevel.DEMO:
             # Demo values are never presented as operationally fresh market

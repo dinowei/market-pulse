@@ -1,8 +1,8 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 from app.contracts import HistoricalSeries, QuoteContract, SeriesMode
 from app.instruments.catalog import (
@@ -21,7 +21,6 @@ from app.providers.models import (
     ProviderProvenance,
     ProviderResult,
 )
-
 
 client = TestClient(app)
 UTC = timezone.utc
