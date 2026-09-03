@@ -269,14 +269,31 @@ export interface components {
         InstrumentSummary: {
             /** Id */
             id: string;
+            /** Canonical Id */
+            canonical_id: string;
             /** Symbol */
             symbol: string;
+            /** Display Symbol */
+            display_symbol: string;
             /** Name */
             name: string;
             /** Instrument Type */
             instrument_type: string;
             /** Currency */
             currency: string;
+            /**
+             * Aliases
+             * @default []
+             */
+            aliases: string[];
+            /** Catalog Status */
+            catalog_status: string;
+            /** Coverage Tier */
+            coverage_tier: string;
+            /** Data Support Status */
+            data_support_status: string;
+            /** Support State */
+            support_state: string;
         };
         /** PageMeta */
         PageMeta: {
@@ -522,7 +539,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown[];
+                        [key: string]: unknown;
                     };
                 };
             };
