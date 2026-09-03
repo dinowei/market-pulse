@@ -46,7 +46,13 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .topbar { display: grid; grid-template-columns: auto minmax(12rem, 22rem) 1fr auto; gap: 1rem; align-items: center; padding: .8rem 1.2rem; border-bottom: 1px solid var(--pa-border-hairline); background: var(--pa-bg-surface); }
 .brand { font-weight: 700; letter-spacing: .12em; text-decoration: none; white-space: nowrap; }
 .brand span { color: var(--pa-text-secondary); font-size: .68rem; }
+.search-wrap { position: relative; min-width: 0; }
 .search input { width: 100%; border: 1px solid var(--pa-border-hairline); border-radius: var(--pa-radius); background: var(--pa-bg-canvas); color: var(--pa-text-primary); padding: .55rem .7rem; }
+.search-results { background: var(--pa-bg-elevated); border: 1px solid var(--pa-border-hairline); left: 0; list-style: none; margin: .25rem 0 0; padding: .25rem; position: absolute; right: 0; z-index: 2; }
+.search-results button { background: transparent; border: 0; color: var(--pa-text-primary); cursor: pointer; display: grid; gap: .2rem; padding: .55rem; text-align: left; width: 100%; }
+.search-results button:hover, .search-results button:focus-visible { background: var(--pa-bg-surface); }
+.search-results small { color: var(--pa-text-secondary); }
+.search-empty { background: var(--pa-bg-elevated); border: 1px solid var(--pa-border-hairline); color: var(--pa-text-secondary); font-size: .75rem; margin: .25rem 0 0; padding: .6rem; position: absolute; right: 0; left: 0; z-index: 2; }
 nav { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
 nav a { color: var(--pa-text-secondary); font-size: .78rem; text-decoration: none; }
 nav a:hover { color: var(--pa-text-primary); }
@@ -71,6 +77,12 @@ h2 { font-size: 1rem; margin-bottom: 1rem; }
 .control-row { display: flex; flex-wrap: wrap; gap: .35rem; }
 .control { color: var(--pa-text-secondary); font-size: .72rem; min-width: 2.5rem; }
 .control.active { background: var(--pa-bg-elevated); color: var(--pa-text-primary); border-color: var(--pa-text-secondary); }
+.particle-chart { margin: 0; }
+.particle-chart svg { background: var(--pa-bg-canvas); border: 1px dashed var(--pa-border-hairline); display: block; height: 16rem; width: 100%; }
+.chart-axis { stroke: var(--pa-border-hairline); stroke-width: .35; }
+.chart-line { stroke: var(--pa-text-primary); stroke-linecap: round; stroke-linejoin: round; stroke-width: .8; }
+.chart-point { fill: var(--pa-market-flat); }
+.particle-chart figcaption { color: var(--pa-text-secondary); font-size: .72rem; margin-top: .5rem; }
 .chart-placeholder { display: grid; place-items: center; min-height: 15rem; border: 1px dashed var(--pa-border-hairline); color: var(--pa-text-secondary); text-align: center; gap: .4rem; padding: 2rem; }
 .chart-placeholder strong { color: var(--pa-market-flat); font-size: .8rem; font-weight: 400; }
 .table-wrap { overflow-x: auto; margin-top: 1rem; }
