@@ -146,6 +146,95 @@ class HistoricalSeries(StrictModel):
         return self
 
 
+class HistoryPeriod(StrEnum):
+    ONE_D = "1D"
+    FIVE_D = "5D"
+    ONE_M = "1M"
+    THREE_M = "3M"
+    SIX_M = "6M"
+    YTD = "YTD"
+    ONE_Y = "1A"
+    FIVE_Y = "5A"
+    MAX = "MAX"
+
+
+class PublicQuote(StrictModel):
+    canonical_id: str
+    symbol: str
+    name: str
+    asset_type: str
+    exchange: str | None = None
+    currency: str = Field(pattern="^[A-Z]{3}$")
+    price: Decimal | None = None
+    change: Decimal | None = None
+    change_percent: Decimal | None = None
+    data_level: DataLevel
+    freshness: Freshness
+    provider: str
+    dataset: str
+    timestamp_official: datetime | None = None
+    timestamp_collected: datetime
+    latency_ms: int | None = Field(default=None, ge=0)
+    limitations: tuple[str, ...] = ()
+    unavailable_reason: str | None = None
+    request_id: str
+
+    @model_validator(mode="after")
+    def require_quote_provenance(self) -> "PublicQuote":
+        if self.freshness is not Freshness.UNAVAILABLE and (
+            self.price is None
+            or self.timestamp_official is None
+            or self.latency_ms is None
+        ):
+            raise ValueError("public quote requires complete provenance")
+        return self
+
+
+class PublicHistoryPoint(StrictModel):
+    timestamp: datetime
+    session_date: date
+    open: Decimal | None = None
+    high: Decimal | None = None
+    low: Decimal | None = None
+    close: Decimal | None = None
+    volume: Decimal | None = None
+    value: Decimal | None = None
+    index_100: Decimal | None = None
+    is_gap: bool = False
+
+
+class PublicHistorySeries(StrictModel):
+    canonical_id: str
+    symbol: str
+    period: HistoryPeriod
+    mode: SeriesMode
+    adjustment_type: str
+    currency: str = Field(pattern="^[A-Z]{3}$")
+    data_level: DataLevel
+    freshness: Freshness
+    provider: str
+    dataset: str
+    timestamp_official: datetime | None = None
+    timestamp_collected: datetime
+    latency_ms: int | None = Field(default=None, ge=0)
+    limitations: tuple[str, ...] = ()
+    points: list[PublicHistoryPoint]
+    tabular_fallback: bool = True
+    accessibility: dict[str, bool]
+    unavailable_reason: str | None = None
+    request_id: str
+
+    @model_validator(mode="after")
+    def require_series_provenance(self) -> "PublicHistorySeries":
+        if self.freshness is not Freshness.UNAVAILABLE and (
+            self.timestamp_official is None or self.latency_ms is None
+        ):
+            raise ValueError("public series requires complete provenance")
+        if self.accessibility.get("smoothed", False):
+            raise ValueError("series smoothing is not allowed")
+        return self
+
+
 class PortfolioEventCreate(StrictModel):
     portfolio_id: str
     event_type: PortfolioEventType

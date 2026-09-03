@@ -6,11 +6,15 @@ import psycopg
 from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 
 from app.contracts import (
+    HistoryPeriod,
     InstrumentList,
     InstrumentSummary,
     PageMeta,
     PortfolioEventAccepted,
     PortfolioEventCreate,
+    PublicHistorySeries,
+    PublicQuote,
+    SeriesMode,
 )
 from app.core.config import get_settings
 from app.errors import request_id as request_id_for
@@ -20,6 +24,8 @@ from app.instruments.catalog import (
     DataSupportStatus,
     search_catalog,
 )
+from app.market_data.normalization import AdjustmentType
+from app.market_data.public_market_data import public_history, public_quote
 from app.market_data.refresh_application import (
     RefreshBatchRequest,
     RefreshBatchResponse,
@@ -116,6 +122,42 @@ def search_instruments(
 @router.get("/market-data/quotes/latest", tags=["market-data"])
 def latest_quote() -> dict[str, object]:
     return {"items": [], "status": "UNAVAILABLE", "reason": "LICENSE_BLOCKED"}
+
+
+@router.get(
+    "/market-data/quotes/{canonical_id}",
+    response_model=PublicQuote,
+    tags=["market-data"],
+)
+def public_quote_by_id(canonical_id: str, request: Request) -> PublicQuote:
+    try:
+        return public_quote(canonical_id, request_id_for(request))
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Instrument not found") from exc
+
+
+@router.get(
+    "/market-data/history/{canonical_id}",
+    response_model=PublicHistorySeries,
+    tags=["market-data"],
+)
+def public_history_by_id(
+    canonical_id: str,
+    request: Request,
+    period: HistoryPeriod = Query(...),
+    mode: SeriesMode = Query(SeriesMode.PRICE),
+    adjustment_type: AdjustmentType = Query(AdjustmentType.UNADJUSTED),
+) -> PublicHistorySeries:
+    try:
+        return public_history(
+            canonical_id,
+            period,
+            mode,
+            request_id_for(request),
+            adjustment_type.value,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Instrument not found") from exc
 
 
 @router.get("/market-data/series", tags=["market-data"])
