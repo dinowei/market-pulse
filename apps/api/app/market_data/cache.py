@@ -94,6 +94,16 @@ class CacheEnvelope:
     limitations: tuple[str, ...] = ()
     license_status: str | None = None
     license_evidence: bool = False
+    latency_ms: int | None = None
+    unavailable_reason: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.source or not self.dataset or not self.currency:
+            raise ValueError("cache provenance requires source, dataset and currency")
+        if self.freshness is not Freshness.UNAVAILABLE and self.source_timestamp is None:
+            raise ValueError("cache provenance requires source_timestamp")
+        if self.latency_ms is not None and self.latency_ms < 0:
+            raise ValueError("latency_ms cannot be negative")
 
     def to_json(self) -> str:
         payload = _encode(
@@ -112,6 +122,8 @@ class CacheEnvelope:
                 "limitations": self.limitations,
                 "license_status": self.license_status,
                 "license_evidence": self.license_evidence,
+                "latency_ms": self.latency_ms,
+                "unavailable_reason": self.unavailable_reason,
             }
         )
         return json.dumps(payload, separators=(",", ":"), ensure_ascii=True)
@@ -134,6 +146,8 @@ class CacheEnvelope:
             limitations=tuple(payload.get("limitations", ())),
             license_status=payload.get("license_status"),
             license_evidence=bool(payload.get("license_evidence", False)),
+            latency_ms=payload.get("latency_ms"),
+            unavailable_reason=payload.get("unavailable_reason"),
         )
 
 

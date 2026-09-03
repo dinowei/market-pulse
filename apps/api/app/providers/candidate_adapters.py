@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from app.providers.adapters import ProviderNotConfigured
-from app.providers.models import ProviderDatasetRef, ProviderError
+from app.providers.models import ProviderDatasetRef, ProviderError, ProviderResult
 
 
 @dataclass(frozen=True)
@@ -63,7 +63,13 @@ class ExternalProviderAdapter:
         if self.normalizer is None:
             raise ProviderNotConfigured(f"{self.name} normalizer not configured")
         payload = self._request_payload(canonical_id, symbol=canonical_id)
-        return self.normalizer(payload, canonical_id, self.name, self.dataset.dataset)
+        result = self.normalizer(payload, canonical_id, self.name, self.dataset.dataset)
+        if not isinstance(result, ProviderResult):
+            raise ProviderError(
+                "NORMALIZATION_REQUIRED",
+                f"{self.name} normalizer must return a normalized ProviderResult",
+            )
+        return result
 
 
 class BrapiAdapter(ExternalProviderAdapter):

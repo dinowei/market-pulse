@@ -1,8 +1,8 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from app.contracts import HistoricalSeries, QuoteContract, SeriesMode
 from app.instruments.catalog import (
@@ -11,10 +11,16 @@ from app.instruments.catalog import (
     search_catalog,
 )
 from app.main import app
-from app.market_data.cache import CacheEnvelope, MemoryCacheBackend
+from app.market_data.cache import CacheEnvelope
 from app.market_data.freshness import WeekdayMarketCalendar, compute_freshness
 from app.providers.candidate_adapters import BrapiAdapter, ProviderHttpResponse
-from app.providers.models import DataLevel, Freshness, ProviderDatasetRef, ProviderProvenance, ProviderResult
+from app.providers.models import (
+    DataLevel,
+    Freshness,
+    ProviderDatasetRef,
+    ProviderProvenance,
+    ProviderResult,
+)
 
 
 client = TestClient(app)
@@ -132,7 +138,10 @@ def test_provider_result_rejects_financial_float_and_adapter_raw_payload():
     adapter = BrapiAdapter(
         dataset=dataset,
         token="fixture-token",
-        transport=lambda **_: ProviderHttpResponse(200, {"price": "1", "currency": "BRL", "timestamp": "2026-09-02T12:00:00Z"}),
+        transport=lambda **_: ProviderHttpResponse(
+            200,
+            {"price": "1", "currency": "BRL", "timestamp": "2026-09-02T12:00:00Z"},
+        ),
         normalizer=lambda *_: {"price": "raw"},
     )
     with pytest.raises(Exception, match="normalized"):

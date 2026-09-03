@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class DataLevel(StrEnum):
@@ -63,6 +63,7 @@ class ProviderProvenance(BaseModel):
     freshness: Freshness
     currency: str = Field(pattern=r"^[A-Z]{3}$")
     exchange: str | None = None
+    latency_ms: int | None = Field(default=None, ge=0)
     limitations: tuple[str, ...] = ()
 
 
@@ -74,6 +75,22 @@ class ProviderResult(BaseModel, Generic[T]):
 
     value: T
     provenance: ProviderProvenance
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def reject_financial_floats(cls, value: T) -> T:
+        def contains_float(item: object) -> bool:
+            if isinstance(item, float):
+                return True
+            if isinstance(item, dict):
+                return any(contains_float(key) or contains_float(val) for key, val in item.items())
+            if isinstance(item, (list, tuple, set)):
+                return any(contains_float(child) for child in item)
+            return False
+
+        if contains_float(value):
+            raise ValueError("provider financial values cannot be float")
+        return value
 
     @model_validator(mode="after")
     def ensure_provenance(self) -> "ProviderResult[T]":

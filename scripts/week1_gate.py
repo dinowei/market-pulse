@@ -15,6 +15,11 @@ SECRET_PATTERNS = (
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"\b(?:sk_live|rk_live|ghp_|github_pat_)[A-Za-z0-9_\-]+\b"),
     re.compile(r"(?i)(?:postgres(?:ql)?|redis)://[^\s/:]+:[^\s/@]+@"),
+    re.compile(
+        r"(?i)\b(?:BRAPI_API_TOKEN|HG_BRASIL_API_KEY|TWELVE_DATA_API_KEY|"
+        r"ALPHA_VANTAGE_API_KEY|OPEN_EXCHANGE_RATES_APP_ID|MASSIVE_API_KEY|"
+        r"B3_DEVELOPERS_CLIENT_ID)\s*[:=]\s*['\"]?[^\s'\"]{8,}"
+    ),
 )
 ALLOWED_DEMO = ("local_only", "", "YOUR_", "SEU_", "example", "demo")
 
@@ -53,6 +58,16 @@ def supply_chain() -> int:
     if missing:
         print("Missing lock/manifests:", ", ".join(missing))
         return 1
+    yfinance_locations: list[str] = []
+    scan_paths = [ROOT / "pyproject.toml", ROOT / "apps/api/pyproject.toml", ROOT / "apps/api/uv.lock"]
+    scan_paths += [path for path in (ROOT / "apps/api/app").rglob("*.py") if path.is_file()]
+    for path in scan_paths:
+        if "yfinance" in path.read_text(encoding="utf-8", errors="ignore").casefold():
+            yfinance_locations.append(str(path.relative_to(ROOT)))
+    if yfinance_locations:
+        print("yfinance found:", ", ".join(yfinance_locations))
+        return 1
+    print("YFINANCE=ABSENT")
     print("LOCKFILES=PASS")
     print("LICENSES=MANUAL_REVIEW_REQUIRED (no license database is bundled)")
     print("VULNERABILITIES=RUN pnpm audit and review uv audit tooling before release")
