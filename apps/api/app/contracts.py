@@ -51,6 +51,43 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class RegisterRequest(StrictModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=12, max_length=128)
+
+    @model_validator(mode="after")
+    def validate_credentials(self) -> "RegisterRequest":
+        normalized = self.email.strip().casefold()
+        if "@" not in normalized or normalized.startswith("@") or normalized.endswith("@"):
+            raise ValueError("invalid email")
+        if not any(char.isalpha() for char in self.password) or not any(
+            char.isdigit() for char in self.password
+        ):
+            raise ValueError("password must contain letters and digits")
+        self.email = normalized
+        return self
+
+
+class LoginRequest(StrictModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=1, max_length=128)
+
+    @model_validator(mode="after")
+    def normalize_email(self) -> "LoginRequest":
+        self.email = self.email.strip().casefold()
+        return self
+
+
+class AuthUserResponse(StrictModel):
+    id: str
+    email: str
+    status: str
+
+
+class AuthSessionResponse(AuthUserResponse):
+    expires_at: datetime
+
+
 class Pagination(StrictModel):
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
@@ -182,9 +219,7 @@ class PublicQuote(StrictModel):
     @model_validator(mode="after")
     def require_quote_provenance(self) -> "PublicQuote":
         if self.freshness is not Freshness.UNAVAILABLE and (
-            self.price is None
-            or self.timestamp_official is None
-            or self.latency_ms is None
+            self.price is None or self.timestamp_official is None or self.latency_ms is None
         ):
             raise ValueError("public quote requires complete provenance")
         return self

@@ -3,17 +3,27 @@ import json
 import secrets
 
 import psycopg
-from fastapi import APIRouter, Header, HTTPException, Query, Request, status
+from fastapi import APIRouter, Cookie, Header, HTTPException, Query, Request, Response, status
 
+from app.auth.service import (
+    AuthConflict,
+    AuthInvalid,
+    AuthRateLimited,
+    AuthService,
+    AuthUnavailable,
+)
 from app.contracts import (
+    AuthUserResponse,
     HistoryPeriod,
     InstrumentList,
     InstrumentSummary,
+    LoginRequest,
     PageMeta,
     PortfolioEventAccepted,
     PortfolioEventCreate,
     PublicHistorySeries,
     PublicQuote,
+    RegisterRequest,
     SeriesMode,
 )
 from app.core.config import get_settings
@@ -33,6 +43,95 @@ from app.market_data.refresh_application import (
 )
 
 router = APIRouter(prefix="/api/v1")
+
+
+def get_auth_service() -> AuthService:
+    return AuthService()
+
+
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
+def _auth_error(request: Request, error: Exception) -> HTTPException:
+    if isinstance(error, AuthConflict):
+        return HTTPException(status_code=409, detail="Unable to register with supplied credentials")
+    if isinstance(error, AuthRateLimited):
+        return HTTPException(status_code=429, detail="Too many authentication attempts")
+    if isinstance(error, AuthUnavailable):
+        return HTTPException(status_code=503, detail="Authentication service unavailable")
+    return HTTPException(status_code=401, detail="Invalid authentication credentials")
+
+
+@router.post(
+    "/auth/register",
+    response_model=AuthUserResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["auth"],
+)
+def register(payload: RegisterRequest, request: Request) -> AuthUserResponse:
+    try:
+        return get_auth_service().register(payload, _client_ip(request))
+    except (AuthConflict, AuthRateLimited, AuthUnavailable) as exc:
+        raise _auth_error(request, exc) from exc
+
+
+@router.post("/auth/login", response_model=AuthUserResponse, tags=["auth"])
+def login(payload: LoginRequest, request: Request, response: Response) -> AuthUserResponse:
+    try:
+        user, token, _expires_at = get_auth_service().login(payload, _client_ip(request))
+    except (AuthInvalid, AuthRateLimited, AuthUnavailable) as exc:
+        raise _auth_error(request, exc) from exc
+    settings = get_settings()
+    secure = settings.auth_cookie_secure or settings.environment not in {"local", "test"}
+    response.set_cookie(
+        key=settings.auth_cookie_name,
+        value=token,
+        httponly=True,
+        secure=secure,
+        samesite=settings.auth_cookie_samesite,
+        max_age=settings.auth_session_ttl_seconds,
+        path="/",
+    )
+    return user
+
+
+def get_current_user(
+    request: Request, session_token: str | None = Cookie(default=None, alias="market_pulse_session")
+) -> AuthUserResponse:
+    service = get_auth_service()
+    cookie_name = get_settings().auth_cookie_name
+    if cookie_name != "market_pulse_session":
+        session_token = request.cookies.get(cookie_name)
+    try:
+        return service.me(session_token)
+    except (AuthInvalid, AuthUnavailable) as exc:
+        raise _auth_error(request, exc) from exc
+
+
+@router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT, tags=["auth"])
+def logout(
+    request: Request,
+    response: Response,
+    session_token: str | None = Cookie(default=None, alias="market_pulse_session"),
+) -> None:
+    service = get_auth_service()
+    cookie_name = get_settings().auth_cookie_name
+    token = (
+        request.cookies.get(cookie_name) if cookie_name != "market_pulse_session" else session_token
+    )
+    try:
+        service.logout(token)
+    except AuthUnavailable as exc:
+        raise _auth_error(request, exc) from exc
+    response.delete_cookie(cookie_name, path="/")
+
+
+@router.get("/auth/me", response_model=AuthUserResponse, tags=["auth"])
+def me(
+    request: Request, session_token: str | None = Cookie(default=None, alias="market_pulse_session")
+) -> AuthUserResponse:
+    return get_current_user(request, session_token)
 
 
 def _authorize_internal_refresh(provided: str | None, expected: str | None) -> bool:

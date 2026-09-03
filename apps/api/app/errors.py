@@ -27,9 +27,12 @@ def problem(request: Request, status: int, title: str, detail: str, code: str) -
 
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     code = {
+        401: "UNAUTHORIZED",
         404: "NOT_FOUND",
         409: "CONFLICT",
         422: "VALIDATION_ERROR",
+        429: "RATE_LIMITED",
+        503: "SERVICE_UNAVAILABLE",
     }.get(exc.status_code, "HTTP_ERROR")
     return problem(request, exc.status_code, "HTTP error", str(exc.detail), code)
 
