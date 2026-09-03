@@ -72,6 +72,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market-data/quotes/{canonical_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Quote By Id */
+        get: operations["public_quote_by_id_api_v1_market_data_quotes__canonical_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market-data/history/{canonical_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public History By Id */
+        get: operations["public_history_by_id_api_v1_market_data_history__canonical_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market-data/series": {
         parameters: {
             query?: never;
@@ -250,15 +284,30 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AdjustmentType
+         * @enum {string}
+         */
+        AdjustmentType: "UNADJUSTED" | "ADJUSTED_SPLIT_ONLY" | "ADJUSTED_TOTAL_RETURN";
+        /**
          * DataLevel
          * @enum {string}
          */
         DataLevel: "REAL_TIME" | "DELAYED" | "EOD" | "DEMO";
+        /**
+         * Freshness
+         * @enum {string}
+         */
+        Freshness: "FRESH" | "STALE" | "UNAVAILABLE";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * HistoryPeriod
+         * @enum {string}
+         */
+        HistoryPeriod: "1D" | "5D" | "1M" | "3M" | "6M" | "YTD" | "1A" | "5A" | "MAX";
         /** InstrumentList */
         InstrumentList: {
             /** Items */
@@ -349,6 +398,131 @@ export interface components {
          * @enum {string}
          */
         ProviderCapability: "latest_quote" | "historical_bars" | "fx_rates" | "instrument_metadata" | "dividends" | "corporate_actions";
+        /** PublicHistoryPoint */
+        PublicHistoryPoint: {
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+            /**
+             * Session Date
+             * Format: date
+             */
+            session_date: string;
+            /** Open */
+            open?: string | null;
+            /** High */
+            high?: string | null;
+            /** Low */
+            low?: string | null;
+            /** Close */
+            close?: string | null;
+            /** Volume */
+            volume?: string | null;
+            /** Value */
+            value?: string | null;
+            /** Index 100 */
+            index_100?: string | null;
+            /**
+             * Is Gap
+             * @default false
+             */
+            is_gap: boolean;
+        };
+        /** PublicHistorySeries */
+        PublicHistorySeries: {
+            /** Canonical Id */
+            canonical_id: string;
+            /** Symbol */
+            symbol: string;
+            period: components["schemas"]["HistoryPeriod"];
+            mode: components["schemas"]["SeriesMode"];
+            /** Adjustment Type */
+            adjustment_type: string;
+            /** Currency */
+            currency: string;
+            data_level: components["schemas"]["DataLevel"];
+            freshness: components["schemas"]["Freshness"];
+            /** Provider */
+            provider: string;
+            /** Dataset */
+            dataset: string;
+            /** Timestamp Official */
+            timestamp_official?: string | null;
+            /**
+             * Timestamp Collected
+             * Format: date-time
+             */
+            timestamp_collected: string;
+            /** Latency Ms */
+            latency_ms?: number | null;
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
+            /** Points */
+            points: components["schemas"]["PublicHistoryPoint"][];
+            /**
+             * Tabular Fallback
+             * @default true
+             */
+            tabular_fallback: boolean;
+            /** Accessibility */
+            accessibility: {
+                [key: string]: boolean;
+            };
+            /** Unavailable Reason */
+            unavailable_reason?: string | null;
+            /** Request Id */
+            request_id: string;
+        };
+        /** PublicQuote */
+        PublicQuote: {
+            /** Canonical Id */
+            canonical_id: string;
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Asset Type */
+            asset_type: string;
+            /** Exchange */
+            exchange?: string | null;
+            /** Currency */
+            currency: string;
+            /** Price */
+            price?: string | null;
+            /** Change */
+            change?: string | null;
+            /** Change Percent */
+            change_percent?: string | null;
+            data_level: components["schemas"]["DataLevel"];
+            freshness: components["schemas"]["Freshness"];
+            /** Provider */
+            provider: string;
+            /** Dataset */
+            dataset: string;
+            /** Timestamp Official */
+            timestamp_official?: string | null;
+            /**
+             * Timestamp Collected
+             * Format: date-time
+             */
+            timestamp_collected: string;
+            /** Latency Ms */
+            latency_ms?: number | null;
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
+            /** Unavailable Reason */
+            unavailable_reason?: string | null;
+            /** Request Id */
+            request_id: string;
+        };
         /** RefreshBatchRequest */
         RefreshBatchRequest: {
             /** Dataset */
@@ -399,6 +573,11 @@ export interface components {
          * @enum {string}
          */
         RefreshMode: "DEMO_ONLY" | "LICENSED_ONLY" | "DRY_RUN";
+        /**
+         * SeriesMode
+         * @enum {string}
+         */
+        SeriesMode: "PRICE" | "INDEX_100";
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -541,6 +720,72 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    public_quote_by_id_api_v1_market_data_quotes__canonical_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canonical_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicQuote"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_history_by_id_api_v1_market_data_history__canonical_id__get: {
+        parameters: {
+            query: {
+                period: components["schemas"]["HistoryPeriod"];
+                mode?: components["schemas"]["SeriesMode"];
+                adjustment_type?: components["schemas"]["AdjustmentType"];
+            };
+            header?: never;
+            path: {
+                canonical_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicHistorySeries"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
