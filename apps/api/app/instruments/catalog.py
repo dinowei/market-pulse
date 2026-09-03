@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class CatalogStatus(StrEnum):
@@ -45,6 +45,15 @@ class InstrumentCatalogEntry(BaseModel):
     coverage_tier: CoverageTier
     data_support_status: DataSupportStatus
     notes: str | None = None
+
+    @model_validator(mode="after")
+    def mutual_funds_are_blocked(self) -> "InstrumentCatalogEntry":
+        if self.instrument_type.upper() == "MUTUAL_FUND" and not (
+            self.catalog_status is CatalogStatus.OUT_OF_SCOPE
+            and self.data_support_status is DataSupportStatus.UNAVAILABLE
+        ):
+            raise ValueError("MUTUAL_FUND is blocked until licensed coverage is approved")
+        return self
 
 
 MASTER_CATALOG: tuple[InstrumentCatalogEntry, ...] = (
@@ -104,5 +113,6 @@ def search_catalog(query: str) -> list[InstrumentCatalogEntry]:
         if normalized in entry.symbol.casefold()
         or normalized in entry.display_symbol.casefold()
         or normalized in entry.name.casefold()
+        or normalized in entry.canonical_id.casefold()
         or any(normalized in alias.casefold() for alias in entry.aliases)
     ]

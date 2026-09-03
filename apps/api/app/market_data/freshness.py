@@ -6,7 +6,7 @@ presented as real time.
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from app.providers.models import DataLevel, Freshness
@@ -30,6 +30,7 @@ class FreshnessResult:
 @dataclass(frozen=True)
 class WeekdayMarketCalendar:
     timezone_name: str
+    holidays: frozenset[date] = frozenset()
 
     @property
     def timezone(self) -> ZoneInfo:
@@ -37,7 +38,10 @@ class WeekdayMarketCalendar:
 
     def is_market_open(self, instant: datetime) -> bool:
         local = instant.astimezone(self.timezone)
-        return local.weekday() < 5
+        return self.is_trading_day(local.date())
+
+    def is_trading_day(self, day: date) -> bool:
+        return day.weekday() < 5 and day not in self.holidays
 
 
 _TTL_SECONDS: dict[DataLevel, dict[str, tuple[int, int]]] = {
@@ -97,6 +101,7 @@ def compute_freshness(
     now: datetime | None = None,
     data_type: str = "quote",
     timezone_name: str = "UTC",
+    calendar: WeekdayMarketCalendar | None = None,
 ) -> FreshnessResult:
     """Compute freshness without consulting a provider or system clock implicitly."""
 
@@ -109,8 +114,12 @@ def compute_freshness(
         status, reason = Freshness.UNAVAILABLE, "MISSING_SOURCE_TIMESTAMP"
     else:
         age = computed_at - source
+        active_calendar = calendar or WeekdayMarketCalendar(timezone_name)
+        source_local_date = source.astimezone(active_calendar.timezone).date()
         if age.total_seconds() < 0:
             status, reason = Freshness.UNAVAILABLE, "FUTURE_SOURCE_TIMESTAMP"
+        elif not active_calendar.is_trading_day(source_local_date):
+            status, reason = Freshness.UNAVAILABLE, "NON_TRADING_DAY_SOURCE"
         elif data_level is DataLevel.DEMO:
             # Demo values are never presented as operationally fresh market
             # data, even when their local cache timestamp is recent.

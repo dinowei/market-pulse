@@ -5,9 +5,21 @@ import secrets
 import psycopg
 from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 
-from app.contracts import InstrumentList, PageMeta, PortfolioEventAccepted, PortfolioEventCreate
+from app.contracts import (
+    InstrumentList,
+    InstrumentSummary,
+    PageMeta,
+    PortfolioEventAccepted,
+    PortfolioEventCreate,
+)
 from app.core.config import get_settings
 from app.errors import request_id as request_id_for
+from app.instruments.catalog import (
+    CatalogStatus,
+    CoverageTier,
+    DataSupportStatus,
+    search_catalog,
+)
 from app.market_data.refresh_application import (
     RefreshBatchRequest,
     RefreshBatchResponse,
@@ -67,12 +79,43 @@ def search_instruments(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ) -> InstrumentList:
-    return InstrumentList(items=[], meta=PageMeta(limit=limit, offset=offset, next_offset=None))
+    entries = search_catalog(q)
+    page = entries[offset : offset + limit]
+    items = [
+        InstrumentSummary(
+            id=entry.canonical_id,
+            canonical_id=entry.canonical_id,
+            symbol=entry.symbol,
+            display_symbol=entry.display_symbol,
+            name=entry.name,
+            instrument_type=entry.instrument_type,
+            currency=entry.currency,
+            aliases=entry.aliases,
+            catalog_status=entry.catalog_status.value,
+            coverage_tier=entry.coverage_tier.value,
+            data_support_status=entry.data_support_status.value,
+            support_state=(
+                "BLOCKED_SCOPE"
+                if entry.catalog_status is CatalogStatus.OUT_OF_SCOPE
+                else "UNSUPPORTED"
+                if entry.data_support_status is DataSupportStatus.UNAVAILABLE
+                else "CANDIDATE_FUTURE"
+                if entry.coverage_tier is not CoverageTier.P0_OPERATIONAL
+                else "P0_OPERATIONAL"
+            ),
+        )
+        for entry in page
+    ]
+    next_offset = offset + limit if offset + limit < len(entries) else None
+    return InstrumentList(
+        items=items,
+        meta=PageMeta(limit=limit, offset=offset, next_offset=next_offset),
+    )
 
 
 @router.get("/market-data/quotes/latest", tags=["market-data"])
-def latest_quote() -> dict[str, list]:
-    return {"items": []}
+def latest_quote() -> dict[str, object]:
+    return {"items": [], "status": "UNAVAILABLE", "reason": "LICENSE_BLOCKED"}
 
 
 @router.get("/market-data/series", tags=["market-data"])

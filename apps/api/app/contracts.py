@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class DataLevel(StrEnum):
@@ -66,10 +66,17 @@ class PageMeta(StrictModel):
 
 class InstrumentSummary(StrictModel):
     id: str
+    canonical_id: str
     symbol: str
+    display_symbol: str
     name: str
     instrument_type: str
     currency: str = Field(pattern="^[A-Z]{3}$")
+    aliases: tuple[str, ...] = ()
+    catalog_status: str
+    coverage_tier: str
+    data_support_status: str
+    support_state: str
 
 
 class InstrumentList(StrictModel):
@@ -84,8 +91,25 @@ class QuoteContract(StrictModel):
     data_level: DataLevel
     freshness: Freshness
     source: str
-    source_timestamp: datetime
-    collected_at: datetime
+    dataset: str
+    source_timestamp: datetime | None = None
+    collected_at: datetime | None = None
+    latency_ms: int | None = Field(default=None, ge=0)
+    limitations: tuple[str, ...] = ()
+    unavailable_reason: str | None = None
+
+    @model_validator(mode="after")
+    def require_provenance(self) -> "QuoteContract":
+        if self.freshness is not Freshness.UNAVAILABLE and (
+            self.source_timestamp is None or self.collected_at is None or self.latency_ms is None
+        ):
+            raise ValueError("quote provenance requires timestamps and latency_ms")
+        return self
+
+
+class SeriesMode(StrEnum):
+    PRICE = "PRICE"
+    INDEX_100 = "INDEX_100"
 
 
 class HistoricalPoint(StrictModel):
@@ -97,9 +121,29 @@ class HistoricalSeries(StrictModel):
     instrument_id: str
     currency: str = Field(pattern="^[A-Z]{3}$")
     source: str
+    dataset: str
     data_level: DataLevel
     freshness: Freshness
+    source_timestamp: datetime | None = None
+    collected_at: datetime | None = None
+    latency_ms: int | None = Field(default=None, ge=0)
+    limitations: tuple[str, ...] = ()
+    unavailable_reason: str | None = None
+    mode: SeriesMode = SeriesMode.PRICE
+    fallback_tabular: bool = True
+    reduced_motion: bool = False
+    smoothed: bool = False
     points: list[HistoricalPoint]
+
+    @model_validator(mode="after")
+    def require_provenance(self) -> "HistoricalSeries":
+        if self.freshness is not Freshness.UNAVAILABLE and (
+            self.source_timestamp is None or self.collected_at is None or self.latency_ms is None
+        ):
+            raise ValueError("series provenance requires timestamps and latency_ms")
+        if self.smoothed:
+            raise ValueError("financial series cannot use artificial smoothing")
+        return self
 
 
 class PortfolioEventCreate(StrictModel):
