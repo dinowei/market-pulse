@@ -57,9 +57,9 @@ avançados de heatmap continuam P1.
 
 | Dia | Objetivo e entregáveis | Dependências | Gate objetivo |
 | --- | --- | --- | --- |
-| 15 | Particle Atlas P0: shell, estados, responsividade e tabelas equivalentes | Contratos da API | 360 px e 1440 px sem overflow; foco/contraste/movimento reduzido verificados |
-| 16 | Tokens monocromáticos e semântica `UP`/`DOWN`/`FLAT`; dashboard de índices, câmbio, commodities e ativos | API de mercado | Preto/branco/cinza predominam; fonte, horário, latência, `DataLevel`, `Freshness` e limitações visíveis; ADR-006 referenciada |
-| 17 | Heatmap/treemap básico, busca/página de ativo e gráficos comparativos | Agregação e contrato | Um ativo = uma linha; multissérie = `INDEX_100` por padrão; valores reais simultaneamente visíveis; preço bruto só com compatibilidade; tabela, fixtures e teclado passam |
+| 15 | Market data público: catálogo, quotes e séries históricas consumíveis pelo frontend, com `DEMO`, `UNAVAILABLE`, provenance, `PRICE`, `INDEX_100`, fallback tabular, OpenAPI e cliente TypeScript | Contratos de dados e licenciamento | Endpoints públicos tipados preservam fonte, timestamps, estados e limitações; nenhum provider real ou dataset não aprovado |
+| 16 | Shell frontend Particle Atlas: tema claro/escuro, app shell, layout do terminal, componentes de provenance/estado e consumo inicial do cliente TypeScript gerado | Market data público do Dia 15 | Shell responsivo e acessível; tokens monocromáticos, estados `DEMO`/`STALE`/`UNAVAILABLE` e metadados visíveis; sem tipos financeiros paralelos |
+| 17 | Página de ativo, gráfico Particle Atlas, comparação, períodos, painel contextual e fallback tabular | Shell e contratos do Dia 16 | Uma série = uma linha; multissérie = `INDEX_100`; valores reais, provenance e tabela acessível preservados |
 | 18 | Cadastro, login, logout e sessão opaca | Persistência | Argon2id, cookie `HttpOnly`, Origin/CSRF, expiração e revogação testados |
 | 19 | Watchlist e múltiplas carteiras informativas por usuário | Dia 18 | Isolamento horizontal; ledger manual append-only; estados vazio/erro/stale; sem gestão ou recomendação |
 | 20 | Morning Call: comando admin, validação, revisão, versões e exibição | Política/plano | Conteúdo inválido não publica; humano identificado publica nova versão append-only |

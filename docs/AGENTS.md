@@ -32,6 +32,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Gate da Semana 2: [WEEK_2_GATE.md](engineering/WEEK_2_GATE.md)
 - Hardening 110% da Semana 2: [WEEK_2_110_HARDENING.md](engineering/WEEK_2_110_HARDENING.md)
 - Market data público do Dia 15: [PUBLIC_MARKET_DATA_DAY_15.md](market_data/PUBLIC_MARKET_DATA_DAY_15.md)
+- Reconciliação do roadmap do Dia 16: [DAY_16_ROADMAP_RECONCILIATION.md](engineering/DAY_16_ROADMAP_RECONCILIATION.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.
