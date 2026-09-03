@@ -9,6 +9,7 @@ Antes de planejar, revisar ou alterar frontend, leia integralmente:
 - `../../AGENTS.md`;
 - `../../docs/engineering/ENTERPRISE_ENGINEERING_BASELINE.md`;
 - `../../docs/design/PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md`;
+- `../../docs/design/PARTICLE_ATLAS_CHART_SEMANTICS.md`;
 - `../../docs/policies/FINANCIAL_CONTENT_POLICY.md`;
 - `../../docs/ROADMAP_30_DAYS.md`;
 - ADRs relevantes, especialmente ADR-005, ADR-006 e ADR-007;
@@ -19,6 +20,11 @@ Sempre que a tarefa envolver cotações, histórico, FX, dados de mercado, provi
 O cliente canônico é `src/generated/api.ts`; regenere-o quando `docs/api/openapi.json` mudar.
 
 Se uma fonte estiver ausente ou contraditória, pare e reporte; não invente substituição.
+
+Para qualquer tarefa de gráficos, séries históricas, comparação de ativos,
+heatmap, treemap, visualização de carteira, renda fixa, Particle Atlas ou
+renderização financeira, a leitura integral de
+`../../docs/design/PARTICLE_ATLAS_CHART_SEMANTICS.md` é obrigatória.
 
 ## Contrato visual e financeiro
 

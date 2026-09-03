@@ -34,6 +34,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Market data público do Dia 15: [PUBLIC_MARKET_DATA_DAY_15.md](market_data/PUBLIC_MARKET_DATA_DAY_15.md)
 - Reconciliação do roadmap do Dia 16: [DAY_16_ROADMAP_RECONCILIATION.md](engineering/DAY_16_ROADMAP_RECONCILIATION.md)
 - Shell Particle Atlas do Dia 16: [PARTICLE_ATLAS_DAY_16_SHELL.md](design/PARTICLE_ATLAS_DAY_16_SHELL.md)
+- Semântica canônica de gráficos Particle Atlas: [PARTICLE_ATLAS_CHART_SEMANTICS.md](design/PARTICLE_ATLAS_CHART_SEMANTICS.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.
@@ -65,6 +66,11 @@ Arquivos equivalentes na raiz marcados como históricos servem apenas à rastrea
 ## Particle Atlas
 
 Documente o P0 acessível antes do P1 visual. Não descreva Particle Atlas como provider, motor preditivo, recomendação ou garantia de tempo real. Globo 3D e efeitos avançados são condicionais, feature-flagged e não bloqueiam o beta.
+
+Qualquer tarefa envolvendo gráficos, séries históricas, comparação de ativos,
+heatmap, treemap, visualização de carteira, renda fixa, Particle Atlas ou outra
+renderização financeira deve ler integralmente
+`design/PARTICLE_ATLAS_CHART_SEMANTICS.md` antes de planejar ou editar.
 
 ## Gate documental
 
