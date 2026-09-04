@@ -29,8 +29,17 @@ from app.contracts import (
     InstrumentSummary,
     LoginRequest,
     PageMeta,
+    PortfolioCashBalanceResponse,
+    PortfolioCreateRequest,
     PortfolioEventAccepted,
     PortfolioEventCreate,
+    PortfolioEventRequest,
+    PortfolioEventResponse,
+    PortfolioListResponse,
+    PortfolioPatchRequest,
+    PortfolioPositionResponse,
+    PortfolioResponse,
+    PortfolioSummaryResponse,
     PublicHistorySeries,
     PublicQuote,
     RegisterRequest,
@@ -58,6 +67,13 @@ from app.market_data.refresh_application import (
     RefreshBatchResponse,
     refresh_market_data,
 )
+from app.portfolios.service import (
+    PortfolioConflict,
+    PortfolioNotFound,
+    PortfolioService,
+    PortfolioValidationError,
+    PostgresPortfolioService,
+)
 from app.watchlists.service import (
     PostgresWatchlistService,
     WatchlistConflict,
@@ -74,6 +90,10 @@ def get_auth_service() -> AuthService:
 
 def get_watchlist_service() -> PostgresWatchlistService:
     return PostgresWatchlistService()
+
+
+def get_portfolio_service() -> PortfolioService:
+    return PostgresPortfolioService()
 
 
 def _client_ip(request: Request) -> str:
@@ -299,6 +319,14 @@ def _watchlist_error(error: Exception) -> HTTPException:
     return HTTPException(status_code=422, detail=str(error))
 
 
+def _portfolio_error(error: Exception) -> HTTPException:
+    if isinstance(error, PortfolioNotFound):
+        return HTTPException(status_code=404, detail="Portfolio or event not found")
+    if isinstance(error, PortfolioConflict):
+        return HTTPException(status_code=409, detail=str(error))
+    return HTTPException(status_code=422, detail=str(error))
+
+
 @router.get("/watchlists", response_model=WatchlistListResponse, tags=["watchlists"])
 def list_watchlists(
     current_user: AuthUserResponse = Depends(get_current_user),
@@ -453,9 +481,174 @@ def unfavorite_instrument(
         raise _watchlist_error(exc) from exc
 
 
-@router.get("/portfolios", tags=["portfolios"])
-def list_portfolios() -> dict[str, list]:
-    return {"items": []}
+@router.get("/portfolios", response_model=PortfolioListResponse, tags=["portfolios"])
+def list_portfolios(
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioService = Depends(get_portfolio_service),
+) -> PortfolioListResponse:
+    return service.list(current_user.id)
+
+
+@router.post(
+    "/portfolios",
+    response_model=PortfolioResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["portfolios"],
+)
+def create_portfolio(
+    payload: PortfolioCreateRequest,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioService = Depends(get_portfolio_service),
+) -> PortfolioResponse:
+    try:
+        return service.create(current_user.id, payload)
+    except (PortfolioConflict, PortfolioValidationError) as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.get("/portfolios/{portfolio_id}", response_model=PortfolioResponse, tags=["portfolios"])
+def get_portfolio(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioService = Depends(get_portfolio_service),
+) -> PortfolioResponse:
+    try:
+        return service.get(current_user.id, portfolio_id)
+    except PortfolioNotFound as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.patch("/portfolios/{portfolio_id}", response_model=PortfolioResponse, tags=["portfolios"])
+def patch_portfolio(
+    portfolio_id: str,
+    payload: PortfolioPatchRequest,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioService = Depends(get_portfolio_service),
+) -> PortfolioResponse:
+    try:
+        return service.patch(current_user.id, portfolio_id, payload)
+    except (PortfolioNotFound, PortfolioConflict, PortfolioValidationError) as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.post(
+    "/portfolios/{portfolio_id}/events",
+    response_model=PortfolioEventResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["portfolios"],
+)
+def add_portfolio_event(
+    portfolio_id: str,
+    payload: PortfolioEventRequest,
+    request: Request,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioService = Depends(get_portfolio_service),
+) -> PortfolioEventResponse:
+    if not idempotency_key:
+        raise HTTPException(status_code=422, detail="Idempotency-Key header is required")
+    try:
+        return service.add_event(
+            current_user.id,
+            portfolio_id,
+            payload,
+            idempotency_key,
+            request_id_for(request),
+        )
+    except (PortfolioNotFound, PortfolioConflict, PortfolioValidationError, ValueError) as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/events",
+    response_model=list[PortfolioEventResponse],
+    tags=["portfolios"],
+)
+def list_portfolio_events(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioService = Depends(get_portfolio_service),
+) -> list[PortfolioEventResponse]:
+    try:
+        return service.events(current_user.id, portfolio_id)
+    except PortfolioNotFound as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/positions",
+    response_model=list[PortfolioPositionResponse],
+    tags=["portfolios"],
+)
+def list_portfolio_positions(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioService = Depends(get_portfolio_service),
+) -> list[PortfolioPositionResponse]:
+    try:
+        return service.positions(current_user.id, portfolio_id)
+    except PortfolioNotFound as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/cash-balances",
+    response_model=list[PortfolioCashBalanceResponse],
+    tags=["portfolios"],
+)
+def list_portfolio_cash_balances(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioService = Depends(get_portfolio_service),
+) -> list[PortfolioCashBalanceResponse]:
+    try:
+        return service.cash_balances(current_user.id, portfolio_id)
+    except PortfolioNotFound as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/summary",
+    response_model=PortfolioSummaryResponse,
+    tags=["portfolios"],
+)
+def portfolio_summary(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioService = Depends(get_portfolio_service),
+) -> PortfolioSummaryResponse:
+    try:
+        return service.summary(current_user.id, portfolio_id)
+    except PortfolioNotFound as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.post(
+    "/portfolios/{portfolio_id}/events/{event_id}/reversal",
+    response_model=PortfolioEventResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["portfolios"],
+)
+def reverse_portfolio_event(
+    portfolio_id: str,
+    event_id: str,
+    request: Request,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioService = Depends(get_portfolio_service),
+) -> PortfolioEventResponse:
+    if not idempotency_key:
+        raise HTTPException(status_code=422, detail="Idempotency-Key header is required")
+    try:
+        return service.reverse_event(
+            current_user.id,
+            portfolio_id,
+            event_id,
+            idempotency_key,
+            request_id_for(request),
+        )
+    except (PortfolioNotFound, PortfolioConflict, PortfolioValidationError) as exc:
+        raise _portfolio_error(exc) from exc
 
 
 @router.post(

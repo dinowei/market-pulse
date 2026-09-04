@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from enum import StrEnum
 
@@ -338,6 +338,104 @@ class PortfolioEventCreate(StrictModel):
     fees: Decimal | None = None
     cash_amount: Decimal | None = None
     note: str | None = Field(default=None, max_length=2000)
+
+
+class PortfolioCreateRequest(StrictModel):
+    name: str = Field(min_length=1, max_length=120)
+    base_currency: str = Field(pattern="^[A-Z]{3}$")
+
+    @model_validator(mode="after")
+    def normalize_name(self) -> "PortfolioCreateRequest":
+        self.name = " ".join(self.name.split())
+        if not self.name:
+            raise ValueError("portfolio name is required")
+        return self
+
+
+class PortfolioPatchRequest(StrictModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    base_currency: str | None = Field(default=None, pattern="^[A-Z]{3}$")
+
+    @model_validator(mode="after")
+    def validate_patch(self) -> "PortfolioPatchRequest":
+        if self.name is None and self.base_currency is None:
+            raise ValueError("portfolio patch cannot be empty")
+        if self.name is not None:
+            self.name = " ".join(self.name.split())
+            if not self.name:
+                raise ValueError("portfolio name is required")
+        return self
+
+
+class PortfolioResponse(StrictModel):
+    id: str
+    name: str
+    base_currency: str = Field(pattern="^[A-Z]{3}$")
+    created_at: datetime
+    updated_at: datetime
+
+
+class PortfolioListResponse(StrictModel):
+    items: list[PortfolioResponse]
+
+
+class PortfolioEventRequest(StrictModel):
+    event_type: PortfolioEventType
+    currency: str = Field(pattern="^[A-Z]{3}$")
+    canonical_id: str | None = Field(default=None, min_length=3, max_length=160)
+    quantity: Decimal | None = None
+    unit_price: Decimal | None = None
+    gross_amount: Decimal | None = None
+    fee_amount: Decimal | None = None
+    notes: str | None = Field(default=None, max_length=2000)
+    reversal_of_event_id: str | None = None
+    occurred_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @model_validator(mode="after")
+    def require_utc_timestamp(self) -> "PortfolioEventRequest":
+        if self.occurred_at.tzinfo is None or self.occurred_at.utcoffset() is None:
+            raise ValueError("occurred_at must include timezone")
+        self.occurred_at = self.occurred_at.astimezone(timezone.utc)
+        return self
+
+
+class PortfolioEventResponse(StrictModel):
+    id: str
+    portfolio_id: str
+    event_type: PortfolioEventType
+    occurred_at: datetime
+    canonical_id: str | None = None
+    currency: str = Field(pattern="^[A-Z]{3}$")
+    quantity: Decimal | None = None
+    unit_price: Decimal | None = None
+    gross_amount: Decimal | None = None
+    fee_amount: Decimal | None = None
+    notes: str | None = None
+    idempotency_key: str
+    reversal_of_event_id: str | None = None
+    created_at: datetime
+    request_id: str
+
+
+class PortfolioPositionResponse(StrictModel):
+    canonical_id: str
+    quantity: Decimal
+    total_cost: Decimal
+    weighted_average_cost: Decimal
+
+
+class PortfolioCashBalanceResponse(StrictModel):
+    currency: str = Field(pattern="^[A-Z]{3}$")
+    balance: Decimal
+
+
+class PortfolioSummaryResponse(StrictModel):
+    portfolio_id: str
+    base_currency: str = Field(pattern="^[A-Z]{3}$")
+    cash_balances: dict[str, Decimal]
+    positions: list[PortfolioPositionResponse]
+    event_count: int
+    last_event_at: datetime | None = None
 
 
 class PortfolioEventAccepted(StrictModel):
