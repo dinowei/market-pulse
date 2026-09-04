@@ -4,6 +4,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.editorial.validator import EditorialBlock, EditorialStatus
+
 
 class DataLevel(StrEnum):
     REAL_TIME = "REAL_TIME"
@@ -49,6 +51,22 @@ class PortfolioEventType(StrEnum):
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+
+class EditorialPostResponse(StrictModel):
+    id: str
+    slug: str
+    title: str
+    summary: str | None = None
+    blocks: tuple[EditorialBlock, ...]
+    status: EditorialStatus
+    version: int = Field(ge=1)
+    created_at: datetime
+    published_at: datetime
+
+
+class EditorialPostListResponse(StrictModel):
+    items: list[EditorialPostResponse]
 
 
 class RegisterRequest(StrictModel):

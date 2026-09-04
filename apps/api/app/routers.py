@@ -24,6 +24,8 @@ from app.auth.service import (
 )
 from app.contracts import (
     AuthUserResponse,
+    EditorialPostListResponse,
+    EditorialPostResponse,
     EquityCurveResponse,
     HistoryPeriod,
     InstrumentList,
@@ -57,6 +59,8 @@ from app.contracts import (
     WatchlistResponse,
 )
 from app.core.config import get_settings
+from app.editorial.service import InMemoryEditorialService, PostgresEditorialService
+from app.editorial.validator import EditorialStatus
 from app.errors import request_id as request_id_for
 from app.instruments.catalog import (
     CatalogStatus,
@@ -103,6 +107,10 @@ def get_portfolio_service() -> PortfolioService:
 
 def get_portfolio_performance_service() -> PortfolioPerformanceService:
     return PortfolioPerformanceService(PostgresPortfolioService())
+
+
+def get_editorial_service() -> InMemoryEditorialService:
+    return PostgresEditorialService()
 
 
 def _client_ip(request: Request) -> str:
@@ -773,11 +781,53 @@ def performance() -> dict[str, list]:
     return {"items": []}
 
 
-@router.get("/morning-call", tags=["morning-call"])
-def morning_call() -> dict[str, list]:
-    return {"items": []}
+def _editorial_response(post) -> EditorialPostResponse:
+    if post is None or post.status is not EditorialStatus.PUBLISHED:
+        raise HTTPException(status_code=404, detail="Editorial post not found")
+    return EditorialPostResponse(
+        id=post.id,
+        slug=post.slug,
+        title=post.title,
+        summary=post.summary,
+        blocks=post.blocks,
+        status=post.status,
+        version=post.version,
+        created_at=post.created_at,
+        published_at=post.published_at,
+    )
 
 
-@router.get("/editorial", tags=["editorial"])
-def editorial() -> dict[str, list]:
-    return {"items": []}
+@router.get(
+    "/editorial/morning-call/latest",
+    response_model=EditorialPostResponse,
+    tags=["editorial"],
+)
+def latest_morning_call(
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialPostResponse:
+    return _editorial_response(service.latest_published())
+
+
+@router.get(
+    "/editorial/posts",
+    response_model=EditorialPostListResponse,
+    tags=["editorial"],
+)
+def list_editorial_posts(
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialPostListResponse:
+    return EditorialPostListResponse(
+        items=[_editorial_response(post) for post in service.list_published()]
+    )
+
+
+@router.get(
+    "/editorial/posts/{slug}",
+    response_model=EditorialPostResponse,
+    tags=["editorial"],
+)
+def get_editorial_post(
+    slug: str,
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialPostResponse:
+    return _editorial_response(service.get_published(slug))
