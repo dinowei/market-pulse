@@ -307,7 +307,112 @@ export interface paths {
         /** List Portfolios */
         get: operations["list_portfolios_api_v1_portfolios_get"];
         put?: never;
+        /** Create Portfolio */
+        post: operations["create_portfolio_api_v1_portfolios_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Portfolio */
+        get: operations["get_portfolio_api_v1_portfolios__portfolio_id__get"];
+        put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Portfolio */
+        patch: operations["patch_portfolio_api_v1_portfolios__portfolio_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Portfolio Events */
+        get: operations["list_portfolio_events_api_v1_portfolios__portfolio_id__events_get"];
+        put?: never;
+        /** Add Portfolio Event */
+        post: operations["add_portfolio_event_api_v1_portfolios__portfolio_id__events_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}/positions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Portfolio Positions */
+        get: operations["list_portfolio_positions_api_v1_portfolios__portfolio_id__positions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}/cash-balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Portfolio Cash Balances */
+        get: operations["list_portfolio_cash_balances_api_v1_portfolios__portfolio_id__cash_balances_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portfolio Summary */
+        get: operations["portfolio_summary_api_v1_portfolios__portfolio_id__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}/events/{event_id}/reversal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse Portfolio Event */
+        post: operations["reverse_portfolio_event_api_v1_portfolios__portfolio_id__events__event_id__reversal_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -526,6 +631,20 @@ export interface components {
             /** Next Offset */
             next_offset: number | null;
         };
+        /** PortfolioCashBalanceResponse */
+        PortfolioCashBalanceResponse: {
+            /** Currency */
+            currency: string;
+            /** Balance */
+            balance: string;
+        };
+        /** PortfolioCreateRequest */
+        PortfolioCreateRequest: {
+            /** Name */
+            name: string;
+            /** Base Currency */
+            base_currency: string;
+        };
         /** PortfolioEventAccepted */
         PortfolioEventAccepted: {
             /**
@@ -561,11 +680,133 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /** PortfolioEventRequest */
+        PortfolioEventRequest: {
+            event_type: components["schemas"]["PortfolioEventType"];
+            /** Currency */
+            currency: string;
+            /** Canonical Id */
+            canonical_id?: string | null;
+            /** Quantity */
+            quantity?: number | string | null;
+            /** Unit Price */
+            unit_price?: number | string | null;
+            /** Gross Amount */
+            gross_amount?: number | string | null;
+            /** Fee Amount */
+            fee_amount?: number | string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Reversal Of Event Id */
+            reversal_of_event_id?: string | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at?: string;
+        };
+        /** PortfolioEventResponse */
+        PortfolioEventResponse: {
+            /** Id */
+            id: string;
+            /** Portfolio Id */
+            portfolio_id: string;
+            event_type: components["schemas"]["PortfolioEventType"];
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Canonical Id */
+            canonical_id?: string | null;
+            /** Currency */
+            currency: string;
+            /** Quantity */
+            quantity?: string | null;
+            /** Unit Price */
+            unit_price?: string | null;
+            /** Gross Amount */
+            gross_amount?: string | null;
+            /** Fee Amount */
+            fee_amount?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Idempotency Key */
+            idempotency_key: string;
+            /** Reversal Of Event Id */
+            reversal_of_event_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Request Id */
+            request_id: string;
+        };
         /**
          * PortfolioEventType
          * @enum {string}
          */
         PortfolioEventType: "BUY" | "SELL" | "CASH_DEPOSIT" | "CASH_WITHDRAWAL" | "FEE" | "DIVIDEND" | "SPLIT" | "ADJUSTMENT" | "REVERSAL";
+        /** PortfolioListResponse */
+        PortfolioListResponse: {
+            /** Items */
+            items: components["schemas"]["PortfolioResponse"][];
+        };
+        /** PortfolioPatchRequest */
+        PortfolioPatchRequest: {
+            /** Name */
+            name?: string | null;
+            /** Base Currency */
+            base_currency?: string | null;
+        };
+        /** PortfolioPositionResponse */
+        PortfolioPositionResponse: {
+            /** Canonical Id */
+            canonical_id: string;
+            /** Quantity */
+            quantity: string;
+            /** Total Cost */
+            total_cost: string;
+            /** Weighted Average Cost */
+            weighted_average_cost: string;
+        };
+        /** PortfolioResponse */
+        PortfolioResponse: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Base Currency */
+            base_currency: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** PortfolioSummaryResponse */
+        PortfolioSummaryResponse: {
+            /** Portfolio Id */
+            portfolio_id: string;
+            /** Base Currency */
+            base_currency: string;
+            /** Cash Balances */
+            cash_balances: {
+                [key: string]: string;
+            };
+            /** Positions */
+            positions: components["schemas"]["PortfolioPositionResponse"][];
+            /** Event Count */
+            event_count: number;
+            /** Last Event At */
+            last_event_at?: string | null;
+        };
         /**
          * ProviderCapability
          * @enum {string}
@@ -1531,7 +1772,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1541,9 +1784,328 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown[];
-                    };
+                    "application/json": components["schemas"]["PortfolioListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_portfolio_api_v1_portfolios_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortfolioCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_portfolio_api_v1_portfolios__portfolio_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_portfolio_api_v1_portfolios__portfolio_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortfolioPatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_portfolio_events_api_v1_portfolios__portfolio_id__events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioEventResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_portfolio_event_api_v1_portfolios__portfolio_id__events_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortfolioEventRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioEventResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_portfolio_positions_api_v1_portfolios__portfolio_id__positions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioPositionResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_portfolio_cash_balances_api_v1_portfolios__portfolio_id__cash_balances_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioCashBalanceResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_summary_api_v1_portfolios__portfolio_id__summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reverse_portfolio_event_api_v1_portfolios__portfolio_id__events__event_id__reversal_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path: {
+                portfolio_id: string;
+                event_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioEventResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
