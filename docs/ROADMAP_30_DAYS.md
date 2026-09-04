@@ -99,6 +99,21 @@ Canvas, WebGL, provider ou dados reais.
 
 **Entregável semanal:** release candidate reproduzível e preparado para Vercel/Render/Neon/Upstash/GitHub Actions, sem provisionamento ou publicação não autorizados.
 
+### Adendo operacional do Dia 23
+
+O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento
+público do Morning Call: papéis `USER`/`EDITOR`/`REVIEWER`/`ADMIN`, workflow
+`DRAFT` → `UNDER_REVIEW` → `APPROVED` → `PUBLISHED` → `ARCHIVED`, validação
+editorial, eventos de revisão e leitura pública somente de versões publicadas.
+O prompt direto prevaleceu sobre a descrição anterior de Neon/Upstash; essa
+integração não foi apagada do histórico, apenas permanece trabalho futuro
+condicionado a nova autorização. A decisão está detalhada em
+[MORNING_CALL_ADMIN_DAY_23.md](editorial/MORNING_CALL_ADMIN_DAY_23.md).
+
+A linha tabular histórica que descrevia Neon/Upstash não é o entregável
+canônico do Dia 23; este adendo é a reconciliação normativa e mantém o registro
+anterior para rastreabilidade.
+
 ### Adendo operacional do Dia 22
 
 O Dia 22 executado corresponde ao validador editorial e ao Morning Call factual,

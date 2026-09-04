@@ -43,6 +43,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Reconciliação do roadmap do Dia 20: [DAY_20_ROADMAP_RECONCILIATION.md](engineering/DAY_20_ROADMAP_RECONCILIATION.md)
 - Performance factual de carteiras do Dia 21: [PORTFOLIO_PERFORMANCE_DAY_21.md](product/PORTFOLIO_PERFORMANCE_DAY_21.md)
 - Morning Call factual do Dia 22: [MORNING_CALL_DAY_22.md](editorial/MORNING_CALL_DAY_22.md)
+- Morning Call público e administrativo do Dia 23: [MORNING_CALL_ADMIN_DAY_23.md](editorial/MORNING_CALL_ADMIN_DAY_23.md)
 - Gate da Semana 3: [WEEK_3_GATE.md](engineering/WEEK_3_GATE.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
