@@ -149,3 +149,20 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .watchlist-item-actions button { font-size: .68rem; }
 .watchlists-link { display: inline-block; text-align: center; text-decoration: none; }
 @media (max-width: 700px) { .watchlists-header { display: block; } .watchlists-back { display: inline-block; margin-top: .5rem; } .watchlists-toolbar { grid-template-columns: 1fr; } .watchlists-grid { grid-template-columns: 1fr; } .watchlist-items li { display: block; } .watchlist-item-actions { justify-content: flex-start; margin-top: .7rem; } }
+.portfolios-page { min-height: 100vh; padding: clamp(1rem, 4vw, 3rem); }
+.portfolios-header { align-items: flex-start; display: flex; gap: 1rem; justify-content: space-between; margin: 0 auto 1rem; max-width: 74rem; }
+.portfolios-back, .portfolios-link { color: var(--pa-market-flat); font-size: .8rem; }
+.portfolios-disclaimer { border-left: 2px solid var(--pa-market-flat); color: var(--pa-text-secondary); margin: 0 auto 1.5rem; max-width: 74rem; padding: .6rem .8rem; }
+.portfolios-toolbar, .portfolio-summary-grid, .portfolio-selector, .portfolios-card { margin: 0 auto 1rem; max-width: 74rem; }
+.portfolios-toolbar, .portfolio-summary-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.portfolio-form, .portfolios-card, .portfolio-selector { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); padding: 1rem; }
+.portfolio-form label, .portfolio-selector label { color: var(--pa-text-secondary); display: block; font-size: .75rem; margin-bottom: .45rem; }
+.portfolio-form-row, .portfolio-form-grid { display: flex; flex-wrap: wrap; gap: .5rem; }
+.portfolio-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.portfolio-form input, .portfolio-form select, .portfolio-selector select, .portfolio-form button { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-hairline); color: var(--pa-text-primary); min-width: 0; padding: .6rem; }
+.portfolio-form-row input { flex: 1; }
+.portfolio-form button { cursor: pointer; }
+.portfolio-form button:disabled { cursor: not-allowed; opacity: .45; }
+.portfolio-selector select { width: 100%; }
+.portfolios-card table { margin-top: .5rem; min-width: 0; }
+@media (max-width: 700px) { .portfolios-header { display: block; } .portfolios-back { display: inline-block; margin-top: .5rem; } .portfolios-toolbar, .portfolio-summary-grid { grid-template-columns: 1fr; } .portfolio-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
