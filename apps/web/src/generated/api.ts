@@ -419,6 +419,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/portfolios/{portfolio_id}/valuation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portfolio Valuation */
+        get: operations["portfolio_valuation_api_v1_portfolios__portfolio_id__valuation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}/performance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portfolio Performance */
+        get: operations["portfolio_performance_api_v1_portfolios__portfolio_id__performance_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}/equity-curve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portfolio Equity Curve */
+        get: operations["portfolio_equity_curve_api_v1_portfolios__portfolio_id__equity_curve_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}/performance/decomposition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portfolio Performance Decomposition */
+        get: operations["portfolio_performance_decomposition_api_v1_portfolios__portfolio_id__performance_decomposition_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/portfolio-events": {
         parameters: {
             query?: never;
@@ -564,6 +632,44 @@ export interface components {
          * @enum {string}
          */
         DataLevel: "REAL_TIME" | "DELAYED" | "EOD" | "DEMO";
+        /** EquityCurvePointResponse */
+        EquityCurvePointResponse: {
+            /**
+             * Valuation Date
+             * Format: date
+             */
+            valuation_date: string;
+            /** Total Value Base */
+            total_value_base: string | null;
+            /** Cash Value Base */
+            cash_value_base: string | null;
+            /** Positions Value Base */
+            positions_value_base: string | null;
+            data_level: components["schemas"]["DataLevel"];
+            freshness: components["schemas"]["Freshness"];
+            valuation_status: components["schemas"]["PerformanceStatus"];
+            /**
+             * Missing Inputs
+             * @default []
+             */
+            missing_inputs: string[];
+        };
+        /** EquityCurveResponse */
+        EquityCurveResponse: {
+            /** Portfolio Id */
+            portfolio_id: string;
+            /** Base Currency */
+            base_currency: string;
+            /** Methodology */
+            methodology: string;
+            /** Points */
+            points: components["schemas"]["EquityCurvePointResponse"][];
+            /**
+             * Provenance
+             * @default []
+             */
+            provenance: components["schemas"]["PerformanceProvenance"][];
+        };
         /**
          * Freshness
          * @enum {string}
@@ -631,6 +737,71 @@ export interface components {
             /** Next Offset */
             next_offset: number | null;
         };
+        /** PerformanceDecompositionResponse */
+        PerformanceDecompositionResponse: {
+            /** Portfolio Id */
+            portfolio_id: string;
+            /** Base Currency */
+            base_currency: string;
+            /** Price Effect */
+            price_effect: string | null;
+            /** Fx Effect */
+            fx_effect: string | null;
+            /** Cash Flow Effect */
+            cash_flow_effect: string | null;
+            /** Fees Effect */
+            fees_effect: string | null;
+            /** Income Effect */
+            income_effect: string | null;
+            /** Unclassified Or Unavailable */
+            unclassified_or_unavailable: string | null;
+            status: components["schemas"]["PerformanceStatus"];
+            /** Methodology */
+            methodology: string;
+            /**
+             * Missing Inputs
+             * @default []
+             */
+            missing_inputs: string[];
+            /**
+             * Provenance
+             * @default []
+             */
+            provenance: components["schemas"]["PerformanceProvenance"][];
+        };
+        /** PerformanceProvenance */
+        PerformanceProvenance: {
+            /** Provider */
+            provider: string;
+            /** Dataset */
+            dataset: string;
+            /** Source */
+            source: string;
+            data_level: components["schemas"]["DataLevel"];
+            freshness: components["schemas"]["Freshness"];
+            /**
+             * Source Timestamp
+             * Format: date-time
+             */
+            source_timestamp: string;
+            /**
+             * Collected At
+             * Format: date-time
+             */
+            collected_at: string;
+            /** Latency Ms */
+            latency_ms?: number | null;
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
+        };
+        /**
+         * PerformanceStatus
+         * @enum {string}
+         */
+        PerformanceStatus: "COMPLETE" | "PARTIAL" | "UNAVAILABLE";
         /** PortfolioCashBalanceResponse */
         PortfolioCashBalanceResponse: {
             /** Currency */
@@ -760,6 +931,32 @@ export interface components {
             /** Base Currency */
             base_currency?: string | null;
         };
+        /** PortfolioPerformanceResponse */
+        PortfolioPerformanceResponse: {
+            /** Portfolio Id */
+            portfolio_id: string;
+            /** Base Currency */
+            base_currency: string;
+            /** Realized Pnl */
+            realized_pnl: string | null;
+            /** Unrealized Pnl */
+            unrealized_pnl: string | null;
+            /** Twr */
+            twr: string | null;
+            status: components["schemas"]["PerformanceStatus"];
+            /** Methodology */
+            methodology: string;
+            /**
+             * Missing Inputs
+             * @default []
+             */
+            missing_inputs: string[];
+            /**
+             * Provenance
+             * @default []
+             */
+            provenance: components["schemas"]["PerformanceProvenance"][];
+        };
         /** PortfolioPositionResponse */
         PortfolioPositionResponse: {
             /** Canonical Id */
@@ -806,6 +1003,72 @@ export interface components {
             event_count: number;
             /** Last Event At */
             last_event_at?: string | null;
+        };
+        /** PortfolioValuationPositionResponse */
+        PortfolioValuationPositionResponse: {
+            /** Canonical Id */
+            canonical_id: string;
+            /** Quantity */
+            quantity: string;
+            /** Currency */
+            currency: string;
+            /** Remaining Cost Basis */
+            remaining_cost_basis: string;
+            /** Weighted Average Cost */
+            weighted_average_cost: string;
+            /** Price */
+            price?: string | null;
+            /** Market Value Native */
+            market_value_native?: string | null;
+            /** Market Value Base */
+            market_value_base?: string | null;
+            /** Unrealized Pnl */
+            unrealized_pnl?: string | null;
+            /** Fx Rate */
+            fx_rate?: string | null;
+            status: components["schemas"]["PerformanceStatus"];
+            /**
+             * Missing Inputs
+             * @default []
+             */
+            missing_inputs: string[];
+        };
+        /** PortfolioValuationResponse */
+        PortfolioValuationResponse: {
+            /** Portfolio Id */
+            portfolio_id: string;
+            /** Base Currency */
+            base_currency: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** Cash Value Base */
+            cash_value_base: string | null;
+            /** Positions Value Base */
+            positions_value_base: string | null;
+            /** Total Value Base */
+            total_value_base: string | null;
+            /** Realized Pnl */
+            realized_pnl: string | null;
+            /** Unrealized Pnl */
+            unrealized_pnl: string | null;
+            status: components["schemas"]["PerformanceStatus"];
+            /**
+             * Missing Inputs
+             * @default []
+             */
+            missing_inputs: string[];
+            /** Methodology */
+            methodology: string;
+            /**
+             * Provenance
+             * @default []
+             */
+            provenance: components["schemas"]["PerformanceProvenance"][];
+            /** Positions */
+            positions: components["schemas"]["PortfolioValuationPositionResponse"][];
         };
         /**
          * ProviderCapability
@@ -2097,6 +2360,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PortfolioEventResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_valuation_api_v1_portfolios__portfolio_id__valuation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioValuationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_performance_api_v1_portfolios__portfolio_id__performance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioPerformanceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_equity_curve_api_v1_portfolios__portfolio_id__equity_curve_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquityCurveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_performance_decomposition_api_v1_portfolios__portfolio_id__performance_decomposition_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerformanceDecompositionResponse"];
                 };
             };
             /** @description Validation Error */
