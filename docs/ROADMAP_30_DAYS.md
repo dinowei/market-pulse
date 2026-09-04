@@ -87,7 +87,7 @@ Canvas, WebGL, provider ou dados reais.
 
 | Dia | Objetivo e entregáveis | Dependências | Gate objetivo |
 | --- | --- | --- | --- |
-| 22 | Stripe estritamente em modo de teste, isolado e opcional | P0 principal verde e nova autorização do dia | Demonstração/test-only; nenhuma cobrança ou paywall real; fluxo informativo funciona sem Stripe |
+| 22 | Validador editorial e Morning Call factual: blocos tipados, fontes, estados, versionamento append-only e leitura pública | Dados e política de conteúdo canônica | Somente `PUBLISHED` é público; linguagem prescritiva é bloqueada; provenance editorial e fallback seguro passam |
 | 23 | Integração compatível com Neon PostgreSQL e Upstash Redis REST | Stack local verde | Migração, TTL, lock, fallback e falha segura passam sem provisionar externamente |
 | 24 | Testes frontend/a11y; P1 visual somente se orçamento permitir | UX P0 verde | Estados críticos cobertos; P1 feature-flagged, não bloqueante e com fallback |
 | 25 | E2E de conta, dashboard, watchlist, stale e Morning Call | Integração | Cenários determinísticos passam sem provider real no CI |
@@ -98,6 +98,14 @@ Canvas, WebGL, provider ou dados reais.
 | 30 | Release candidate e auditoria final | Todos os gates | Regressão, migração, a11y, segurança, licença, limitações e checklist evidenciados |
 
 **Entregável semanal:** release candidate reproduzível e preparado para Vercel/Render/Neon/Upstash/GitHub Actions, sem provisionamento ou publicação não autorizados.
+
+### Adendo operacional do Dia 22
+
+O Dia 22 executado corresponde ao validador editorial e ao Morning Call factual,
+conforme o prompt aprovado. A linha histórica anterior que previa Stripe em
+modo de teste não autoriza integração neste dia; Stripe permanece pendente,
+estritamente test-only, para um gate futuro com nova autorização. Nenhuma
+cobrança, paywall, IA, provider ou notícia externa foi ativada.
 
 ## Gate final do beta
 
