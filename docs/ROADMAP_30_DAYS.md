@@ -61,11 +61,19 @@ avançados de heatmap continuam P1.
 | 16 | Shell frontend Particle Atlas: tema claro/escuro, app shell, layout do terminal, componentes de provenance/estado e consumo inicial do cliente TypeScript gerado | Market data público do Dia 15 | Shell responsivo e acessível; tokens monocromáticos, estados `DEMO`/`STALE`/`UNAVAILABLE` e metadados visíveis; sem tipos financeiros paralelos |
 | 17 | Página de ativo, gráfico Particle Atlas, comparação, períodos, painel contextual e fallback tabular | Shell e contratos do Dia 16 | Uma série = uma linha; multissérie = `INDEX_100`; valores reais, provenance e tabela acessível preservados |
 | 18 | Cadastro, login, logout e sessão opaca | Persistência | Argon2id, cookie `HttpOnly`, Origin/CSRF, expiração e revogação testados |
-| 19 | Watchlist e múltiplas carteiras informativas por usuário | Dia 18 | Isolamento horizontal; ledger manual append-only; estados vazio/erro/stale; sem gestão ou recomendação |
-| 20 | Morning Call: comando admin, validação, revisão, versões e exibição | Política/plano | Conteúdo inválido não publica; humano identificado publica nova versão append-only |
+| 19 | Watchlist por usuário | Dia 18 | Isolamento horizontal; estados vazio/erro/stale; sem gestão ou recomendação |
+| 20 | Carteiras informativas: múltiplas carteiras, moeda-base imutável, ledger manual append-only, caixa e posições | Dia 18 e schema financeiro | Replay determinístico com `Decimal`; isolamento horizontal; idempotência; reversão sem mutar evento original; sem valuation, P&L, TWR ou recomendação |
 | 21 | Global Atlas P0 em tabela acessível e gate integrado de UX | Dias 15–20 | Fluxos principais por teclado; disclaimer e metadados visíveis; sem recomendação |
 
 **Entregável semanal:** experiência P0 responsiva e acessível com dashboard, heatmap, Global Atlas tabular, sessão, watchlist e Morning Call.
+
+### Adendo documental do Dia 20
+
+O Dia 20 executado corresponde ao domínio de carteiras informativas e não ao
+Morning Call descrito em versões anteriores deste quadro. O Morning Call não foi
+apagado como requisito: permanece pendente para o próximo dia apropriado, antes
+do Global Atlas. A reconciliação está registrada em
+[DAY_20_ROADMAP_RECONCILIATION.md](engineering/DAY_20_ROADMAP_RECONCILIATION.md).
 
 ### Adendo documental do Dia 18.1
 

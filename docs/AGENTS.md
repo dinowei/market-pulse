@@ -39,6 +39,8 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Reconciliação visual Particle Atlas do Dia 18.1: [PARTICLE_ATLAS_VISUAL_RECONCILIATION_DAY_18_1.md](design/PARTICLE_ATLAS_VISUAL_RECONCILIATION_DAY_18_1.md)
 - Autenticação e sessões do Dia 18: [AUTH_SESSIONS_DAY_18.md](security/AUTH_SESSIONS_DAY_18.md)
 - Watchlists e favoritos do Dia 19: [WATCHLISTS_DAY_19.md](product/WATCHLISTS_DAY_19.md)
+- Carteiras informativas do Dia 20: [PORTFOLIOS_DAY_20.md](product/PORTFOLIOS_DAY_20.md)
+- Reconciliação do roadmap do Dia 20: [DAY_20_ROADMAP_RECONCILIATION.md](engineering/DAY_20_ROADMAP_RECONCILIATION.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.
