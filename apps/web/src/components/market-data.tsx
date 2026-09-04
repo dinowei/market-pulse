@@ -3,6 +3,7 @@
 import type { components } from "../generated/api";
 import { useEffect, useState } from "react";
 import { ParticleChart } from "./particle-chart";
+import { MorningCallPanel } from "./morning-call";
 
 type PublicQuote = components["schemas"]["PublicQuote"];
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
@@ -146,7 +147,7 @@ export function TerminalShell() {
   return <div className="terminal-root" data-theme={theme}>
     <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#dashboard">Dashboard</a><a href="#assets">Ações</a><a href="#assets">ETFs</a><a href="#assets">FIIs</a><a href="#assets">Fundos</a><a href="#portfolios">Carteiras</a><a href="#morning-call">Morning Call</a></nav><button type="button" className="theme-toggle" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label={`Mudar para tema ${theme === "dark" ? "claro" : "escuro"}`}>Tema {theme === "dark" ? "claro" : "escuro"}</button></header>
     <div className="terminal-grid">
-      <aside className="left-rail" aria-label="Contexto operacional"><section id="morning-call"><p className="eyebrow">MORNING CALL</p><h2>Resumo operacional</h2><p className="muted">Conteúdo editorial indisponível neste ambiente.</p><span className="state-label">UNAVAILABLE · DEMO</span></section><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p></section></aside>
+      <aside className="left-rail" aria-label="Contexto operacional"><MorningCallPanel /><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE · DEMO</span></section></aside>
       <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} /></div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <><ParticleChart series={history} /><AccessibleDataTable points={history.points} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}<p className="comparison-note">Comparação multissérie aguardando contrato com benchmark; nenhuma série foi inventada.</p></section></main>
       <AssetContextPanel quote={quote} loading={quoteLoading} error={quoteError} selectedId={selectedCanonicalId} />
     </div>

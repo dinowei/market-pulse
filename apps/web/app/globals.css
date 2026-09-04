@@ -170,4 +170,12 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .portfolio-metrics dt { color: var(--pa-text-secondary); font-size: .7rem; }
 .portfolio-metrics dd { font-size: 1.05rem; font-variant-numeric: tabular-nums; margin: .25rem 0 0; }
 .equity-chart { background: var(--pa-bg-canvas); border: 1px dashed var(--pa-border-hairline); color: var(--pa-market-flat); display: block; height: 10rem; margin: 1rem 0; width: 100%; }
+.morning-call-panel { border-bottom: 1px solid var(--pa-border-hairline); padding-bottom: 1rem; }
+.morning-call-panel h3 { font-size: 1rem; margin: .6rem 0 .3rem; }
+.editorial-status { color: var(--pa-market-flat); font-size: .7rem; letter-spacing: .08em; }
+.editorial-blocks { display: grid; gap: .7rem; margin-top: .8rem; }
+.editorial-block { border-left: 2px solid var(--pa-border-hairline); padding-left: .7rem; }
+.editorial-block p { margin: .2rem 0; }
+.editorial-sources { color: var(--pa-text-secondary); font-size: .72rem; margin: .5rem 0 0; padding-left: 1rem; }
+.editorial-sources a { color: var(--pa-market-flat); }
 @media (max-width: 700px) { .portfolios-header { display: block; } .portfolios-back { display: inline-block; margin-top: .5rem; } .portfolios-toolbar, .portfolio-summary-grid { grid-template-columns: 1fr; } .portfolio-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
