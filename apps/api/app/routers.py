@@ -24,11 +24,13 @@ from app.auth.service import (
 )
 from app.contracts import (
     AuthUserResponse,
+    EquityCurveResponse,
     HistoryPeriod,
     InstrumentList,
     InstrumentSummary,
     LoginRequest,
     PageMeta,
+    PerformanceDecompositionResponse,
     PortfolioCashBalanceResponse,
     PortfolioCreateRequest,
     PortfolioEventAccepted,
@@ -37,9 +39,11 @@ from app.contracts import (
     PortfolioEventResponse,
     PortfolioListResponse,
     PortfolioPatchRequest,
+    PortfolioPerformanceResponse,
     PortfolioPositionResponse,
     PortfolioResponse,
     PortfolioSummaryResponse,
+    PortfolioValuationResponse,
     PublicHistorySeries,
     PublicQuote,
     RegisterRequest,
@@ -67,6 +71,7 @@ from app.market_data.refresh_application import (
     RefreshBatchResponse,
     refresh_market_data,
 )
+from app.portfolios.performance import PortfolioPerformanceService
 from app.portfolios.service import (
     PortfolioConflict,
     PortfolioNotFound,
@@ -94,6 +99,10 @@ def get_watchlist_service() -> PostgresWatchlistService:
 
 def get_portfolio_service() -> PortfolioService:
     return PostgresPortfolioService()
+
+
+def get_portfolio_performance_service() -> PortfolioPerformanceService:
+    return PortfolioPerformanceService(PostgresPortfolioService())
 
 
 def _client_ip(request: Request) -> str:
@@ -648,6 +657,70 @@ def reverse_portfolio_event(
             request_id_for(request),
         )
     except (PortfolioNotFound, PortfolioConflict, PortfolioValidationError) as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/valuation",
+    response_model=PortfolioValuationResponse,
+    tags=["portfolio-performance"],
+)
+def portfolio_valuation(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioPerformanceService = Depends(get_portfolio_performance_service),
+) -> PortfolioValuationResponse:
+    try:
+        return service.valuation_response(current_user.id, portfolio_id)
+    except PortfolioNotFound as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/performance",
+    response_model=PortfolioPerformanceResponse,
+    tags=["portfolio-performance"],
+)
+def portfolio_performance(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioPerformanceService = Depends(get_portfolio_performance_service),
+) -> PortfolioPerformanceResponse:
+    try:
+        return service.performance_response(current_user.id, portfolio_id)
+    except PortfolioNotFound as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/equity-curve",
+    response_model=EquityCurveResponse,
+    tags=["portfolio-performance"],
+)
+def portfolio_equity_curve(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioPerformanceService = Depends(get_portfolio_performance_service),
+) -> EquityCurveResponse:
+    try:
+        return service.equity_curve_response(current_user.id, portfolio_id)
+    except PortfolioNotFound as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/performance/decomposition",
+    response_model=PerformanceDecompositionResponse,
+    tags=["portfolio-performance"],
+)
+def portfolio_performance_decomposition(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioPerformanceService = Depends(get_portfolio_performance_service),
+) -> PerformanceDecompositionResponse:
+    try:
+        return service.decomposition_response(current_user.id, portfolio_id)
+    except PortfolioNotFound as exc:
         raise _portfolio_error(exc) from exc
 
 

@@ -438,6 +438,101 @@ class PortfolioSummaryResponse(StrictModel):
     last_event_at: datetime | None = None
 
 
+class PerformanceStatus(StrEnum):
+    COMPLETE = "COMPLETE"
+    PARTIAL = "PARTIAL"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class PerformanceProvenance(StrictModel):
+    provider: str
+    dataset: str
+    source: str
+    data_level: DataLevel
+    freshness: Freshness
+    source_timestamp: datetime
+    collected_at: datetime
+    latency_ms: int | None = Field(default=None, ge=0)
+    limitations: tuple[str, ...] = ()
+
+
+class PortfolioValuationPositionResponse(StrictModel):
+    canonical_id: str
+    quantity: Decimal
+    currency: str = Field(pattern="^[A-Z]{3}$")
+    remaining_cost_basis: Decimal
+    weighted_average_cost: Decimal
+    price: Decimal | None = None
+    market_value_native: Decimal | None = None
+    market_value_base: Decimal | None = None
+    unrealized_pnl: Decimal | None = None
+    fx_rate: Decimal | None = None
+    status: PerformanceStatus
+    missing_inputs: tuple[str, ...] = ()
+
+
+class PortfolioValuationResponse(StrictModel):
+    portfolio_id: str
+    base_currency: str = Field(pattern="^[A-Z]{3}$")
+    as_of: datetime
+    cash_value_base: Decimal | None
+    positions_value_base: Decimal | None
+    total_value_base: Decimal | None
+    realized_pnl: Decimal | None
+    unrealized_pnl: Decimal | None
+    status: PerformanceStatus
+    missing_inputs: tuple[str, ...] = ()
+    methodology: str
+    provenance: tuple[PerformanceProvenance, ...] = ()
+    positions: list[PortfolioValuationPositionResponse]
+
+
+class EquityCurvePointResponse(StrictModel):
+    valuation_date: date
+    total_value_base: Decimal | None
+    cash_value_base: Decimal | None
+    positions_value_base: Decimal | None
+    data_level: DataLevel
+    freshness: Freshness
+    valuation_status: PerformanceStatus
+    missing_inputs: tuple[str, ...] = ()
+
+
+class EquityCurveResponse(StrictModel):
+    portfolio_id: str
+    base_currency: str = Field(pattern="^[A-Z]{3}$")
+    methodology: str
+    points: list[EquityCurvePointResponse]
+    provenance: tuple[PerformanceProvenance, ...] = ()
+
+
+class PerformanceDecompositionResponse(StrictModel):
+    portfolio_id: str
+    base_currency: str = Field(pattern="^[A-Z]{3}$")
+    price_effect: Decimal | None
+    fx_effect: Decimal | None
+    cash_flow_effect: Decimal | None
+    fees_effect: Decimal | None
+    income_effect: Decimal | None
+    unclassified_or_unavailable: Decimal | None
+    status: PerformanceStatus
+    methodology: str
+    missing_inputs: tuple[str, ...] = ()
+    provenance: tuple[PerformanceProvenance, ...] = ()
+
+
+class PortfolioPerformanceResponse(StrictModel):
+    portfolio_id: str
+    base_currency: str = Field(pattern="^[A-Z]{3}$")
+    realized_pnl: Decimal | None
+    unrealized_pnl: Decimal | None
+    twr: Decimal | None
+    status: PerformanceStatus
+    methodology: str
+    missing_inputs: tuple[str, ...] = ()
+    provenance: tuple[PerformanceProvenance, ...] = ()
+
+
 class PortfolioEventAccepted(StrictModel):
     status: str = "accepted"
     idempotency_key: str
