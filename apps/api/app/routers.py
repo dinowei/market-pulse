@@ -24,8 +24,14 @@ from app.auth.service import (
 )
 from app.contracts import (
     AuthUserResponse,
+    EditorialAdminPostListResponse,
+    EditorialAdminPostResponse,
+    EditorialPostCreateRequest,
     EditorialPostListResponse,
     EditorialPostResponse,
+    EditorialRole,
+    EditorialValidationResponse,
+    EditorialVersionCreateRequest,
     EquityCurveResponse,
     HistoryPeriod,
     InstrumentList,
@@ -60,7 +66,7 @@ from app.contracts import (
 )
 from app.core.config import get_settings
 from app.editorial.service import InMemoryEditorialService, PostgresEditorialService
-from app.editorial.validator import EditorialStatus
+from app.editorial.validator import EditorialStatus, validate_editorial_blocks
 from app.errors import request_id as request_id_for
 from app.instruments.catalog import (
     CatalogStatus,
@@ -171,6 +177,22 @@ def get_current_user(
         return service.me(session_token)
     except (AuthInvalid, AuthUnavailable) as exc:
         raise _auth_error(request, exc) from exc
+
+
+def get_editorial_role(
+    current_user: AuthUserResponse = Depends(get_current_user),
+) -> str:
+    try:
+        with psycopg.connect(get_settings().database_url) as conn:
+            row = conn.execute("SELECT role FROM users WHERE id=%s", (current_user.id,)).fetchone()
+        return str(row[0]) if row and row[0] else EditorialRole.USER.value
+    except Exception:
+        return EditorialRole.USER.value
+
+
+def _require_editorial_role(role: str, *allowed: EditorialRole) -> None:
+    if role not in {item.value for item in allowed}:
+        raise HTTPException(status_code=403, detail="Editorial permission required")
 
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT, tags=["auth"])
@@ -789,6 +811,7 @@ def _editorial_response(post) -> EditorialPostResponse:
         slug=post.slug,
         title=post.title,
         summary=post.summary,
+        content_date=post.content_date,
         blocks=post.blocks,
         status=post.status,
         version=post.version,
@@ -831,3 +854,258 @@ def get_editorial_post(
     service: InMemoryEditorialService = Depends(get_editorial_service),
 ) -> EditorialPostResponse:
     return _editorial_response(service.get_published(slug))
+
+
+def _admin_response(post) -> EditorialAdminPostResponse:
+    return EditorialAdminPostResponse(
+        id=post.id,
+        slug=post.slug,
+        title=post.title,
+        summary=post.summary,
+        content_date=post.content_date,
+        blocks=post.blocks,
+        status=post.status,
+        version=post.version,
+        created_at=post.created_at,
+        published_at=post.published_at,
+    )
+
+
+@router.get(
+    "/editorial/admin/posts",
+    response_model=EditorialAdminPostListResponse,
+    tags=["editorial-admin"],
+)
+def admin_list_editorial_posts(
+    current_user: AuthUserResponse = Depends(get_current_user),
+    role: str = Depends(get_editorial_role),
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialAdminPostListResponse:
+    _require_editorial_role(role, EditorialRole.EDITOR, EditorialRole.REVIEWER, EditorialRole.ADMIN)
+    return EditorialAdminPostListResponse(
+        items=[_admin_response(post) for post in service.list_admin()]
+    )
+
+
+@router.post(
+    "/editorial/admin/posts",
+    response_model=EditorialAdminPostResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["editorial-admin"],
+)
+def admin_create_editorial_post(
+    payload: EditorialPostCreateRequest,
+    request: Request,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    role: str = Depends(get_editorial_role),
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialAdminPostResponse:
+    _require_editorial_role(role, EditorialRole.EDITOR, EditorialRole.ADMIN)
+    try:
+        return _admin_response(
+            service.create_draft(
+                slug=payload.slug,
+                title=payload.title,
+                summary=payload.summary,
+                blocks=payload.blocks,
+                content_date=payload.content_date,
+                created_by_user_id=current_user.id,
+            )
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get(
+    "/editorial/admin/posts/{post_id}",
+    response_model=EditorialAdminPostResponse,
+    tags=["editorial-admin"],
+)
+def admin_get_editorial_post(
+    post_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    role: str = Depends(get_editorial_role),
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialAdminPostResponse:
+    _require_editorial_role(role, EditorialRole.EDITOR, EditorialRole.REVIEWER, EditorialRole.ADMIN)
+    try:
+        return _admin_response(service.get_by_id(post_id))
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Editorial post not found") from exc
+
+
+@router.post(
+    "/editorial/admin/posts/{post_id}/versions",
+    response_model=EditorialAdminPostResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["editorial-admin"],
+)
+def admin_add_editorial_version(
+    post_id: str,
+    payload: EditorialVersionCreateRequest,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    role: str = Depends(get_editorial_role),
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialAdminPostResponse:
+    _require_editorial_role(role, EditorialRole.EDITOR, EditorialRole.ADMIN)
+    try:
+        return _admin_response(
+            service.add_version(
+                post_id,
+                title=payload.title,
+                summary=payload.summary,
+                blocks=payload.blocks,
+                content_date=payload.content_date,
+            )
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Editorial post not found") from exc
+
+
+@router.post(
+    "/editorial/admin/posts/{post_id}/validate",
+    response_model=EditorialValidationResponse,
+    tags=["editorial-admin"],
+)
+def admin_validate_editorial_post(
+    post_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    role: str = Depends(get_editorial_role),
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialValidationResponse:
+    _require_editorial_role(role, EditorialRole.EDITOR, EditorialRole.REVIEWER, EditorialRole.ADMIN)
+    try:
+        post = service.get_by_id(post_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Editorial post not found") from exc
+    report = validate_editorial_blocks(post.blocks)
+    return EditorialValidationResponse(
+        valid=report.valid,
+        violations=tuple(item.model_dump() for item in report.violations),
+    )
+
+
+def _admin_transition(
+    post_id: str,
+    target: EditorialStatus,
+    role: str,
+    service: InMemoryEditorialService,
+    current_user: AuthUserResponse,
+    request: Request,
+) -> EditorialAdminPostResponse:
+    allowed = {
+        EditorialStatus.UNDER_REVIEW: (EditorialRole.EDITOR, EditorialRole.ADMIN),
+        EditorialStatus.APPROVED: (EditorialRole.REVIEWER, EditorialRole.ADMIN),
+        EditorialStatus.PUBLISHED: (EditorialRole.REVIEWER, EditorialRole.ADMIN),
+        EditorialStatus.ARCHIVED: (EditorialRole.REVIEWER, EditorialRole.ADMIN),
+    }
+    _require_editorial_role(role, *allowed[target])
+    try:
+        return _admin_response(
+            service.transition_by_id(
+                post_id,
+                target,
+                actor_user_id=current_user.id,
+                request_id=request_id_for(request),
+            )
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Editorial post not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post(
+    "/editorial/admin/posts/{post_id}/submit-review",
+    response_model=EditorialAdminPostResponse,
+    tags=["editorial-admin"],
+)
+def admin_submit_review(
+    post_id: str,
+    request: Request,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    role: str = Depends(get_editorial_role),
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialAdminPostResponse:
+    return _admin_transition(
+        post_id, EditorialStatus.UNDER_REVIEW, role, service, current_user, request
+    )
+
+
+@router.post(
+    "/editorial/admin/posts/{post_id}/approve",
+    response_model=EditorialAdminPostResponse,
+    tags=["editorial-admin"],
+)
+def admin_approve(
+    post_id: str,
+    request: Request,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    role: str = Depends(get_editorial_role),
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialAdminPostResponse:
+    return _admin_transition(
+        post_id, EditorialStatus.APPROVED, role, service, current_user, request
+    )
+
+
+@router.post(
+    "/editorial/admin/posts/{post_id}/publish",
+    response_model=EditorialAdminPostResponse,
+    tags=["editorial-admin"],
+)
+def admin_publish(
+    post_id: str,
+    request: Request,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    role: str = Depends(get_editorial_role),
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialAdminPostResponse:
+    return _admin_transition(
+        post_id, EditorialStatus.PUBLISHED, role, service, current_user, request
+    )
+
+
+@router.post(
+    "/editorial/admin/posts/{post_id}/archive",
+    response_model=EditorialAdminPostResponse,
+    tags=["editorial-admin"],
+)
+def admin_archive(
+    post_id: str,
+    request: Request,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    role: str = Depends(get_editorial_role),
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialAdminPostResponse:
+    return _admin_transition(
+        post_id, EditorialStatus.ARCHIVED, role, service, current_user, request
+    )
+
+
+@router.get(
+    "/editorial/posts/{slug}/versions", response_model=EditorialPostListResponse, tags=["editorial"]
+)
+def public_editorial_versions(
+    slug: str, service: InMemoryEditorialService = Depends(get_editorial_service)
+) -> EditorialPostListResponse:
+    versions = service.public_versions(slug)
+    if not versions:
+        raise HTTPException(status_code=404, detail="Editorial post not found")
+    return EditorialPostListResponse(items=[_editorial_response(version) for version in versions])
+
+
+@router.get(
+    "/editorial/posts/{slug}/versions/{version_number}",
+    response_model=EditorialPostResponse,
+    tags=["editorial"],
+)
+def public_editorial_version(
+    slug: str,
+    version_number: int,
+    service: InMemoryEditorialService = Depends(get_editorial_service),
+) -> EditorialPostResponse:
+    version = next(
+        (item for item in service.public_versions(slug) if item.version == version_number), None
+    )
+    return _editorial_response(version)

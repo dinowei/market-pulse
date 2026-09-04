@@ -58,6 +58,7 @@ class EditorialPostResponse(StrictModel):
     slug: str
     title: str
     summary: str | None = None
+    content_date: date | None = None
     blocks: tuple[EditorialBlock, ...]
     status: EditorialStatus
     version: int = Field(ge=1)
@@ -67,6 +68,41 @@ class EditorialPostResponse(StrictModel):
 
 class EditorialPostListResponse(StrictModel):
     items: list[EditorialPostResponse]
+
+
+class EditorialAdminPostResponse(EditorialPostResponse):
+    published_at: datetime | None = None
+
+
+class EditorialAdminPostListResponse(StrictModel):
+    items: list[EditorialAdminPostResponse]
+
+
+class EditorialPostCreateRequest(StrictModel):
+    slug: str = Field(min_length=3, max_length=180, pattern=r"^[a-z0-9][a-z0-9-]*$")
+    title: str = Field(min_length=1, max_length=240)
+    summary: str | None = Field(default=None, max_length=2000)
+    content_date: date | None = None
+    blocks: tuple[EditorialBlock, ...] = ()
+
+
+class EditorialVersionCreateRequest(StrictModel):
+    title: str = Field(min_length=1, max_length=240)
+    summary: str | None = Field(default=None, max_length=2000)
+    content_date: date | None = None
+    blocks: tuple[EditorialBlock, ...] = ()
+
+
+class EditorialValidationResponse(StrictModel):
+    valid: bool
+    violations: tuple[dict[str, object], ...] = ()
+
+
+class EditorialRole(StrEnum):
+    USER = "USER"
+    EDITOR = "EDITOR"
+    REVIEWER = "REVIEWER"
+    ADMIN = "ADMIN"
 
 
 class RegisterRequest(StrictModel):
