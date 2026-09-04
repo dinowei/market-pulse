@@ -486,8 +486,12 @@ class PortfolioPerformanceService:
         points: list[EquityCurvePointResponse] = []
         provenance: tuple[PerformanceProvenance, ...] = ()
         for day in dates:
+            events_at_day = [item for item in events if item.occurred_at.date() <= day]
             result = calculate_valuation(
-                events, base_currency=portfolio.base_currency, prices=prices, fx_rates=fx
+                events_at_day,
+                base_currency=portfolio.base_currency,
+                prices=prices,
+                fx_rates=fx,
             )
             points.append(
                 EquityCurvePointResponse(

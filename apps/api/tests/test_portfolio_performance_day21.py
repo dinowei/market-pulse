@@ -5,7 +5,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 import app.routers as routers
-from app.contracts import AuthUserResponse, PortfolioCreateRequest
+from app.contracts import (
+    AuthUserResponse,
+    PortfolioCreateRequest,
+    PortfolioEventRequest,
+    PortfolioEventType,
+)
 from app.main import app
 from app.portfolios.performance import (
     FxMark,
@@ -195,3 +200,40 @@ def test_performance_routes_preserve_owner_isolation_and_401() -> None:
         app.dependency_overrides.pop(routers.get_portfolio_performance_service, None)
         app.dependency_overrides.pop(routers.get_current_user, None)
     assert TestClient(app).get(f"/api/v1/portfolios/{portfolio.id}/valuation").status_code == 401
+
+
+def test_equity_curve_does_not_project_future_ledger_events_backwards() -> None:
+    service = InMemoryPortfolioService()
+    owner = AuthUserResponse(id="owner-curve", email="curve@example.invalid", status="ACTIVE")
+    portfolio = service.create(owner.id, PortfolioCreateRequest(name="Curve", base_currency="BRL"))
+    service.add_event(
+        owner.id,
+        portfolio.id,
+        PortfolioEventRequest(
+            event_type=PortfolioEventType.CASH_DEPOSIT,
+            currency="BRL",
+            gross_amount=Decimal("1000"),
+            occurred_at=datetime(2026, 1, 1, tzinfo=UTC),
+        ),
+        "curve-deposit",
+        "curve-request",
+    )
+    service.add_event(
+        owner.id,
+        portfolio.id,
+        PortfolioEventRequest(
+            event_type=PortfolioEventType.BUY,
+            currency="BRL",
+            canonical_id="equity.br.b3.petr4",
+            quantity=Decimal("10"),
+            unit_price=Decimal("50"),
+            gross_amount=Decimal("500"),
+            occurred_at=datetime(2026, 1, 2, tzinfo=UTC),
+        ),
+        "curve-buy",
+        "curve-request-2",
+    )
+    points = (
+        PortfolioPerformanceService(service).equity_curve_response(owner.id, portfolio.id).points
+    )
+    assert points[0].total_value_base == Decimal("1000")
