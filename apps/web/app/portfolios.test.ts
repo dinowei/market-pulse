@@ -21,3 +21,10 @@ test("portfolio UI exposes ledger, cash and positions with accessible controls",
   }
   assert.doesNotMatch(source, /Canvas|WebGL|ParticleChart/);
 });
+
+test("portfolio UI exposes consolidated performance with honest states and table fallback", () => {
+  for (const marker of ["valuation", "performance", "equity-curve", "decomposition", "realized_pnl", "unrealized_pnl", "twr", "DEMO", "STALE", "UNAVAILABLE", "PARTIAL", "provenance", "fallback", "SVG"]) {
+    assert.match(source, new RegExp(marker, "i"));
+  }
+  assert.doesNotMatch(source, /recomendação|sugestão de compra|otimização/i);
+});
