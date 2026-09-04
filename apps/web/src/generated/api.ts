@@ -521,15 +521,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/morning-call": {
+    "/api/v1/editorial/morning-call/latest": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Morning Call */
-        get: operations["morning_call_api_v1_morning_call_get"];
+        /** Latest Morning Call */
+        get: operations["latest_morning_call_api_v1_editorial_morning_call_latest_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -538,15 +538,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/editorial": {
+    "/api/v1/editorial/posts": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Editorial */
-        get: operations["editorial_api_v1_editorial_get"];
+        /** List Editorial Posts */
+        get: operations["list_editorial_posts_api_v1_editorial_posts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/editorial/posts/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Editorial Post */
+        get: operations["get_editorial_post_api_v1_editorial_posts__slug__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -632,6 +649,73 @@ export interface components {
          * @enum {string}
          */
         DataLevel: "REAL_TIME" | "DELAYED" | "EOD" | "DEMO";
+        /** EditorialBlock */
+        EditorialBlock: {
+            content_type: components["schemas"]["EditorialBlockType"];
+            /** Text */
+            text: string;
+            /**
+             * Sources
+             * @default []
+             */
+            sources: components["schemas"]["EditorialSource"][];
+            /** Attribution */
+            attribution?: string | null;
+        };
+        /**
+         * EditorialBlockType
+         * @enum {string}
+         */
+        EditorialBlockType: "FACT" | "THIRD_PARTY_CONSENSUS" | "CONDITIONAL_SCENARIO" | "RISK" | "LIMITATION";
+        /** EditorialPostListResponse */
+        EditorialPostListResponse: {
+            /** Items */
+            items: components["schemas"]["EditorialPostResponse"][];
+        };
+        /** EditorialPostResponse */
+        EditorialPostResponse: {
+            /** Id */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary?: string | null;
+            /** Blocks */
+            blocks: components["schemas"]["EditorialBlock"][];
+            status: components["schemas"]["EditorialStatus"];
+            /** Version */
+            version: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+        };
+        /** EditorialSource */
+        EditorialSource: {
+            /** Label */
+            label: string;
+            /** Publisher */
+            publisher: string;
+            /** Url */
+            url?: string | null;
+            /** Retrieved At */
+            retrieved_at?: string | null;
+            /** Justification */
+            justification?: string | null;
+        };
+        /**
+         * EditorialStatus
+         * @enum {string}
+         */
+        EditorialStatus: "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "PUBLISHED" | "ARCHIVED";
         /** EquityCurvePointResponse */
         EquityCurvePointResponse: {
             /**
@@ -2562,7 +2646,7 @@ export interface operations {
             };
         };
     };
-    morning_call_api_v1_morning_call_get: {
+    latest_morning_call_api_v1_editorial_morning_call_latest_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2577,14 +2661,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown[];
-                    };
+                    "application/json": components["schemas"]["EditorialPostResponse"];
                 };
             };
         };
     };
-    editorial_api_v1_editorial_get: {
+    list_editorial_posts_api_v1_editorial_posts_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2599,9 +2681,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown[];
-                    };
+                    "application/json": components["schemas"]["EditorialPostListResponse"];
+                };
+            };
+        };
+    };
+    get_editorial_post_api_v1_editorial_posts__slug__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialPostResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
