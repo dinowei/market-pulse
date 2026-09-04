@@ -10,6 +10,10 @@ type PortfolioEvent = components["schemas"]["PortfolioEventResponse"];
 type PortfolioEventRequest = components["schemas"]["PortfolioEventRequest"];
 type PortfolioEventType = components["schemas"]["PortfolioEventType"];
 type PortfolioSummary = components["schemas"]["PortfolioSummaryResponse"];
+type PortfolioValuation = components["schemas"]["PortfolioValuationResponse"];
+type PortfolioPerformance = components["schemas"]["PortfolioPerformanceResponse"];
+type EquityCurve = components["schemas"]["EquityCurveResponse"];
+type PerformanceDecomposition = components["schemas"]["PerformanceDecompositionResponse"];
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 const eventTypes = ["CASH_DEPOSIT", "CASH_WITHDRAWAL", "BUY", "SELL", "FEE"] as const satisfies readonly PortfolioEventType[];
@@ -37,6 +41,10 @@ export function PortfoliosPanel() {
   const [selectedId, setSelectedId] = useState("");
   const [summary, setSummary] = useState<PortfolioSummary>();
   const [events, setEvents] = useState<PortfolioEvent[]>([]);
+  const [valuation, setValuation] = useState<PortfolioValuation>();
+  const [performance, setPerformance] = useState<PortfolioPerformance>();
+  const [equityCurve, setEquityCurve] = useState<EquityCurve>();
+  const [decomposition, setDecomposition] = useState<PerformanceDecomposition>();
   const [name, setName] = useState("");
   const [baseCurrency, setBaseCurrency] = useState("BRL");
   const [eventType, setEventType] = useState<PortfolioEventType>("CASH_DEPOSIT");
@@ -52,12 +60,20 @@ export function PortfoliosPanel() {
   const loadDetails = useCallback(async (portfolioId: string) => {
     if (!portfolioId) return;
     try {
-      const [nextSummary, nextEvents] = await Promise.all([
+      const [nextSummary, nextEvents, nextValuation, nextPerformance, nextCurve, nextDecomposition] = await Promise.all([
         requestJson<PortfolioSummary>(`/api/v1/portfolios/${portfolioId}/summary`),
         requestJson<PortfolioEvent[]>(`/api/v1/portfolios/${portfolioId}/events`),
+        requestJson<PortfolioValuation>(`/api/v1/portfolios/${portfolioId}/valuation`),
+        requestJson<PortfolioPerformance>(`/api/v1/portfolios/${portfolioId}/performance`),
+        requestJson<EquityCurve>(`/api/v1/portfolios/${portfolioId}/equity-curve`),
+        requestJson<PerformanceDecomposition>(`/api/v1/portfolios/${portfolioId}/performance/decomposition`),
       ]);
       setSummary(nextSummary);
       setEvents(nextEvents);
+      setValuation(nextValuation);
+      setPerformance(nextPerformance);
+      setEquityCurve(nextCurve);
+      setDecomposition(nextDecomposition);
     } catch (reason) {
       if (isSignedOut(reason)) setSignedOut(true);
       else setError("Não foi possível carregar os detalhes da carteira.");
@@ -88,10 +104,18 @@ export function PortfoliosPanel() {
     Promise.all([
       requestJson<PortfolioSummary>(`/api/v1/portfolios/${selectedId}/summary`),
       requestJson<PortfolioEvent[]>(`/api/v1/portfolios/${selectedId}/events`),
-    ]).then(([nextSummary, nextEvents]) => {
+      requestJson<PortfolioValuation>(`/api/v1/portfolios/${selectedId}/valuation`),
+      requestJson<PortfolioPerformance>(`/api/v1/portfolios/${selectedId}/performance`),
+      requestJson<EquityCurve>(`/api/v1/portfolios/${selectedId}/equity-curve`),
+      requestJson<PerformanceDecomposition>(`/api/v1/portfolios/${selectedId}/performance/decomposition`),
+    ]).then(([nextSummary, nextEvents, nextValuation, nextPerformance, nextCurve, nextDecomposition]) => {
       if (!active) return;
       setSummary(nextSummary);
       setEvents(nextEvents);
+      setValuation(nextValuation);
+      setPerformance(nextPerformance);
+      setEquityCurve(nextCurve);
+      setDecomposition(nextDecomposition);
     }).catch((reason) => {
       if (!active) return;
       if (isSignedOut(reason)) setSignedOut(true);
@@ -141,13 +165,13 @@ export function PortfoliosPanel() {
 
   return <main className="portfolios-page terminal-root" data-theme="dark">
     <header className="portfolios-header"><div><p className="eyebrow">PARTICLE ATLAS / ÁREA PRIVADA</p><h1 id="portfolios-title">Carteiras informativas</h1></div><Link href="/" className="portfolios-back">Voltar ao terminal</Link></header>
-    <p className="portfolios-disclaimer">Esta carteira mostra eventos, caixa, posições e custo médio. Performance, P&amp;L, valuation e TWR entram na próxima etapa.</p>
+    <p className="portfolios-disclaimer">Esta carteira mostra eventos, caixa, posições, valuation, P&amp;L e TWR factuais, sempre acompanhados de metodologia. Estados possíveis: DEMO, STALE, PARTIAL e UNAVAILABLE.</p>
     {error && <p className="state-note" role="alert">{error}</p>}
     <section className="portfolios-toolbar" aria-label="Controles de carteira">
       <form onSubmit={createPortfolio} className="portfolio-form"><label htmlFor="portfolio-name">Nova carteira</label><div className="portfolio-form-row"><input id="portfolio-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome da carteira" /><select aria-label="Moeda base" value={baseCurrency} onChange={(event) => setBaseCurrency(event.target.value)}><option>BRL</option><option>USD</option></select><button type="submit">Criar</button></div></form>
       <form onSubmit={createEvent} className="portfolio-form"><label htmlFor="portfolio-event-type">Registrar evento manual</label><div className="portfolio-form-grid"><select id="portfolio-event-type" value={eventType} onChange={(event) => setEventType(event.target.value as PortfolioEventType)}>{eventTypes.map((type) => <option key={type}>{type}</option>)}</select><input aria-label="Moeda do evento" value={currency} onChange={(event) => setCurrency(event.target.value.toUpperCase())} maxLength={3} /><input aria-label="Canonical ID do ativo" value={canonicalId} onChange={(event) => setCanonicalId(event.target.value)} placeholder="canonical_id (BUY/SELL)" /><input aria-label="Quantidade" value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="Quantidade" inputMode="decimal" /><input aria-label="Preço unitário" value={unitPrice} onChange={(event) => setUnitPrice(event.target.value)} placeholder="Preço unitário" inputMode="decimal" /><input aria-label="Valor bruto" value={grossAmount} onChange={(event) => setGrossAmount(event.target.value)} placeholder="Valor bruto" inputMode="decimal" /><button type="submit" disabled={!selectedId}>Registrar</button></div></form>
     </section>
     {portfolios.length === 0 && <section className="portfolios-card"><p className="muted">Nenhuma carteira criada ainda.</p></section>}
-    {portfolios.length > 0 && <><section className="portfolio-selector" aria-label="Selecionar carteira"><label htmlFor="portfolio-select">Carteira</label><select id="portfolio-select" value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>{portfolios.map((portfolio) => <option key={portfolio.id} value={portfolio.id}>{portfolio.name} · {portfolio.base_currency}</option>)}</select></section><section className="portfolio-summary-grid"><div className="portfolios-card"><h2>Caixa por moeda</h2><table><caption>Saldos reconstruídos do ledger</caption><thead><tr><th scope="col">Moeda</th><th scope="col">Saldo</th></tr></thead><tbody>{Object.entries(summary?.cash_balances ?? {}).map(([key, value]) => <tr key={key}><th scope="row">{key}</th><td>{value}</td></tr>)}</tbody></table></div><div className="portfolios-card"><h2>Posições atuais</h2><table><caption>Quantidade e custo médio ponderado</caption><thead><tr><th scope="col">Ativo</th><th scope="col">Quantidade</th><th scope="col">Custo médio</th></tr></thead><tbody>{(summary?.positions ?? []).map((position) => <tr key={position.canonical_id}><th scope="row">{position.canonical_id}</th><td>{position.quantity}</td><td>{position.weighted_average_cost}</td></tr>)}</tbody></table></div></section><section className="portfolios-card"><h2>Ledger append-only</h2><table><caption>Eventos manuais, ordenados por ocorrência</caption><thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Ativo</th><th scope="col">Moeda</th><th scope="col">Valor</th></tr></thead><tbody>{events.map((item) => <tr key={item.id}><th scope="row">{item.occurred_at}</th><td>{item.event_type}</td><td>{item.canonical_id ?? "—"}</td><td>{item.currency}</td><td>{item.gross_amount ?? item.unit_price ?? "—"}</td></tr>)}</tbody></table></section></>}
+    {portfolios.length > 0 && <><section className="portfolio-selector" aria-label="Selecionar carteira"><label htmlFor="portfolio-select">Carteira</label><select id="portfolio-select" value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>{portfolios.map((portfolio) => <option key={portfolio.id} value={portfolio.id}>{portfolio.name} · {portfolio.base_currency}</option>)}</select></section><section className="portfolio-summary-grid"><div className="portfolios-card"><h2>Resumo factual</h2><dl className="portfolio-metrics"><div><dt>Patrimônio em {valuation?.base_currency ?? "moeda-base"}</dt><dd>{valuation?.total_value_base ?? "UNAVAILABLE"}</dd></div><div><dt>P&amp;L realizado</dt><dd>{performance?.realized_pnl ?? "UNAVAILABLE"}</dd></div><div><dt>P&amp;L não realizado</dt><dd>{performance?.unrealized_pnl ?? "UNAVAILABLE"}</dd></div><div><dt>TWR</dt><dd>{performance?.twr ?? "UNAVAILABLE"}</dd></div></dl><p className="state-note">Estado: {performance?.status ?? "UNAVAILABLE"}. Metodologia: {performance?.methodology ?? "sem dados"}</p><p className="state-note">Proveniência: {valuation?.provenance.map((item) => `${item.provider}/${item.dataset} · ${item.data_level}/${item.freshness} · fonte ${item.source_timestamp} · coleta ${item.collected_at}`).join("; ") || "UNAVAILABLE"}</p></div><div className="portfolios-card"><h2>Caixa por moeda</h2><table><caption>Saldos reconstruídos do ledger</caption><thead><tr><th scope="col">Moeda</th><th scope="col">Saldo</th></tr></thead><tbody>{Object.entries(summary?.cash_balances ?? {}).map(([key, value]) => <tr key={key}><th scope="row">{key}</th><td>{value}</td></tr>)}</tbody></table></div></section><section className="portfolios-card"><h2>Evolução patrimonial</h2><p className="muted">Gráfico SVG leve; pontos ausentes permanecem indisponíveis.</p><svg className="equity-chart" viewBox="0 0 600 160" role="img" aria-label="Evolução patrimonial da carteira"><polyline points={(equityCurve?.points ?? []).map((point, index) => `${index * 100},${point.total_value_base ? 140 - index * 20 : 150}`).join(" ")} fill="none" stroke="currentColor" strokeWidth="2" /></svg><table><caption>Fallback tabular da equity curve</caption><thead><tr><th scope="col">Data</th><th scope="col">Patrimônio</th><th scope="col">Estado</th><th scope="col">Dados ausentes</th></tr></thead><tbody>{(equityCurve?.points ?? []).map((point) => <tr key={point.valuation_date}><th scope="row">{point.valuation_date}</th><td>{point.total_value_base ?? "UNAVAILABLE"}</td><td>{point.valuation_status} / {point.freshness}</td><td>{point.missing_inputs.join(", ") || "—"}</td></tr>)}</tbody></table></section><section className="portfolio-summary-grid"><div className="portfolios-card"><h2>Posições atuais</h2><table><caption>Quantidade, custo médio, valor e P&amp;L</caption><thead><tr><th scope="col">Ativo</th><th scope="col">Quantidade</th><th scope="col">Custo médio</th><th scope="col">Valor atual</th><th scope="col">P&amp;L</th></tr></thead><tbody>{(valuation?.positions ?? []).map((position) => <tr key={position.canonical_id}><th scope="row">{position.canonical_id}</th><td>{position.quantity}</td><td>{position.weighted_average_cost}</td><td>{position.market_value_base ?? "UNAVAILABLE"}</td><td>{position.unrealized_pnl ?? "UNAVAILABLE"}</td></tr>)}</tbody></table></div><div className="portfolios-card"><h2>Decomposição de impactos</h2><dl className="portfolio-metrics"><div><dt>Preço</dt><dd>{decomposition?.price_effect ?? "UNAVAILABLE"}</dd></div><div><dt>FX</dt><dd>{decomposition?.fx_effect ?? "UNAVAILABLE"}</dd></div><div><dt>Fluxo de caixa</dt><dd>{decomposition?.cash_flow_effect ?? "UNAVAILABLE"}</dd></div><div><dt>Taxas</dt><dd>{decomposition?.fees_effect ?? "UNAVAILABLE"}</dd></div><div><dt>Indisponível/não classificado</dt><dd>{decomposition?.unclassified_or_unavailable ?? "UNAVAILABLE"}</dd></div></dl><p className="state-note">Fonte e limitações: {decomposition?.provenance.map((item) => `${item.provider}/${item.dataset} (${item.data_level}/${item.freshness})`).join("; ") || "UNAVAILABLE"}</p></div></section><section className="portfolios-card"><h2>Ledger append-only</h2><table><caption>Eventos manuais, ordenados por ocorrência</caption><thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Ativo</th><th scope="col">Moeda</th><th scope="col">Valor</th></tr></thead><tbody>{events.map((item) => <tr key={item.id}><th scope="row">{item.occurred_at}</th><td>{item.event_type}</td><td>{item.canonical_id ?? "—"}</td><td>{item.currency}</td><td>{item.gross_amount ?? item.unit_price ?? "—"}</td></tr>)}</tbody></table></section></>}
   </main>;
 }
