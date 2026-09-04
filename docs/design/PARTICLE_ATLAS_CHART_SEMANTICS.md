@@ -30,9 +30,17 @@ exibível ou metodologicamente correto; apenas desenha o contrato aprovado.
 leve, open source sob Apache 2.0, baseada em Canvas HTML5 e adequada a linhas,
 áreas, barras, candles e histogramas. A adoção exige validação de licença,
 bundle, acessibilidade e uma ADR própria; não autoriza provider nem dado real.
-HTML/CSS/SVG continuam padrão para UI e equivalentes acessíveis. Canvas 2D
-exige justificativa de densidade/performance; WebGL/Three.js permanece P1,
-feature-flagged, apenas para visualizações 3D reais.
+HTML/CSS/SVG continuam padrão para UI, gráficos simples, acessibilidade e
+estados P0 leves. Canvas 2D é recomendado quando densidade, volume de pontos,
+partículas, animações ou transições justificarem a escolha, sempre com medição e
+equivalente acessível. Os gráficos SVG P0 existentes não devem ser reescritos
+sem evidência de ganho. WebGL/Three.js permanece P1, feature-flagged, apenas
+para visualizações 3D/Global Atlas avançadas.
+
+Dataism é somente uma referência para transições de troca de ativo, período,
+refresh, navegação e futura revalorização de carteira. Nunca representa preço,
+tick, previsão ou volatilidade; não pode bloquear números nem continuar ativa
+com `prefers-reduced-motion`.
 
 ## Semântica de cores
 
@@ -52,6 +60,9 @@ codificação de direção também usa texto, sinal, ícone, forma ou padrão. U
 paleta alternativa azul/laranja pode ser oferecida futuramente, sem retirar os
 rótulos textuais nem mudar o significado financeiro. Contraste deve atender
 WCAG 2.2 AA.
+
+`FRESH` aparece em texto e provenance, sem uma cor de alerta própria. `STALE`,
+`DEMO` e `UNAVAILABLE` exigem rótulo visual claro e explicação textual.
 
 ## Janelas curtas e intraday
 

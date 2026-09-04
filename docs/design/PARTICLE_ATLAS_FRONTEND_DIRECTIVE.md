@@ -15,6 +15,16 @@ Leia esta diretriz integralmente antes de planejar, revisar ou modificar `apps/w
 
 Para tarefas fora desses gatilhos, esta diretriz não amplia o escopo autorizado.
 
+### Estado real após o Dia 19
+
+Este documento é uma diretriz permanente de design do Market Pulse. Ele nasceu
+no Dia 1 como especificação visual, mas deve ser lido conforme o estado atual do
+projeto: já existem shell Particle Atlas, temas escuro/claro, gráfico P0 em SVG,
+autenticação, sessões opacas, watchlists e favoritos privados. Ainda não existem
+provider real, dado real, carteira, P&L ou TWR implementados. A nota
+[Reconciliação visual do Dia 18.1](PARTICLE_ATLAS_VISUAL_RECONCILIATION_DAY_18_1.md)
+registra esta atualização documental.
+
 ## 2. Ordem de precedência
 
 Em conflito, prevalecem: política financeira, segurança, privacidade e licença; `PROJECT_SPEC.md` e `ROADMAP_30_DAYS.md`; ADRs aceitas; OpenAPI e comportamento comprovado do backend; esta diretriz; orientações complementares de Cláudio; imagens de referência apenas como inspiração. Não escolha silenciosamente: registre fonte, conflito, impacto e opção segura e peça decisão humana.
@@ -24,6 +34,12 @@ Em conflito, prevalecem: política financeira, segurança, privacidade e licenç
 O Market Pulse organiza dados de mercado, histórico, contexto e carteiras próprias para que o usuário compreenda o que aconteceu com ativos suportados. Pode exibir preços, históricos, variações, índices, ETFs, FIIs, fundos autorizados, benchmarks, patrimônio, P&L, proventos, performance factual, eventos permitidos e Morning Call factual.
 
 Carteiras são registros informativos próprios. O produto não faz gestão de carteira, recomendação, suitability, execução, alocação sugerida ou promessa de retorno.
+
+Carteiras pessoais são P0 do beta, mas ainda serão implementadas em dias
+posteriores. Quando entrarem, o gráfico representará dinheiro real do usuário,
+com preço médio ponderado, moeda de consolidação documentada para carteiras
+BR/US, FX utilizado, provenance completa e marcadores somente para eventos reais
+do ledger. A tabela equivalente será obrigatória.
 
 ## 4. Fronteira financeira permanente
 
@@ -72,6 +88,10 @@ Tokens iniciais, sujeitos a WCAG 2.2 AA:
 | `--status-unavailable` | `#6B7280` | indisponível |
 
 `UP` usa verde + sinal/texto/seta; `DOWN` vermelho + sinal/texto/seta; `FLAT` azul + zero/traço/texto. `FRESH` é neutro e textual. Cor nunca é a única forma de comunicação. Não existe token dourado.
+
+Logos de empresas, fundos, gestoras ou corretoras só podem ser usados com fonte
+e licença aprovadas, registradas por origem e finalidade. Até lá, use monograma,
+ticker ou placeholder textual.
 
 ## 9. Direção e hierarquia dos valores
 
@@ -149,7 +169,21 @@ Cada gráfico separa verdade (séries, valores, escalas, timestamps e eventos), 
 
 ## 18. Renderização, movimento e desempenho
 
-HTML/CSS são padrão; SVG serve eixos, labels e séries moderadas; Canvas 2D exige densidade/performance medida e equivalente acessível; WebGL/Three.js é P1, feature flag, lazy load e fallback. P0 nunca depende de WebGL.
+HTML/CSS/SVG são padrão para UI, gráficos simples, acessibilidade e estados P0
+leves. Canvas 2D é recomendado quando densidade, volume de pontos, partículas,
+animações ou transições justificarem a escolha, sempre com medição e equivalente
+acessível. Não se deve reescrever os gráficos SVG P0 atuais enquanto SVG atender
+performance, acessibilidade e fidelidade. `TradingView Lightweight Charts` pode
+ser avaliado no futuro, mas nunca é fonte de verdade. WebGL/Three.js permanece
+P1, sob feature flag, somente para 3D/Global Atlas avançado.
+
+### Transições e referência Dataism
+
+Dataism é apenas uma referência estética para transições de troca de ativo,
+período, refresh completo, navegação e futura revalorização de carteira. Nunca
+representa preço, tick, dado, previsão ou volatilidade; não roda a cada tick, não
+bloqueia a leitura do número e deve ser desligado ou reduzido com
+`prefers-reduced-motion`.
 
 Movimento comunica atualização/seleção/transição, não decoração permanente. Respeite `prefers-reduced-motion`, permita pausar/parar/ocultar atualização contínua, suspenda fora da viewport/documento oculto e degrade arte antes da linha financeira. Meça LCP, INP, CLS, bundle, frame time e cold load no ambiente real.
 

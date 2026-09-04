@@ -67,6 +67,14 @@ avançados de heatmap continuam P1.
 
 **Entregável semanal:** experiência P0 responsiva e acessível com dashboard, heatmap, Global Atlas tabular, sessão, watchlist e Morning Call.
 
+### Adendo documental do Dia 18.1
+
+O Dia 18.1 reconcilia a diretriz visual Particle Atlas com o estado real após os
+Dias 16–19. Shell, temas, gráfico SVG P0, autenticação, sessões, watchlists e
+favoritos já existem; provider/dado real, carteiras, P&L e TWR ainda não. A
+reconciliação é documental e não altera o escopo nem autoriza bibliotecas,
+Canvas, WebGL, provider ou dados reais.
+
 ## Semana 4 — hardening e release candidate
 
 | Dia | Objetivo e entregáveis | Dependências | Gate objetivo |

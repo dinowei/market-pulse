@@ -26,6 +26,13 @@ heatmap, treemap, visualização de carteira, renda fixa, Particle Atlas ou
 renderização financeira, a leitura integral de
 `../../docs/design/PARTICLE_ATLAS_CHART_SEMANTICS.md` é obrigatória.
 
+Antes de alterar qualquer UI, gráfico, tema, layout, transição, painel,
+watchlist, carteira, página de ativo ou visualização de mercado, leia
+integralmente `../../docs/design/PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md` e
+`../../docs/design/PARTICLE_ATLAS_CHART_SEMANTICS.md`. Se a tarefa envolver
+transições, partículas, Canvas, SVG, WebGL ou gráficos financeiros, leia também
+`../../docs/design/PARTICLE_ATLAS_VISUAL_RECONCILIATION_DAY_18_1.md`.
+
 ## Contrato visual e financeiro
 
 - Preto, branco e cinzas são a identidade predominante. Dourado não é identidade, foco ou seleção.
