@@ -391,6 +391,9 @@ class PostgresEditorialService(InMemoryEditorialService):
             else current.published_at
         )
         with self._connect() as conn:
+            version_row = conn.execute(
+                "SELECT current_version_id FROM editorial_posts WHERE id=%s", (post_id,)
+            ).fetchone()
             conn.execute(
                 "UPDATE editorial_posts SET status=%s,published_at=%s,"
                 "archived_at=%s, published_version_id=CASE WHEN %s='PUBLISHED' "
@@ -410,7 +413,7 @@ class PostgresEditorialService(InMemoryEditorialService):
                 "to_status,reason,request_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                 (
                     post_id,
-                    None,
+                    version_row[0] if version_row else None,
                     actor_user_id,
                     target.value,
                     current.status.value,
@@ -435,9 +438,11 @@ class PostgresEditorialService(InMemoryEditorialService):
         with self._connect() as conn:
             rows = conn.execute(
                 "SELECT p.id,p.slug,p.content_date,p.published_at,v.title,v.summary,"
-                "v.blocks,v.status_snapshot,v.version_number,v.created_at "
+                "v.blocks,'PUBLISHED' AS status_snapshot,v.version_number,v.created_at "
                 "FROM editorial_posts p JOIN editorial_post_versions v "
-                "ON v.post_id=p.id WHERE p.slug=%s AND v.status_snapshot='PUBLISHED' "
+                "ON v.post_id=p.id JOIN editorial_review_events e "
+                "ON e.post_version_id=v.id AND e.to_status='PUBLISHED' "
+                "WHERE p.slug=%s "
                 "ORDER BY v.version_number DESC",
                 (slug,),
             ).fetchall()
@@ -447,13 +452,9 @@ class PostgresEditorialService(InMemoryEditorialService):
         with self._connect() as conn:
             rows = conn.execute(
                 """SELECT p.id, p.slug, p.title, p.summary, p.published_at,
-                          v.blocks, v.status_snapshot, v.version_number, v.created_at
+                          v.blocks, 'PUBLISHED' AS status_snapshot, v.version_number, v.created_at
                    FROM editorial_posts p
-                   JOIN LATERAL (
-                     SELECT * FROM editorial_post_versions v0
-                     WHERE v0.post_id=p.id AND v0.status_snapshot='PUBLISHED'
-                     ORDER BY v0.version_number DESC LIMIT 1
-                   ) v ON TRUE
+                   JOIN editorial_post_versions v ON v.id=p.published_version_id
                    WHERE p.status='PUBLISHED'
                    ORDER BY p.published_at DESC, p.id DESC"""
             ).fetchall()
