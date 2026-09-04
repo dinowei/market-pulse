@@ -41,6 +41,8 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Watchlists e favoritos do Dia 19: [WATCHLISTS_DAY_19.md](product/WATCHLISTS_DAY_19.md)
 - Carteiras informativas do Dia 20: [PORTFOLIOS_DAY_20.md](product/PORTFOLIOS_DAY_20.md)
 - Reconciliação do roadmap do Dia 20: [DAY_20_ROADMAP_RECONCILIATION.md](engineering/DAY_20_ROADMAP_RECONCILIATION.md)
+- Performance factual de carteiras do Dia 21: [PORTFOLIO_PERFORMANCE_DAY_21.md](product/PORTFOLIO_PERFORMANCE_DAY_21.md)
+- Gate da Semana 3: [WEEK_3_GATE.md](engineering/WEEK_3_GATE.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.
