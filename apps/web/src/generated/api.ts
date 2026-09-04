@@ -572,6 +572,177 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/editorial/admin/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin List Editorial Posts */
+        get: operations["admin_list_editorial_posts_api_v1_editorial_admin_posts_get"];
+        put?: never;
+        /** Admin Create Editorial Post */
+        post: operations["admin_create_editorial_post_api_v1_editorial_admin_posts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/editorial/admin/posts/{post_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin Get Editorial Post */
+        get: operations["admin_get_editorial_post_api_v1_editorial_admin_posts__post_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/editorial/admin/posts/{post_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin Add Editorial Version */
+        post: operations["admin_add_editorial_version_api_v1_editorial_admin_posts__post_id__versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/editorial/admin/posts/{post_id}/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin Validate Editorial Post */
+        post: operations["admin_validate_editorial_post_api_v1_editorial_admin_posts__post_id__validate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/editorial/admin/posts/{post_id}/submit-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin Submit Review */
+        post: operations["admin_submit_review_api_v1_editorial_admin_posts__post_id__submit_review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/editorial/admin/posts/{post_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin Approve */
+        post: operations["admin_approve_api_v1_editorial_admin_posts__post_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/editorial/admin/posts/{post_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin Publish */
+        post: operations["admin_publish_api_v1_editorial_admin_posts__post_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/editorial/admin/posts/{post_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin Archive */
+        post: operations["admin_archive_api_v1_editorial_admin_posts__post_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/editorial/posts/{slug}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Editorial Versions */
+        get: operations["public_editorial_versions_api_v1_editorial_posts__slug__versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/editorial/posts/{slug}/versions/{version_number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Editorial Version */
+        get: operations["public_editorial_version_api_v1_editorial_posts__slug__versions__version_number__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -649,6 +820,36 @@ export interface components {
          * @enum {string}
          */
         DataLevel: "REAL_TIME" | "DELAYED" | "EOD" | "DEMO";
+        /** EditorialAdminPostListResponse */
+        EditorialAdminPostListResponse: {
+            /** Items */
+            items: components["schemas"]["EditorialAdminPostResponse"][];
+        };
+        /** EditorialAdminPostResponse */
+        EditorialAdminPostResponse: {
+            /** Id */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary?: string | null;
+            /** Content Date */
+            content_date?: string | null;
+            /** Blocks */
+            blocks: components["schemas"]["EditorialBlock"][];
+            status: components["schemas"]["EditorialStatus"];
+            /** Version */
+            version: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Published At */
+            published_at?: string | null;
+        };
         /** EditorialBlock */
         EditorialBlock: {
             content_type: components["schemas"]["EditorialBlockType"];
@@ -667,6 +868,22 @@ export interface components {
          * @enum {string}
          */
         EditorialBlockType: "FACT" | "THIRD_PARTY_CONSENSUS" | "CONDITIONAL_SCENARIO" | "RISK" | "LIMITATION";
+        /** EditorialPostCreateRequest */
+        EditorialPostCreateRequest: {
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary?: string | null;
+            /** Content Date */
+            content_date?: string | null;
+            /**
+             * Blocks
+             * @default []
+             */
+            blocks: components["schemas"]["EditorialBlock"][];
+        };
         /** EditorialPostListResponse */
         EditorialPostListResponse: {
             /** Items */
@@ -682,6 +899,8 @@ export interface components {
             title: string;
             /** Summary */
             summary?: string | null;
+            /** Content Date */
+            content_date?: string | null;
             /** Blocks */
             blocks: components["schemas"]["EditorialBlock"][];
             status: components["schemas"]["EditorialStatus"];
@@ -716,6 +935,32 @@ export interface components {
          * @enum {string}
          */
         EditorialStatus: "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "PUBLISHED" | "ARCHIVED";
+        /** EditorialValidationResponse */
+        EditorialValidationResponse: {
+            /** Valid */
+            valid: boolean;
+            /**
+             * Violations
+             * @default []
+             */
+            violations: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** EditorialVersionCreateRequest */
+        EditorialVersionCreateRequest: {
+            /** Title */
+            title: string;
+            /** Summary */
+            summary?: string | null;
+            /** Content Date */
+            content_date?: string | null;
+            /**
+             * Blocks
+             * @default []
+             */
+            blocks: components["schemas"]["EditorialBlock"][];
+        };
         /** EquityCurvePointResponse */
         EquityCurvePointResponse: {
             /**
@@ -2692,6 +2937,370 @@ export interface operations {
             header?: never;
             path: {
                 slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialPostResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_list_editorial_posts_api_v1_editorial_admin_posts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAdminPostListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_create_editorial_post_api_v1_editorial_admin_posts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditorialPostCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAdminPostResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_get_editorial_post_api_v1_editorial_admin_posts__post_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAdminPostResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_add_editorial_version_api_v1_editorial_admin_posts__post_id__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditorialVersionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAdminPostResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_validate_editorial_post_api_v1_editorial_admin_posts__post_id__validate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialValidationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_submit_review_api_v1_editorial_admin_posts__post_id__submit_review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAdminPostResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_approve_api_v1_editorial_admin_posts__post_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAdminPostResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_publish_api_v1_editorial_admin_posts__post_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAdminPostResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_archive_api_v1_editorial_admin_posts__post_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialAdminPostResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_editorial_versions_api_v1_editorial_posts__slug__versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EditorialPostListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_editorial_version_api_v1_editorial_posts__slug__versions__version_number__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version_number: number;
             };
             cookie?: never;
         };
