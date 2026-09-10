@@ -44,6 +44,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Performance factual de carteiras do Dia 21: [PORTFOLIO_PERFORMANCE_DAY_21.md](product/PORTFOLIO_PERFORMANCE_DAY_21.md)
 - Morning Call factual do Dia 22: [MORNING_CALL_DAY_22.md](editorial/MORNING_CALL_DAY_22.md)
 - Morning Call público e administrativo do Dia 23: [MORNING_CALL_ADMIN_DAY_23.md](editorial/MORNING_CALL_ADMIN_DAY_23.md)
+- Demo local validada do Dia 24: [DEMO_SEED_DAY_24.md](demo/DEMO_SEED_DAY_24.md)
 - Gate da Semana 3: [WEEK_3_GATE.md](engineering/WEEK_3_GATE.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
@@ -83,6 +84,12 @@ renderização financeira deve ler integralmente
 `design/PARTICLE_ATLAS_CHART_SEMANTICS.md` antes de planejar ou editar.
 
 ## Gate documental
+
+Antes de trabalhar em seed/reset, fixtures de demonstração ou E2E principal,
+consulte `demo/DEMO_SEED_DAY_24.md`. O banco principal não é alvo de reset nem de
+testes com limpeza. Uma preparação offline não equivale a seed persistido ou gate
+integrado aprovado: execute as barreiras, migrations e validações registradas no
+guia antes de declarar o resultado.
 
 Uma mudança documental termina com:
 

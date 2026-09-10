@@ -1,6 +1,8 @@
 "use client";
 
 import type { components } from "../generated/api";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ParticleChart } from "./particle-chart";
 import { MorningCallPanel } from "./morning-call";
@@ -17,7 +19,6 @@ type InstrumentList = components["schemas"]["InstrumentList"];
 
 const periods = ["1D", "5D", "1M", "3M", "6M", "YTD", "1A", "5A", "MAX"] as const satisfies readonly HistoryPeriod[];
 const modes = ["PRICE", "INDEX_100"] as const satisfies readonly SeriesMode[];
-const canonicalId = "equity.br.b3.petr4";
 
 export function DataStateBadge({ dataLevel, freshness }: { dataLevel: DataLevel; freshness: Freshness }) {
   return (
@@ -116,10 +117,12 @@ export function InstrumentSearch({ onSelect }: { onSelect: (canonicalId: string)
 }
 
 export function TerminalShell() {
+  const router = useRouter();
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [period, setPeriod] = useState<HistoryPeriod>("1M");
   const [mode, setMode] = useState<SeriesMode>("PRICE");
-  const [selectedCanonicalId, setSelectedCanonicalId] = useState(canonicalId);
+  const [selectedCanonicalId, setSelectedCanonicalId] = useState("");
+  const [sessionError, setSessionError] = useState("");
   const [quoteState, setQuoteState] = useState<{ key: string; data?: PublicQuote; error?: string }>({ key: "" });
   const [historyState, setHistoryState] = useState<{ key: string; data?: PublicHistorySeries; error?: string }>({ key: "" });
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -133,19 +136,41 @@ export function TerminalShell() {
   const historyLoading = historyState.key !== historyKey;
 
   useEffect(() => {
+    if (selectedCanonicalId) return;
+    const controller = new AbortController();
+    fetchJson<InstrumentList>(`${apiBase}/api/v1/instruments/search?q=.&limit=1`, controller.signal)
+      .then((data) => setSelectedCanonicalId((current) => current || data.items[0]?.canonical_id || ""))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [apiBase, selectedCanonicalId]);
+
+  async function logout() {
+    try {
+      const response = await fetch(`${apiBase}/api/v1/auth/logout`, { method: "POST", credentials: "include" });
+      if (!response.ok) throw new Error("Logout unavailable");
+      router.push("/login");
+    } catch {
+      setSessionError("Não foi possível encerrar a sessão. Tente novamente.");
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedCanonicalId) return;
     const controller = new AbortController();
     fetchJson<PublicQuote>(`${apiBase}/api/v1/market-data/quotes/${encodeURIComponent(selectedCanonicalId)}`, controller.signal).then((data) => setQuoteState({ key: `${apiBase}|${selectedCanonicalId}`, data })).catch((error: unknown) => { if (error instanceof Error && error.name !== "AbortError") setQuoteState({ key: `${apiBase}|${selectedCanonicalId}`, error: error.message }); });
     return () => controller.abort();
   }, [apiBase, selectedCanonicalId]);
 
   useEffect(() => {
+    if (!selectedCanonicalId) return;
     const controller = new AbortController();
     fetchJson<PublicHistorySeries>(`${apiBase}/api/v1/market-data/history/${encodeURIComponent(selectedCanonicalId)}?period=${period}&mode=${mode}&adjustment_type=UNADJUSTED`, controller.signal).then((data) => setHistoryState({ key: historyKey, data })).catch((error: unknown) => { if (error instanceof Error && error.name !== "AbortError") setHistoryState({ key: historyKey, error: error.message }); });
     return () => controller.abort();
   }, [historyKey, apiBase, mode, period, selectedCanonicalId]);
 
   return <div className="terminal-root" data-theme={theme}>
-    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#dashboard">Dashboard</a><a href="#assets">Ações</a><a href="#assets">ETFs</a><a href="#assets">FIIs</a><a href="#assets">Fundos</a><a href="#portfolios">Carteiras</a><a href="#morning-call">Morning Call</a></nav><button type="button" className="theme-toggle" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label={`Mudar para tema ${theme === "dark" ? "claro" : "escuro"}`}>Tema {theme === "dark" ? "claro" : "escuro"}</button></header>
+    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><button type="button" className="theme-toggle" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label={`Mudar para tema ${theme === "dark" ? "claro" : "escuro"}`}>Tema {theme === "dark" ? "claro" : "escuro"}</button></header>
+    {sessionError && <p role="alert">{sessionError}</p>}
     <div className="terminal-grid">
       <aside className="left-rail" aria-label="Contexto operacional"><MorningCallPanel /><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE · DEMO</span></section></aside>
       <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} /></div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <><ParticleChart series={history} /><AccessibleDataTable points={history.points} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}<p className="comparison-note">Comparação multissérie aguardando contrato com benchmark; nenhuma série foi inventada.</p></section></main>

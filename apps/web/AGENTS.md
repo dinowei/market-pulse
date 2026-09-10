@@ -73,3 +73,10 @@ transições, partículas, Canvas, SVG, WebGL ou gráficos financeiros, leia tam
 Componentes conectados tratam explicitamente `loading`, `refreshing`, `empty`, erro recuperável/terminal, rate limit, signed-out, forbidden, `FRESH`, `STALE`, `DEMO`, `UNAVAILABLE`, `PARTIAL`, offline, provider outage e feature disabled.
 
 Execute verificações relevantes: lint, typecheck, contrato, unit/component, Playwright, axe, teclado, zoom, regressão visual e medição de performance. Verifique uma série/uma linha, N séries/N linhas, matemática de `INDEX_100`, valores reais, cores semânticas, gaps e reduced motion. Não declare conclusão sem saída recente e diff revisado.
+
+Antes de validar seed/reset ou E2E principal, consulte
+`../../docs/demo/DEMO_SEED_DAY_24.md`. Nunca rode testes com limpeza no banco principal.
+
+Para APIs e configuração do Next.js instalado, consulte a documentação versionada
+em `node_modules/next/dist/docs/`. As instruções deste repositório são mantidas
+explicitamente (`agentRules: false`), sem reescrita automática por `next dev`.

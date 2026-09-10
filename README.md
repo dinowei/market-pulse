@@ -6,7 +6,18 @@ O Market Pulse é um terminal web autenticado para acompanhamento **informativo 
 
 ## Status atual
 
-O repositório conclui o **Dia 3 — Infraestrutura local e health model**. O frontend e a API possuem boot visual e diagnóstico; PostgreSQL e Redis são serviços locais opcionais para desenvolvimento. Não há provider real, autenticação operacional, cron, Stripe ou deploy configurados.
+O repositório possui a implementação até o **Dia 24**, incluindo autenticação,
+watchlists, carteiras, Morning Call e uma demonstração local persistida,
+determinística e isolada. O Dia 24 foi validado com PostgreSQL e Redis locais,
+migrations, reset/seed do banco DEMO e E2E de fluxo principal e isolamento entre
+usuários. Nenhum provider real, Stripe ou deploy foi ativado por esta etapa.
+
+## Demonstração local — Dia 24
+
+Consulte [DEMO_SEED_DAY_24.md](docs/demo/DEMO_SEED_DAY_24.md) para os comandos,
+barreiras, dados sintéticos e gates executados. O único banco autorizado para
+reset ou seed é `market_pulse_demo`, local e isolado. Nunca execute limpeza,
+reset ou a suíte integrada contra o banco principal.
 
 ## Escopo P0 do beta
 
@@ -141,4 +152,5 @@ O repositório não adota licença open source neste momento; consulte [LICENSE]
 
 ## Próximo passo
 
-Somente após aprovação explícita: **Dia 4 — contratos iniciais da API e persistência preparatória**.
+O **Dia 24** está concluído localmente. O Dia 25 não está autorizado por esta
+etapa.

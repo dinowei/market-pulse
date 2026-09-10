@@ -16,6 +16,8 @@ class Settings(BaseSettings):
         "postgresql://market_pulse:market_pulse_local_only@127.0.0.1:5432/market_pulse"
     )
     redis_url: str = "redis://127.0.0.1:6379/0"
+    demo_enabled: bool = False
+    demo_database_url: str | None = None
     database_timeout_seconds: float = 2.0
     cache_timeout_seconds: float = 1.0
     internal_refresh_secret: str | None = None

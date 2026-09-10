@@ -14,23 +14,34 @@ SECRET_PATTERNS = (
     re.compile(r"BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"\b(?:sk_live|rk_live|ghp_|github_pat_)[A-Za-z0-9_\-]+\b"),
-    re.compile(r"(?i)(?:postgres(?:ql)?|redis)://[^\s/:]+:[^\s/@]+@"),
+    re.compile(
+        r"(?i)(?:postgres(?:ql)?|redis)://[^\s/:]+:(?P<password>[^\s/@]+)@"
+    ),
     re.compile(
         r"(?i)\b(?:BRAPI_API_TOKEN|HG_BRASIL_API_KEY|TWELVE_DATA_API_KEY|"
         r"ALPHA_VANTAGE_API_KEY|OPEN_EXCHANGE_RATES_APP_ID|MASSIVE_API_KEY|"
-        r"B3_DEVELOPERS_CLIENT_ID)\s*[:=]\s*['\"]?[^\s'\"]{8,}"
+        r"B3_DEVELOPERS_CLIENT_ID)[ \t]*[:=][ \t]*['\"]?(?P<provider_value>[^\s'\"]{8,})"
     ),
 )
-ALLOWED_DEMO = ("local_only", "", "YOUR_", "SEU_", "example", "demo")
+# Only complete, explicit placeholders are exempt. A marker inside a token or
+# password must never suppress a finding (and an empty marker matches everything).
+LOCAL_PASSWORD_PLACEHOLDERS = frozenset({"local_only", "market_pulse_local_only"})
+PROVIDER_PLACEHOLDERS = frozenset(
+    {"local_only", "YOUR_TOKEN", "YOUR_API_KEY", "SEU_TOKEN", "SEU_API_KEY"}
+)
 
 
 def files() -> list[Path]:
-    tracked = subprocess.run(
-        ["git", "ls-files"], cwd=ROOT, check=True, capture_output=True, text=True
-    ).stdout.splitlines()
-    paths = {ROOT / item for item in tracked}
+    candidates = subprocess.run(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.split("\0")
+    paths = {ROOT / item for item in candidates if item}
     paths.add(Path(__file__).resolve())
-    return [path for path in paths if path.is_file()]
+    return sorted(path for path in paths if path.is_file())
 
 
 def secret_scan() -> int:
@@ -41,8 +52,10 @@ def secret_scan() -> int:
         text = path.read_text(encoding="utf-8", errors="ignore")
         for pattern in SECRET_PATTERNS:
             for match in pattern.finditer(text):
-                value = match.group(0)
-                if any(marker in value for marker in ALLOWED_DEMO):
+                fields = match.groupdict()
+                if fields.get("password") in LOCAL_PASSWORD_PLACEHOLDERS:
+                    continue
+                if fields.get("provider_value") in PROVIDER_PLACEHOLDERS:
                     continue
                 failures.append(f"{path.relative_to(ROOT)}:{match.start() + 1}")
     if failures:

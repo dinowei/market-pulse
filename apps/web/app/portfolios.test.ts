@@ -1,30 +1,31 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { EquityChart } from "../src/components/equity-chart";
+import type { components } from "../src/generated/api";
+import { elements } from "../test-support/chart-fixtures";
 
-const root = process.cwd();
-const source = readFileSync(join(root, "src", "components", "portfolios.tsx"), "utf8");
-const page = readFileSync(join(root, "app", "portfolios", "page.tsx"), "utf8");
-
-test("portfolio page uses generated contracts and exposes the informational boundary", () => {
-  assert.match(page, /PortfoliosPanel/);
-  assert.match(source, /generated\/api/);
-  assert.match(source, /credentials:\s*["']include["']/);
-  assert.match(source, /Performance[\s\S]*(P&L|P&amp;L)[\s\S]*valuation[\s\S]*TWR/);
-  assert.doesNotMatch(source, /localStorage|sessionStorage/);
+type Point = components["schemas"]["EquityCurvePointResponse"];
+const point = (date: string, value: string | null): Point => ({
+  valuation_date: date, total_value_base: value, cash_value_base: null,
+  positions_value_base: null, data_level: "DEMO", freshness: value === null ? "UNAVAILABLE" : "STALE",
+  valuation_status: value === null ? "PARTIAL" : "COMPLETE", missing_inputs: [],
 });
+const render = (points: Point[]) => renderToStaticMarkup(createElement(EquityChart, { points }));
 
-test("portfolio UI exposes ledger, cash and positions with accessible controls", () => {
-  for (const marker of ["portfolios", "Idempotency-Key", "CASH_DEPOSIT", "BUY", "SELL", "cash_balances", "weighted_average_cost", "aria-label", "loading"]) {
-    assert.match(source, new RegExp(marker, "i"));
-  }
-  assert.doesNotMatch(source, /Canvas|WebGL|ParticleChart/);
+test("equity geometry uses money and elapsed dates, not ordinal index", () => {
+  const markup = render([point("2026-01-01", "300"), point("2026-01-02", "100"), point("2026-01-05", "200")]);
+  assert.equal(elements(markup, "path")[0]?.d, "M 0 20 L 150 140 L 600 80");
+  assert.match(elements(markup, "svg")[0]["aria-label"], /DEMO/);
 });
-
-test("portfolio UI exposes consolidated performance with honest states and table fallback", () => {
-  for (const marker of ["valuation", "performance", "equity-curve", "decomposition", "realized_pnl", "unrealized_pnl", "twr", "DEMO", "STALE", "UNAVAILABLE", "PARTIAL", "provenance", "fallback", "SVG"]) {
-    assert.match(source, new RegExp(marker, "i"));
-  }
-  assert.doesNotMatch(source, /recomendação|sugestão de compra|otimização/i);
+test("missing and partial valuations break the equity line", () => {
+  const markup = render([point("2026-01-01", "100"), point("2026-01-02", null), point("2026-01-03", "200")]);
+  assert.equal(elements(markup, "path")[0]?.d, "M 0 140 M 600 20");
+  assert.equal(elements(render([{ ...point("2026-01-01", "100"), valuation_status: "PARTIAL" }]), "path").length, 0);
+});
+test("zero and constant equity remain valid, centered and horizontal", () => {
+  assert.equal(elements(render([point("2026-01-01", "0"), point("2026-01-02", "0")]), "path")[0]?.d, "M 0 80 L 600 80");
+  assert.equal(elements(render([point("2026-01-01", "100")]), "path")[0]?.d, "M 300 80");
+  assert.equal(elements(render([]), "path").length, 0);
 });

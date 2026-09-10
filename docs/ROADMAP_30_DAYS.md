@@ -99,6 +99,23 @@ Canvas, WebGL, provider ou dados reais.
 
 **Entregável semanal:** release candidate reproduzível e preparado para Vercel/Render/Neon/Upstash/GitHub Actions, sem provisionamento ou publicação não autorizados.
 
+### Reconciliação autorizada do Dia 24
+
+O prompt direto do Dia 24 define **seed DEMO oficial, reset reprodutível e E2E
+principal**, incluindo isolamento entre usuários, coerência financeira e
+correções mínimas dos gráficos e scanner de segredos. A linha histórica de
+testes frontend/a11y e P1 visual acima é preservada, mas não autoriza expansão
+visual nesta execução. O escopo de E2E antes planejado para o Dia 25 passa a
+integrar este gate, sem declarar o Dia 25 executado.
+
+O operador aprovou exclusivamente o banco local `market_pulse_demo`, com
+múltiplas barreiras e preservação do banco principal e das proteções append-only.
+O gate foi concluído localmente em 2026-09-07: migrations em banco DEMO vazio,
+reset/seed repetidos com fingerprint lógico estável, health de PostgreSQL/Redis
+e E2E principal e de isolamento A/B. Estado, comandos e limitações em
+[DEMO_SEED_DAY_24.md](demo/DEMO_SEED_DAY_24.md). Esta reconciliação não declara
+o Dia 25 executado.
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento

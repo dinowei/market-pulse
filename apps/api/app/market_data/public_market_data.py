@@ -12,12 +12,13 @@ from app.contracts import (
     PublicQuote,
     SeriesMode,
 )
+from app.core.config import get_settings
 from app.instruments.catalog import (
-    MASTER_CATALOG,
     CatalogStatus,
     CoverageTier,
     DataSupportStatus,
     InstrumentCatalogEntry,
+    get_catalog,
 )
 from app.providers.demo import DemoProvider
 from app.providers.models import DataLevel, Freshness
@@ -27,7 +28,7 @@ _DEMO = DemoProvider()
 
 
 def _find(canonical_id: str) -> InstrumentCatalogEntry | None:
-    return next((entry for entry in MASTER_CATALOG if entry.canonical_id == canonical_id), None)
+    return next((entry for entry in get_catalog() if entry.canonical_id == canonical_id), None)
 
 
 def _unavailable_quote(
@@ -55,6 +56,38 @@ def public_quote(canonical_id: str, request_id: str) -> PublicQuote:
     entry = _find(canonical_id)
     if entry is None:
         raise KeyError(canonical_id)
+    if get_settings().demo_enabled:
+        from app.demo.dataset import DEMO_LIMITATIONS
+        from app.demo.read_models import bar_rows, quote_row
+
+        row = quote_row(canonical_id)
+        if row is None:
+            return _unavailable_quote(entry, canonical_id, request_id)
+        bars = bar_rows(canonical_id)
+        previous = bars[-2]["close"] if len(bars) >= 2 else None
+        change = row["price"] - previous if previous else None
+        return PublicQuote(
+            canonical_id=canonical_id,
+            symbol=entry.symbol,
+            name=entry.name,
+            asset_type=entry.instrument_type,
+            exchange=entry.exchange,
+            currency=row["currency"],
+            price=row["price"],
+            change=change,
+            change_percent=change / previous * Decimal("100") if previous else None,
+            data_level=row["data_level"],
+            freshness=row["freshness"],
+            provider=row["provider"],
+            dataset=row["dataset"],
+            timestamp_official=row["source_timestamp"],
+            timestamp_collected=row["collected_at"],
+            latency_ms=max(
+                0, int((row["collected_at"] - row["source_timestamp"]).total_seconds() * 1000)
+            ),
+            limitations=DEMO_LIMITATIONS,
+            request_id=request_id,
+        )
     if entry.coverage_tier is not CoverageTier.P0_OPERATIONAL or (
         entry.catalog_status is CatalogStatus.OUT_OF_SCOPE
         or entry.data_support_status is DataSupportStatus.UNAVAILABLE
@@ -80,10 +113,7 @@ def public_quote(canonical_id: str, request_id: str) -> PublicQuote:
         timestamp_collected=provenance.collected_at,
         latency_ms=max(
             0,
-            int(
-                (provenance.collected_at - provenance.source_timestamp).total_seconds()
-                * 1000
-            ),
+            int((provenance.collected_at - provenance.source_timestamp).total_seconds() * 1000),
         ),
         limitations=provenance.limitations,
         request_id=request_id,
@@ -150,6 +180,36 @@ def public_history(
         raise KeyError(canonical_id)
     if entry.coverage_tier is not CoverageTier.P0_OPERATIONAL:
         return _unavailable_history(entry, period, mode, request_id)
+    if get_settings().demo_enabled:
+        from app.demo.dataset import DEMO_LIMITATIONS
+        from app.demo.read_models import bar_rows, history_points
+
+        rows = bar_rows(canonical_id, period) if adjustment_type == "UNADJUSTED" else []
+        if not rows:
+            return _unavailable_history(entry, period, mode, request_id)
+        latest = rows[-1]
+        return PublicHistorySeries(
+            canonical_id=canonical_id,
+            symbol=entry.symbol,
+            period=period,
+            mode=mode,
+            adjustment_type="UNADJUSTED",
+            currency=latest["currency"],
+            data_level="DEMO",
+            freshness="STALE",
+            provider=latest["provider"],
+            dataset=latest["dataset"],
+            timestamp_official=latest["source_timestamp"],
+            timestamp_collected=latest["collected_at"],
+            latency_ms=max(
+                0, int((latest["collected_at"] - latest["source_timestamp"]).total_seconds() * 1000)
+            ),
+            limitations=DEMO_LIMITATIONS,
+            points=history_points(rows),
+            tabular_fallback=True,
+            accessibility={"reduced_motion": True, "smoothed": False},
+            request_id=request_id,
+        )
     start, end = _period_window(period)
     result = _DEMO.historical_bars(canonical_id, start, end)
     provenance = result.provenance

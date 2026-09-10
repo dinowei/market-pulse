@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import StrEnum
@@ -20,6 +20,7 @@ from app.contracts import (
 from app.contracts import (
     PerformanceStatus as ContractPerformanceStatus,
 )
+from app.core.config import get_settings
 from app.portfolios.service import PortfolioEventInput
 from app.providers.models import DataLevel, Freshness
 
@@ -226,6 +227,7 @@ def calculate_valuation(
                     None,
                     None,
                     None,
+                    None,
                     PerformanceStatus.UNAVAILABLE,
                     (f"PRICE_{canonical_id}",),
                 )
@@ -337,6 +339,10 @@ def event_inputs(events: list[PortfolioEventResponse]) -> list[PortfolioEventInp
 def demo_price_marks(
     events: list[PortfolioEventInput],
 ) -> tuple[dict[str, PriceMark], dict[tuple[str, str], FxMark]]:
+    if get_settings().demo_enabled:
+        from app.demo.read_models import price_marks
+
+        return price_marks([item.canonical_id for item in events]), {}
     now = datetime.now(UTC)
     prices: dict[str, PriceMark] = {}
     currencies = {"equity.us.nasdaq.aapl": "USD", "equity.br.b3.petr4": "BRL"}
@@ -381,17 +387,77 @@ class PortfolioPerformanceService:
 
     def valuation(self, user_id: str, portfolio_id: str):
         portfolio, events = self._inputs(user_id, portfolio_id)
+        events, outside_window = self._valuation_window(events)
         prices, fx = demo_price_marks(events)
-        return (
-            portfolio,
-            events,
-            calculate_valuation(
-                events, base_currency=portfolio.base_currency, prices=prices, fx_rates=fx
-            ),
+        result = calculate_valuation(
+            events, base_currency=portfolio.base_currency, prices=prices, fx_rates=fx
         )
+        if outside_window:
+            result = replace(
+                result,
+                status=PerformanceStatus.PARTIAL
+                if result.status == PerformanceStatus.COMPLETE
+                else result.status,
+                missing_inputs=(*result.missing_inputs, "EVENTS_AFTER_DEMO_CUTOFF"),
+            )
+        return portfolio, events, result
+
+    @staticmethod
+    def _valuation_window(events):
+        if not get_settings().demo_enabled:
+            return events, False
+        from app.demo.dataset import DEMO_CUTOFF
+
+        eligible = [event for event in events if event.occurred_at <= DEMO_CUTOFF]
+        return eligible, len(eligible) != len(events)
 
     def twr(self, user_id: str, portfolio_id: str) -> TWRResult:
         _, events = self._inputs(user_id, portfolio_id)
+        events, outside_window = self._valuation_window(events)
+        if outside_window:
+            return TWRResult(
+                None,
+                PerformanceStatus.UNAVAILABLE,
+                "TWR indisponível: há eventos posteriores ao corte histórico DEMO.",
+                ("EVENTS_AFTER_DEMO_CUTOFF",),
+            )
+        if get_settings().demo_enabled and events:
+            curve = self.equity_curve_response(user_id, portfolio_id)
+            days = curve.points
+            if days and days[0].total_value_base is not None and days[0].total_value_base <= 0:
+                return TWRResult(
+                    None,
+                    PerformanceStatus.UNAVAILABLE,
+                    "TWR exige patrimônio inicial estritamente positivo.",
+                    ("POSITIVE_BEGINNING_VALUATION",),
+                )
+            later_flows = (
+                any(
+                    event.event_type in {"CASH_DEPOSIT", "CASH_WITHDRAWAL", "REVERSAL"}
+                    and event.occurred_at.date() > days[0].valuation_date
+                    for event in events
+                )
+                if days
+                else True
+            )
+            if (
+                len(days) >= 2
+                and not later_flows
+                and all(
+                    point.total_value_base is not None and point.valuation_status == "COMPLETE"
+                    for point in days
+                )
+            ):
+                return calculate_twr(
+                    [
+                        TWRPoint(
+                            datetime.combine(point.valuation_date, datetime.min.time(), UTC),
+                            point.total_value_base,
+                            Decimal("0"),
+                        )
+                        for point in (days[0], days[-1])
+                    ]
+                )
         if len(events) < 2:
             return TWRResult(
                 None,
@@ -427,10 +493,22 @@ class PortfolioPerformanceService:
 
     def valuation_response(self, user_id: str, portfolio_id: str) -> PortfolioValuationResponse:
         portfolio, _, result = self.valuation(user_id, portfolio_id)
+        as_of = max(
+            (item.source_timestamp for item in result.provenance), default=datetime.now(UTC)
+        )
+        window_note = ""
+        if get_settings().demo_enabled:
+            from app.demo.dataset import DEMO_CUTOFF
+
+            as_of = DEMO_CUTOFF
+            window_note = (
+                f" Corte DEMO: {DEMO_CUTOFF.isoformat()}; somente eventos até esse instante."
+                " Eventos posteriores ficam preservados no ledger e não entram neste recorte."
+            )
         return PortfolioValuationResponse(
             portfolio_id=portfolio.id,
             base_currency=portfolio.base_currency,
-            as_of=datetime.now(UTC),
+            as_of=as_of,
             cash_value_base=result.cash_value_base,
             positions_value_base=result.positions_value_base,
             total_value_base=result.total_value_base,
@@ -441,7 +519,8 @@ class PortfolioPerformanceService:
             methodology=(
                 "Replay append-only com Decimal; preço DEMO aprovado apenas como "
                 "fixture sintética local e conversão FX explícita."
-            ),
+            )
+            + window_note,
             provenance=self._provenance(result.provenance),
             positions=[
                 PortfolioValuationPositionResponse(
@@ -481,12 +560,33 @@ class PortfolioPerformanceService:
 
     def equity_curve_response(self, user_id: str, portfolio_id: str) -> EquityCurveResponse:
         portfolio, events = self._inputs(user_id, portfolio_id)
+        events, _ = self._valuation_window(events)
         prices, fx = demo_price_marks(events)
         dates = sorted({item.occurred_at.date() for item in events}) or [datetime.now(UTC).date()]
+        window_note = ""
+        if get_settings().demo_enabled:
+            from datetime import timedelta
+
+            from app.demo.dataset import DEMO_CUTOFF
+
+            first = min((item.occurred_at.date() for item in events), default=DEMO_CUTOFF.date())
+            dates = [
+                first + timedelta(days=offset)
+                for offset in range((DEMO_CUTOFF.date() - first).days + 1)
+                if events and (first + timedelta(days=offset)).weekday() < 5
+            ]
+            window_note = (
+                f" Corte DEMO: {DEMO_CUTOFF.isoformat()}; eventos posteriores não são projetados"
+                " para pontos históricos. O ledger original permanece intacto."
+            )
         points: list[EquityCurvePointResponse] = []
         provenance: tuple[PerformanceProvenance, ...] = ()
         for day in dates:
             events_at_day = [item for item in events if item.occurred_at.date() <= day]
+            if get_settings().demo_enabled:
+                from app.demo.read_models import price_marks
+
+                prices = price_marks([item.canonical_id for item in events_at_day], as_of=day)
             result = calculate_valuation(
                 events_at_day,
                 base_currency=portfolio.base_currency,
@@ -505,13 +605,16 @@ class PortfolioPerformanceService:
                     missing_inputs=result.missing_inputs,
                 )
             )
-            provenance = self._provenance(result.provenance)
+            provenance += self._provenance(result.provenance)
         return EquityCurveResponse(
             portfolio_id=portfolio.id,
             base_currency=portfolio.base_currency,
             methodology=(
-                "Pontos correspondem às datas do ledger; não há interpolação de preço ausente."
-            ),
+                "Valuations por data, sem interpolação; no cenário DEMO persistido, cada ponto "
+                "usa exclusivamente a barra daquela sessão. TWR indisponível quando faltam "
+                "valuations nas fronteiras de fluxos externos."
+            )
+            + window_note,
             points=points,
             provenance=provenance,
         )

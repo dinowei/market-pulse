@@ -13,11 +13,11 @@ from app.contracts import (
 )
 from app.core.config import Settings, get_settings
 from app.instruments.catalog import (
-    MASTER_CATALOG,
     CatalogStatus,
     CoverageTier,
     DataSupportStatus,
     InstrumentCatalogEntry,
+    get_catalog,
 )
 
 
@@ -35,7 +35,7 @@ class WatchlistConflict(ValueError):
 
 def find_catalog_entry(canonical_id: str) -> InstrumentCatalogEntry:
     normalized = canonical_id.strip().casefold()
-    for entry in MASTER_CATALOG:
+    for entry in get_catalog():
         if entry.canonical_id == normalized:
             return entry
     raise WatchlistInvalid("BLOCKED_SCOPE: instrument is not in the approved watchlist universe")

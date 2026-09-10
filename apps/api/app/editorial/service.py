@@ -413,7 +413,7 @@ class PostgresEditorialService(InMemoryEditorialService):
                 "to_status,reason,request_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                 (
                     post_id,
-                    version_row[0] if version_row else None,
+                    version_row["current_version_id"] if version_row else None,
                     actor_user_id,
                     target.value,
                     current.status.value,

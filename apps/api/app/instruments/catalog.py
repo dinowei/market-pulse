@@ -2,6 +2,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.core.config import get_settings
+
 
 class CatalogStatus(StrEnum):
     ACTIVE = "ACTIVE"
@@ -103,13 +105,21 @@ FUTURE_CANDIDATE_UNIVERSE = frozenset(
 )
 
 
+def get_catalog() -> tuple[InstrumentCatalogEntry, ...]:
+    if get_settings().demo_enabled:
+        from app.demo.read_models import catalog_entries
+
+        return catalog_entries()
+    return MASTER_CATALOG
+
+
 def search_catalog(query: str) -> list[InstrumentCatalogEntry]:
     normalized = query.strip().casefold()
     if not normalized:
         return []
     return [
         entry
-        for entry in MASTER_CATALOG
+        for entry in get_catalog()
         if normalized in entry.symbol.casefold()
         or normalized in entry.display_symbol.casefold()
         or normalized in entry.name.casefold()
