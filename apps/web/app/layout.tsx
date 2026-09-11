@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { WebVitalsReporter } from "../src/components/web-vitals-reporter";
 
 export const metadata: Metadata = {
   title: "Market Pulse",
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body><WebVitalsReporter />{children}</body>
     </html>
   );
 }

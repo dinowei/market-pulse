@@ -62,7 +62,7 @@ export function MarketStatusBar({ data }: { data?: PublicQuote | PublicHistorySe
 export function AssetContextPanel({ quote, loading, error, selectedId }: { quote?: PublicQuote; loading: boolean; error?: string; selectedId: string }) {
   return (
     <aside className="asset-context" aria-labelledby="asset-context-title">
-      <div className="section-heading"><p className="eyebrow">ATIVO SELECIONADO</p><h2 id="asset-context-title">{quote?.symbol ?? selectedId}</h2></div>
+      <div className="section-heading"><p className="eyebrow">ATIVO SELECIONADO</p><h2 id="asset-context-title">{quote?.symbol ?? (selectedId || "Ativo indisponível")}</h2></div>
       {loading && <p className="muted">Carregando contrato…</p>}
       {error && <p className="state-note" role="alert">Dados indisponíveis: {error}</p>}
       {!loading && !error && quote && (
@@ -114,7 +114,7 @@ export function InstrumentSearch({ onSelect }: { onSelect: (canonicalId: string)
     return () => controller.abort();
   }, [apiBase, query]);
   const items: InstrumentSummary[] = state.key === query.trim() ? state.data?.items ?? [] : [];
-  return <div className="search-wrap"><label className="search"><span className="sr-only">Buscar instrumento</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar símbolo ou nome" aria-controls="instrument-results" /></label>{items.length > 0 && <ul id="instrument-results" className="search-results" role="listbox">{items.map((item) => <li key={item.canonical_id}><button type="button" role="option" aria-selected={false} onClick={() => { onSelect(item.canonical_id); setQuery(item.display_symbol); }}>{item.display_symbol} · {item.name}<small>{item.support_state}</small></button></li>)}</ul>}{query.trim().length >= 2 && state.key === query.trim() && items.length === 0 && <p className="search-empty">Nenhum instrumento no catálogo.</p>}</div>;
+  return <div className="search-wrap"><label className="search"><span className="sr-only">Buscar instrumento</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar símbolo ou nome" /></label>{items.length > 0 && <ul id="instrument-results" className="search-results" role="listbox">{items.map((item) => <li key={item.canonical_id}><button type="button" role="option" aria-selected={false} onClick={() => { onSelect(item.canonical_id); setQuery(item.display_symbol); }}>{item.display_symbol} · {item.name}<small>{item.support_state}</small></button></li>)}</ul>}{query.trim().length >= 2 && state.key === query.trim() && items.length === 0 && <p className="search-empty">Nenhum instrumento no catálogo.</p>}</div>;
 }
 
 export function TerminalShell() {
