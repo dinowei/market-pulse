@@ -25,6 +25,10 @@ O contrato sempre carrega `checked_at` por seção e exibe estado `ok`,
 contagens de quarentena, locks ativos sem expor chaves, publicação editorial e
 volumetria de usuários/carteiras.
 
+Locks Redis existentes não carregam timestamp de aquisição no valor opaco. Por
+isso `acquired_at` representa a observação segura do lock e `ttl_seconds`
+representa o tempo restante; a UI nunca tenta inferir ou exibir a chave interna.
+
 Provider, dataset e licença só aparecem como `allowed` quando a combinação
 exata está aprovada; qualquer ausência ou estado desconhecido permanece
 `denied` (default deny). O painel não expõe URL, senha, token, cookie, stack
