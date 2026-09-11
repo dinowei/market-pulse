@@ -50,7 +50,7 @@ function sections(payload: AdminSystem): Section[] {
     {
       key: "providers",
       label: "Governança de providers",
-      value: `${payload.providers.items.filter((item) => item.access === "allowed").length}/${payload.providers.items.length} permitidos`,
+      value: `${(payload.providers.items ?? []).filter((item) => item.access === "allowed").length}/${(payload.providers.items ?? []).length} permitidos`,
       checkedAt: payload.providers.checked_at,
     },
     {
@@ -63,7 +63,7 @@ function sections(payload: AdminSystem): Section[] {
     {
       key: "locks",
       label: "Locks",
-      value: `${payload.locks.items.length} ativos`,
+      value: `${(payload.locks.items ?? []).length} ativos`,
       checkedAt: payload.locks.checked_at,
     },
     {

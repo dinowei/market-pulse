@@ -174,6 +174,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market-data/quotes/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Public Quotes Batch */
+        post: operations["public_quotes_batch_api_v1_market_data_quotes_batch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market-data/benchmarks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Benchmarks */
+        get: operations["public_benchmarks_api_v1_market_data_benchmarks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market-data/history/{canonical_id}": {
         parameters: {
             query?: never;
@@ -183,6 +217,57 @@ export interface paths {
         };
         /** Public History By Id */
         get: operations["public_history_by_id_api_v1_market_data_history__canonical_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market-data/history/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Public History Batch */
+        post: operations["public_history_batch_api_v1_market_data_history_batch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/economic-calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Economic Calendar */
+        get: operations["economic_calendar_api_v1_economic_calendar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/economic-calendar/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Economic Calendar Detail */
+        get: operations["economic_calendar_detail_api_v1_economic_calendar__event_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -839,16 +924,10 @@ export interface components {
         AdminBackgroundJobsStatus: {
             /** Last Refresh At */
             last_refresh_at?: string | null;
-            /**
-             * Backfills
-             * @default []
-             */
-            backfills: components["schemas"]["AdminBackfillStatus"][];
-            /**
-             * Errors
-             * @default []
-             */
-            errors: components["schemas"]["AdminStructuredError"][];
+            /** Backfills */
+            backfills?: components["schemas"]["AdminBackfillStatus"][];
+            /** Errors */
+            errors?: components["schemas"]["AdminStructuredError"][];
             /**
              * Checked At
              * Format: date-time
@@ -903,11 +982,8 @@ export interface components {
         };
         /** AdminLocksStatus */
         AdminLocksStatus: {
-            /**
-             * Items
-             * @default []
-             */
-            items: components["schemas"]["AdminLockStatus"][];
+            /** Items */
+            items?: components["schemas"]["AdminLockStatus"][];
             /**
              * Checked At
              * Format: date-time
@@ -916,11 +992,8 @@ export interface components {
         };
         /** AdminProviderGovernanceStatus */
         AdminProviderGovernanceStatus: {
-            /**
-             * Items
-             * @default []
-             */
-            items: components["schemas"]["AdminProviderStatus"][];
+            /** Items */
+            items?: components["schemas"]["AdminProviderStatus"][];
             /**
              * Checked At
              * Format: date-time
@@ -1006,11 +1079,169 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** BatchHistoryRequest */
+        BatchHistoryRequest: {
+            /** Canonical Ids */
+            canonical_ids: string[];
+            /** @default 1M */
+            period: components["schemas"]["HistoryPeriod"];
+            /** @default INDEX_100 */
+            mode: components["schemas"]["SeriesMode"];
+            /**
+             * Adjustment Type
+             * @default UNADJUSTED
+             */
+            adjustment_type: string;
+        };
+        /** BatchHistoryResponse */
+        BatchHistoryResponse: {
+            /** Items */
+            items: components["schemas"]["PublicHistorySeries"][];
+        };
+        /** BatchQuoteRequest */
+        BatchQuoteRequest: {
+            /** Canonical Ids */
+            canonical_ids: string[];
+        };
+        /** BatchQuoteResponse */
+        BatchQuoteResponse: {
+            /** Items */
+            items: components["schemas"]["PublicQuote"][];
+        };
+        /** BenchmarkItem */
+        BenchmarkItem: {
+            /** Canonical Id */
+            canonical_id: string;
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Currency */
+            currency: string;
+            /** Value */
+            value?: string | null;
+            /** Change Percent */
+            change_percent?: string | null;
+            data_level: components["schemas"]["DataLevel"];
+            freshness: components["schemas"]["Freshness"];
+            /** Source */
+            source: string;
+            /** Dataset */
+            dataset: string;
+            /** Timestamp Official */
+            timestamp_official?: string | null;
+            /**
+             * Timestamp Collected
+             * Format: date-time
+             */
+            timestamp_collected: string;
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
+            /** Unavailable Reason */
+            unavailable_reason?: string | null;
+        };
+        /** BenchmarkListResponse */
+        BenchmarkListResponse: {
+            /** Items */
+            items: components["schemas"]["BenchmarkItem"][];
+        };
         /**
          * DataLevel
          * @enum {string}
          */
         DataLevel: "REAL_TIME" | "DELAYED" | "EOD" | "DEMO";
+        /** EconomicCalendarEvent */
+        EconomicCalendarEvent: {
+            /** Event Id */
+            event_id: string;
+            /** Event Key */
+            event_key: string;
+            /** Country */
+            country: string;
+            /** Timezone */
+            timezone: string;
+            /**
+             * Event Date
+             * Format: date
+             */
+            event_date: string;
+            /** Event Time */
+            event_time?: string | null;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            importance: components["schemas"]["EconomicEventImportance"];
+            status: components["schemas"]["EconomicEventStatus"];
+            value_status: components["schemas"]["EconomicEventValueStatus"];
+            /** Actual */
+            actual?: string | null;
+            /** Forecast */
+            forecast?: string | null;
+            /** Previous */
+            previous?: string | null;
+            /** Unit */
+            unit?: string | null;
+            provenance: components["schemas"]["EconomicCalendarProvenance"];
+        };
+        /** EconomicCalendarProvenance */
+        EconomicCalendarProvenance: {
+            /** Source */
+            source: string;
+            /** Dataset */
+            dataset: string;
+            data_level: components["schemas"]["DataLevel"];
+            freshness: components["schemas"]["Freshness"];
+            /** Source Timestamp */
+            source_timestamp?: string | null;
+            /**
+             * Collected At
+             * Format: date-time
+             */
+            collected_at: string;
+            /** Timezone */
+            timezone: string;
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
+        };
+        /** EconomicCalendarResponse */
+        EconomicCalendarResponse: {
+            /** Items */
+            items: components["schemas"]["EconomicCalendarEvent"][];
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            /** Limit */
+            limit: number;
+        };
+        /**
+         * EconomicEventImportance
+         * @enum {string}
+         */
+        EconomicEventImportance: "LOW" | "MEDIUM" | "HIGH";
+        /**
+         * EconomicEventStatus
+         * @enum {string}
+         */
+        EconomicEventStatus: "SCHEDULED" | "RELEASED" | "CANCELLED" | "UNAVAILABLE";
+        /**
+         * EconomicEventValueStatus
+         * @enum {string}
+         */
+        EconomicEventValueStatus: "AVAILABLE" | "PENDING" | "UNAVAILABLE";
         /** EditorialAdminPostListResponse */
         EditorialAdminPostListResponse: {
             /** Items */
@@ -2187,6 +2418,59 @@ export interface operations {
             };
         };
     };
+    public_quotes_batch_api_v1_market_data_quotes_batch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchQuoteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_benchmarks_api_v1_market_data_benchmarks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BenchmarkListResponse"];
+                };
+            };
+        };
+    };
     public_history_by_id_api_v1_market_data_history__canonical_id__get: {
         parameters: {
             query: {
@@ -2209,6 +2493,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicHistorySeries"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_history_batch_api_v1_market_data_history_batch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchHistoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchHistoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    economic_calendar_api_v1_economic_calendar_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+                country?: string | null;
+                timezone?: string | null;
+                importance?: components["schemas"]["EconomicEventImportance"] | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicCalendarResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    economic_calendar_detail_api_v1_economic_calendar__event_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicCalendarEvent"];
                 };
             };
             /** @description Validation Error */
