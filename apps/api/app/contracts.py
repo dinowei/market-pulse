@@ -381,6 +381,122 @@ class PublicHistorySeries(StrictModel):
         return self
 
 
+class EconomicEventImportance(StrEnum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
+class EconomicEventStatus(StrEnum):
+    SCHEDULED = "SCHEDULED"
+    RELEASED = "RELEASED"
+    CANCELLED = "CANCELLED"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class EconomicEventValueStatus(StrEnum):
+    AVAILABLE = "AVAILABLE"
+    PENDING = "PENDING"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class EconomicCalendarProvenance(StrictModel):
+    source: str
+    dataset: str
+    data_level: DataLevel
+    freshness: Freshness
+    source_timestamp: datetime | None = None
+    collected_at: datetime
+    timezone: str
+    limitations: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def require_demo_until_licensed(self) -> "EconomicCalendarProvenance":
+        if self.data_level is not DataLevel.DEMO:
+            raise ValueError("economic calendar remains DEMO until a provider is approved")
+        if self.freshness is not Freshness.UNAVAILABLE and self.source_timestamp is None:
+            raise ValueError("available calendar data requires source_timestamp")
+        return self
+
+
+class EconomicCalendarEvent(StrictModel):
+    event_id: str
+    event_key: str
+    country: str = Field(pattern="^[A-Z]{2}$")
+    timezone: str
+    event_date: date
+    event_time: datetime | None = None
+    title: str = Field(min_length=1, max_length=240)
+    description: str = Field(min_length=1, max_length=1000)
+    importance: EconomicEventImportance
+    status: EconomicEventStatus
+    value_status: EconomicEventValueStatus
+    actual: Decimal | None = None
+    forecast: Decimal | None = None
+    previous: Decimal | None = None
+    unit: str | None = Field(default=None, max_length=40)
+    provenance: EconomicCalendarProvenance
+
+
+class EconomicCalendarResponse(StrictModel):
+    items: list[EconomicCalendarEvent]
+    date_from: date
+    date_to: date
+    limit: int = Field(ge=1, le=100)
+
+
+class BenchmarkItem(StrictModel):
+    canonical_id: str
+    symbol: str
+    name: str
+    currency: str = Field(pattern="^[A-Z]{3}$")
+    value: Decimal | None = None
+    change_percent: Decimal | None = None
+    data_level: DataLevel
+    freshness: Freshness
+    source: str
+    dataset: str
+    timestamp_official: datetime | None = None
+    timestamp_collected: datetime
+    limitations: tuple[str, ...] = ()
+    unavailable_reason: str | None = None
+
+
+class BenchmarkListResponse(StrictModel):
+    items: list[BenchmarkItem]
+
+
+class BatchHistoryRequest(StrictModel):
+    canonical_ids: list[str] = Field(min_length=1, max_length=10)
+    period: HistoryPeriod = HistoryPeriod.ONE_M
+    mode: SeriesMode = SeriesMode.INDEX_100
+    adjustment_type: str = "UNADJUSTED"
+
+    @model_validator(mode="after")
+    def require_unique_ids(self) -> "BatchHistoryRequest":
+        if len(set(self.canonical_ids)) != len(self.canonical_ids):
+            raise ValueError("canonical_ids must be unique")
+        return self
+
+
+class BatchHistoryResponse(StrictModel):
+    items: list[PublicHistorySeries]
+
+
+class BatchQuoteRequest(StrictModel):
+    canonical_ids: list[str] = Field(min_length=1, max_length=10)
+
+    @model_validator(mode="after")
+    def require_unique_ids(self) -> "BatchQuoteRequest":
+        if len(set(self.canonical_ids)) != len(self.canonical_ids):
+            raise ValueError("canonical_ids must be unique")
+        return self
+
+
+class BatchQuoteResponse(StrictModel):
+    items: list[PublicQuote]
+
+
 class PortfolioEventCreate(StrictModel):
     portfolio_id: str
     event_type: PortfolioEventType

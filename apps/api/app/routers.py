@@ -1,6 +1,7 @@
 import hashlib
 import json
 import secrets
+from datetime import date, timedelta
 
 import psycopg
 from fastapi import (
@@ -26,6 +27,14 @@ from app.auth.service import (
 from app.contracts import (
     AdminSystemResponse,
     AuthUserResponse,
+    BatchHistoryRequest,
+    BatchHistoryResponse,
+    BatchQuoteRequest,
+    BatchQuoteResponse,
+    BenchmarkListResponse,
+    EconomicCalendarEvent,
+    EconomicCalendarResponse,
+    EconomicEventImportance,
     EditorialAdminPostListResponse,
     EditorialAdminPostResponse,
     EditorialPostCreateRequest,
@@ -75,6 +84,13 @@ from app.instruments.catalog import (
     CoverageTier,
     DataSupportStatus,
     search_catalog,
+)
+from app.market_data.benchmarks import benchmark_items, benchmark_series
+from app.market_data.economic_calendar import (
+    CALENDAR_LIMIT,
+    CALENDAR_MAX_DAYS,
+    filter_events,
+    valid_timezone,
 )
 from app.market_data.normalization import AdjustmentType
 from app.market_data.public_market_data import public_history, public_quote
@@ -424,6 +440,30 @@ def public_quote_by_id(canonical_id: str, request: Request) -> PublicQuote:
         raise HTTPException(status_code=404, detail="Instrument not found") from exc
 
 
+@router.post(
+    "/market-data/quotes/batch",
+    response_model=BatchQuoteResponse,
+    tags=["market-data"],
+)
+def public_quotes_batch(payload: BatchQuoteRequest, request: Request) -> BatchQuoteResponse:
+    items: list[PublicQuote] = []
+    for canonical_id in payload.canonical_ids:
+        try:
+            items.append(public_quote(canonical_id, request_id_for(request)))
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Instrument not found") from exc
+    return BatchQuoteResponse(items=items)
+
+
+@router.get(
+    "/market-data/benchmarks",
+    response_model=BenchmarkListResponse,
+    tags=["market-data", "benchmarks"],
+)
+def public_benchmarks() -> BenchmarkListResponse:
+    return BenchmarkListResponse(items=benchmark_items())
+
+
 @router.get(
     "/market-data/history/{canonical_id}",
     response_model=PublicHistorySeries,
@@ -436,6 +476,9 @@ def public_history_by_id(
     mode: SeriesMode = Query(SeriesMode.PRICE),
     adjustment_type: AdjustmentType = Query(AdjustmentType.UNADJUSTED),
 ) -> PublicHistorySeries:
+    benchmark = benchmark_series(canonical_id, period, mode, request_id_for(request))
+    if benchmark is not None:
+        return benchmark
     try:
         return public_history(
             canonical_id,
@@ -446,6 +489,88 @@ def public_history_by_id(
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Instrument not found") from exc
+
+
+@router.post(
+    "/market-data/history/batch",
+    response_model=BatchHistoryResponse,
+    tags=["market-data"],
+)
+def public_history_batch(
+    payload: BatchHistoryRequest,
+    request: Request,
+) -> BatchHistoryResponse:
+    request_id = request_id_for(request)
+    items: list[PublicHistorySeries] = []
+    for canonical_id in payload.canonical_ids:
+        benchmark = benchmark_series(canonical_id, payload.period, payload.mode, request_id)
+        if benchmark is not None:
+            items.append(benchmark)
+            continue
+        try:
+            items.append(
+                public_history(
+                    canonical_id,
+                    payload.period,
+                    payload.mode,
+                    request_id,
+                    payload.adjustment_type,
+                )
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Instrument not found") from exc
+    return BatchHistoryResponse(items=items)
+
+
+@router.get(
+    "/economic-calendar",
+    response_model=EconomicCalendarResponse,
+    tags=["economic-calendar"],
+)
+def economic_calendar(
+    date_from: date | None = Query(default=None),
+    date_to: date | None = Query(default=None),
+    country: str | None = Query(default=None, min_length=2, max_length=2, pattern="^[A-Z]{2}$"),
+    timezone_name: str | None = Query(default=None, alias="timezone"),
+    importance: EconomicEventImportance | None = Query(default=None),
+    limit: int = Query(default=CALENDAR_LIMIT, ge=1, le=CALENDAR_LIMIT),
+) -> EconomicCalendarResponse:
+    today = date.today()
+    start = date_from or today
+    end = date_to or start + timedelta(days=30)
+    if end < start:
+        raise HTTPException(status_code=422, detail="date_to must be on or after date_from")
+    if (end - start).days > CALENDAR_MAX_DAYS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"economic calendar range cannot exceed {CALENDAR_MAX_DAYS} days",
+        )
+    if timezone_name and not valid_timezone(timezone_name):
+        raise HTTPException(status_code=422, detail="timezone must be a valid IANA timezone")
+    items = filter_events(
+        date_from=start,
+        date_to=end,
+        country=country,
+        importance=importance,
+        timezone_name=timezone_name,
+    )[:limit]
+    return EconomicCalendarResponse(items=items, date_from=start, date_to=end, limit=limit)
+
+
+@router.get(
+    "/economic-calendar/{event_id}",
+    response_model=EconomicCalendarEvent,
+    tags=["economic-calendar"],
+)
+def economic_calendar_detail(event_id: str) -> EconomicCalendarEvent:
+    today = date.today()
+    for event in filter_events(
+        date_from=today - timedelta(days=1),
+        date_to=today + timedelta(days=366),
+    ):
+        if event.event_id == event_id:
+            return event
+    raise HTTPException(status_code=404, detail="Economic event not found")
 
 
 @router.get("/market-data/series", tags=["market-data"])
