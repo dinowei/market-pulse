@@ -92,7 +92,9 @@ def _event(
                 dataset="demo-economic-calendar",
                 data_level=DataLevel.DEMO,
                 freshness=Freshness.STALE,
-                source_timestamp=event_time.astimezone(UTC),
+                # The schedule can be in the future; provenance is the time
+                # this DEMO record was assembled, never a future observation.
+                source_timestamp=collected,
                 collected_at=collected,
                 timezone=timezone_name,
                 limitations=("Cenário sintético DEMO; não representa calendário oficial.",),

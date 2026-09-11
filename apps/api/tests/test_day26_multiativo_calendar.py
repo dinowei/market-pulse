@@ -28,6 +28,7 @@ def test_calendar_exposes_demo_provenance_and_safe_enums() -> None:
     assert event["value_status"] in {item.value for item in EconomicEventValueStatus}
     assert "recommendation" not in event
     assert "signal" not in event
+    assert event["provenance"]["source_timestamp"] <= event["provenance"]["collected_at"]
 
 
 def test_calendar_enforces_interval_and_timezone() -> None:
