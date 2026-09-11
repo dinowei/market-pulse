@@ -134,6 +134,20 @@ lexical de recomendação, ação ou sinal. Eventos sintéticos permanecem `DEMO
 até nova decisão documental de provider/licença; ausência ou revogação deve
 degradar para `UNAVAILABLE`, nunca para um valor inventado.
 
+## Proventos, eventos e observabilidade de UX (Dia 27)
+
+As rotas de carteira `/income` e `/event-markers` são projeções somente leitura
+de `portfolio_events` e `corporate_actions`. O campo `source_id` é validado
+contra o registro persistido correspondente; marcadores decorativos ou eventos
+inventados são rejeitados. A UI exibe valores `Decimal`, provenance,
+`DataLevel`/`Freshness` e tabela HTML equivalente ao gráfico.
+
+Web Vitals aceitos são LCP, INP e CLS. A API rejeita PII e grava apenas
+agregados diários de rota/métrica; o gate de CI aplica os orçamentos P95 e
+impede dependências 3D/WebGL no bundle crítico. O Particle Atlas permanece
+SVG/HTML acessível; uma futura biblioteca de gráficos só poderá entrar se
+preservar `Decimal` e proveniência sem conversão implícita.
+
 ## Restrições de implantação
 
 O Dia 1 apenas prepara decisões e referências. Credenciais ficam fora do Git. Vercel, Render, Neon, Upstash, GitHub Actions agendado e Stripe não podem ser conectados, provisionados ou publicados sem autorização posterior. Docker Compose serve exclusivamente ao desenvolvimento local.
