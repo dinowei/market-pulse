@@ -192,5 +192,19 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .editorial-admin-card { align-items: flex-start; display: flex; justify-content: space-between; gap: 1rem; }
 .editorial-admin-card h2 { margin: .2rem 0; }
 .editorial-admin-actions { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
+.admin-system-page { min-height: 100vh; padding: clamp(1rem, 4vw, 3rem); }
+.admin-system-header, .admin-system-grid, .admin-system-checked, .admin-system-note, .admin-system-error { margin-left: auto; margin-right: auto; max-width: 74rem; }
+.admin-system-header { align-items: flex-start; display: flex; gap: 1rem; justify-content: space-between; }
+.admin-system-request { color: var(--pa-text-secondary); font-family: monospace; font-size: .68rem; max-width: 24rem; overflow-wrap: anywhere; }
+.admin-system-checked { color: var(--pa-text-secondary); font-size: .75rem; margin-bottom: 1rem; }
+.admin-system-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.admin-system-card { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); border-top: 2px solid var(--pa-border-hairline); min-height: 7rem; padding: 1rem; }
+.admin-system-card strong { display: block; font-size: 1rem; overflow-wrap: anywhere; }
+.admin-system-card small { color: var(--pa-text-secondary); display: block; font-size: .66rem; margin-top: .8rem; }
+.admin-system-card-ok { border-top-color: var(--pa-market-up); }
+.admin-system-card-degraded { border-top-color: var(--pa-state-stale); }
+.admin-system-card-down { border-top-color: var(--pa-market-down); }
+.admin-system-error { border-left: 2px solid var(--pa-market-down); color: var(--pa-market-down); padding: .7rem; }
+.admin-system-note { border-left: 2px solid var(--pa-market-flat); color: var(--pa-text-secondary); font-size: .75rem; line-height: 1.5; margin-top: 1.5rem; padding-left: .7rem; }
 @media (max-width: 700px) { .editorial-admin-header, .editorial-admin-card { display: block; } .editorial-admin-header button, .editorial-admin-actions { margin-top: .7rem; } .editorial-admin-form { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .portfolios-header { display: block; } .portfolios-back { display: inline-block; margin-top: .5rem; } .portfolios-toolbar, .portfolio-summary-grid { grid-template-columns: 1fr; } .portfolio-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

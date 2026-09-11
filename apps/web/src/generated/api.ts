@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/system": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin System */
+        get: operations["admin_system_api_v1_admin_system_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/logout": {
         parameters: {
             query?: never;
@@ -806,6 +823,180 @@ export interface components {
          * @enum {string}
          */
         AdjustmentType: "UNADJUSTED" | "ADJUSTED_SPLIT_ONLY" | "ADJUSTED_TOTAL_RETURN";
+        /** AdminBackfillStatus */
+        AdminBackfillStatus: {
+            /** Status */
+            status: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Job Id */
+            job_id?: string | null;
+        };
+        /** AdminBackgroundJobsStatus */
+        AdminBackgroundJobsStatus: {
+            /** Last Refresh At */
+            last_refresh_at?: string | null;
+            /**
+             * Backfills
+             * @default []
+             */
+            backfills: components["schemas"]["AdminBackfillStatus"][];
+            /**
+             * Errors
+             * @default []
+             */
+            errors: components["schemas"]["AdminStructuredError"][];
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+        };
+        /** AdminContractStatus */
+        AdminContractStatus: {
+            /** Version */
+            version: string;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+        };
+        /** AdminEditorialConsumptionStatus */
+        AdminEditorialConsumptionStatus: {
+            /** Last Published At */
+            last_published_at?: string | null;
+            /** Archived Versions */
+            archived_versions: number;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+        };
+        /** AdminHealthStatus */
+        AdminHealthStatus: {
+            /** Status */
+            status: string;
+            /** Latency Ms */
+            latency_ms?: number | null;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+        };
+        /** AdminLockStatus */
+        AdminLockStatus: {
+            /** Name */
+            name: string;
+            /**
+             * Acquired At
+             * Format: date-time
+             */
+            acquired_at: string;
+            /** Ttl Seconds */
+            ttl_seconds?: number | null;
+        };
+        /** AdminLocksStatus */
+        AdminLocksStatus: {
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["AdminLockStatus"][];
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+        };
+        /** AdminProviderGovernanceStatus */
+        AdminProviderGovernanceStatus: {
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["AdminProviderStatus"][];
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+        };
+        /** AdminProviderStatus */
+        AdminProviderStatus: {
+            /** Provider */
+            provider: string;
+            /** Dataset */
+            dataset: string;
+            /** Provider Status */
+            provider_status: string;
+            /** Dataset Status */
+            dataset_status: string;
+            /** License Status */
+            license_status: string;
+            /** Access */
+            access: string;
+        };
+        /** AdminQuarantineStatus */
+        AdminQuarantineStatus: {
+            /** Price Anomalies */
+            price_anomalies: number;
+            /** Corporate Actions */
+            corporate_actions: number;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+        };
+        /** AdminStructuredError */
+        AdminStructuredError: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+        };
+        /** AdminSystemResponse */
+        AdminSystemResponse: {
+            /** Request Id */
+            request_id: string;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+            postgres: components["schemas"]["AdminHealthStatus"];
+            redis: components["schemas"]["AdminHealthStatus"];
+            openapi: components["schemas"]["AdminContractStatus"];
+            background_jobs: components["schemas"]["AdminBackgroundJobsStatus"];
+            providers: components["schemas"]["AdminProviderGovernanceStatus"];
+            quarantine: components["schemas"]["AdminQuarantineStatus"];
+            locks: components["schemas"]["AdminLocksStatus"];
+            editorial: components["schemas"]["AdminEditorialConsumptionStatus"];
+            volumetrics: components["schemas"]["AdminVolumetricStatus"];
+        };
+        /** AdminVolumetricStatus */
+        AdminVolumetricStatus: {
+            /** Active Users */
+            active_users: number;
+            /** Active Portfolios */
+            active_portfolios: number;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+        };
         /** AuthUserResponse */
         AuthUserResponse: {
             /** Id */
@@ -1737,6 +1928,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthUserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    admin_system_api_v1_admin_system_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSystemResponse"];
                 };
             };
             /** @description Validation Error */
