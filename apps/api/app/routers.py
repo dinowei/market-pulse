@@ -15,6 +15,7 @@ from fastapi import (
     status,
 )
 
+from app.admin.system import build_admin_system
 from app.auth.service import (
     AuthConflict,
     AuthInvalid,
@@ -23,6 +24,7 @@ from app.auth.service import (
     AuthUnavailable,
 )
 from app.contracts import (
+    AdminSystemResponse,
     AuthUserResponse,
     EditorialAdminPostListResponse,
     EditorialAdminPostResponse,
@@ -193,6 +195,107 @@ def get_editorial_role(
 def _require_editorial_role(role: str, *allowed: EditorialRole) -> None:
     if role not in {item.value for item in allowed}:
         raise HTTPException(status_code=403, detail="Editorial permission required")
+
+
+def _admin_role_for_user(user_id: str) -> str:
+    try:
+        with psycopg.connect(
+            get_settings().database_url,
+            connect_timeout=max(1, int(get_settings().database_timeout_seconds)),
+        ) as conn:
+            row = conn.execute("SELECT role FROM users WHERE id=%s", (user_id,)).fetchone()
+        return str(row[0]) if row and row[0] else EditorialRole.USER.value
+    except Exception:
+        return EditorialRole.USER.value
+
+
+def _record_admin_audit(
+    *,
+    actor_user_id: str | None,
+    action: str,
+    resource: str,
+    result: str,
+    request_id: str,
+) -> None:
+    try:
+        with psycopg.connect(
+            get_settings().database_url,
+            connect_timeout=max(1, int(get_settings().database_timeout_seconds)),
+        ) as conn:
+            conn.execute(
+                "INSERT INTO audit_logs "
+                "(entity_type, action, actor_user_id, occurred_at, metadata, resource, "
+                "result, request_id) "
+                "VALUES (%s, %s, %s, now(), %s::jsonb, %s, %s, %s)",
+                (
+                    "admin_system",
+                    action,
+                    actor_user_id,
+                    json.dumps(
+                        {
+                            "actor": actor_user_id or "anonymous",
+                            "resource": resource,
+                            "result": result,
+                            "request_id": request_id,
+                        }
+                    ),
+                    resource,
+                    result,
+                    request_id,
+                ),
+            )
+            conn.commit()
+    except Exception:
+        # Operational visibility must never expose database details or break auth.
+        return
+
+
+def get_admin_user(
+    request: Request,
+    session_token: str | None = Cookie(default=None, alias="market_pulse_session"),
+) -> AuthUserResponse:
+    request_id = request_id_for(request)
+    try:
+        current_user = get_current_user(request, session_token)
+    except HTTPException:
+        _record_admin_audit(
+            actor_user_id=None,
+            action="view_admin_system",
+            resource="/admin/system",
+            result="denied",
+            request_id=request_id,
+        )
+        raise
+    role = _admin_role_for_user(current_user.id)
+    if role != EditorialRole.ADMIN.value:
+        _record_admin_audit(
+            actor_user_id=current_user.id,
+            action="view_admin_system",
+            resource="/admin/system",
+            result="denied",
+            request_id=request_id,
+        )
+        raise HTTPException(status_code=403, detail="Admin permission required")
+    _record_admin_audit(
+        actor_user_id=current_user.id,
+        action="view_admin_system",
+        resource="/admin/system",
+        result="allowed",
+        request_id=request_id,
+    )
+    return current_user
+
+
+@router.get(
+    "/admin/system",
+    response_model=AdminSystemResponse,
+    tags=["admin-system"],
+)
+def admin_system(
+    request: Request,
+    _admin: AuthUserResponse = Depends(get_admin_user),
+) -> AdminSystemResponse:
+    return build_admin_system(request_id_for(request))
 
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT, tags=["auth"])

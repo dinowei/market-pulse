@@ -600,3 +600,90 @@ class ErrorProblem(StrictModel):
     instance: str
     code: str
     request_id: str
+
+
+class AdminHealthStatus(StrictModel):
+    status: str = Field(pattern="^(ok|degraded|down)$")
+    latency_ms: int | None = Field(default=None, ge=0)
+    checked_at: datetime
+
+
+class AdminContractStatus(StrictModel):
+    version: str
+    checked_at: datetime
+
+
+class AdminBackfillStatus(StrictModel):
+    status: str
+    occurred_at: datetime
+    job_id: str | None = None
+
+
+class AdminStructuredError(StrictModel):
+    code: str
+    message: str
+    occurred_at: datetime
+
+
+class AdminBackgroundJobsStatus(StrictModel):
+    last_refresh_at: datetime | None = None
+    backfills: list[AdminBackfillStatus] = Field(default_factory=list)
+    errors: list[AdminStructuredError] = Field(default_factory=list)
+    checked_at: datetime
+
+
+class AdminProviderStatus(StrictModel):
+    provider: str
+    dataset: str
+    provider_status: str
+    dataset_status: str
+    license_status: str
+    access: str = Field(pattern="^(allowed|denied)$")
+
+
+class AdminProviderGovernanceStatus(StrictModel):
+    items: list[AdminProviderStatus] = Field(default_factory=list)
+    checked_at: datetime
+
+
+class AdminQuarantineStatus(StrictModel):
+    price_anomalies: int = Field(ge=0)
+    corporate_actions: int = Field(ge=0)
+    checked_at: datetime
+
+
+class AdminLockStatus(StrictModel):
+    name: str
+    acquired_at: datetime
+    ttl_seconds: int | None = Field(default=None, ge=0)
+
+
+class AdminLocksStatus(StrictModel):
+    items: list[AdminLockStatus] = Field(default_factory=list)
+    checked_at: datetime
+
+
+class AdminEditorialConsumptionStatus(StrictModel):
+    last_published_at: datetime | None = None
+    archived_versions: int = Field(ge=0)
+    checked_at: datetime
+
+
+class AdminVolumetricStatus(StrictModel):
+    active_users: int = Field(ge=0)
+    active_portfolios: int = Field(ge=0)
+    checked_at: datetime
+
+
+class AdminSystemResponse(StrictModel):
+    request_id: str
+    checked_at: datetime
+    postgres: AdminHealthStatus
+    redis: AdminHealthStatus
+    openapi: AdminContractStatus
+    background_jobs: AdminBackgroundJobsStatus
+    providers: AdminProviderGovernanceStatus
+    quarantine: AdminQuarantineStatus
+    locks: AdminLocksStatus
+    editorial: AdminEditorialConsumptionStatus
+    volumetrics: AdminVolumetricStatus
