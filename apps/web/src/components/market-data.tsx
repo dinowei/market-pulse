@@ -21,10 +21,11 @@ const periods = ["1D", "5D", "1M", "3M", "6M", "YTD", "1A", "5A", "MAX"] as cons
 const modes = ["PRICE", "INDEX_100"] as const satisfies readonly SeriesMode[];
 
 export function DataStateBadge({ dataLevel, freshness }: { dataLevel: DataLevel; freshness: Freshness }) {
+  const label = dataLevel === "DEMO" ? "DADOS DE DEMONSTRAÇÃO" : `${dataLevel} · ${freshness}`;
   return (
     <span className={`data-badge data-badge-${freshness.toLowerCase()}`} aria-label={`Estado ${freshness}, nível ${dataLevel}`}>
       <span aria-hidden="true" className="badge-mark" />
-      {dataLevel} · {freshness}
+      {label}{dataLevel === "DEMO" && <span className="sr-only">DEMO · {freshness}</span>}
     </span>
   );
 }

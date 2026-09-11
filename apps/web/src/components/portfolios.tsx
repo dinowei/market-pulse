@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { components } from "../generated/api";
 import { EquityChart } from "./equity-chart";
+import { DataStateBadge } from "./market-data";
 
 type Portfolio = components["schemas"]["PortfolioResponse"];
 type PortfolioList = components["schemas"]["PortfolioListResponse"];
@@ -168,6 +169,7 @@ export function PortfoliosPanel() {
     <header className="portfolios-header"><div><p className="eyebrow">PARTICLE ATLAS / ÁREA PRIVADA</p><h1 id="portfolios-title">Carteiras informativas</h1></div><Link href="/" className="portfolios-back">Voltar ao terminal</Link></header>
     <p className="portfolios-disclaimer">Esta carteira mostra eventos, caixa, posições, valuation, P&amp;L e TWR factuais, sempre acompanhados de metodologia. Estados possíveis: DEMO, STALE, PARTIAL e UNAVAILABLE.</p>
     {error && <p className="state-note" role="alert">{error}</p>}
+    {valuation?.provenance[0] && <DataStateBadge dataLevel={valuation.provenance[0].data_level} freshness={valuation.provenance[0].freshness} />}
     <section className="portfolios-toolbar" aria-label="Controles de carteira">
       <form onSubmit={createPortfolio} className="portfolio-form"><label htmlFor="portfolio-name">Nova carteira</label><div className="portfolio-form-row"><input id="portfolio-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome da carteira" /><select aria-label="Moeda base" value={baseCurrency} onChange={(event) => setBaseCurrency(event.target.value)}><option>BRL</option><option>USD</option></select><button type="submit">Criar</button></div></form>
       <form onSubmit={createEvent} className="portfolio-form"><label htmlFor="portfolio-event-type">Registrar evento manual</label><div className="portfolio-form-grid"><select id="portfolio-event-type" value={eventType} onChange={(event) => setEventType(event.target.value as PortfolioEventType)}>{eventTypes.map((type) => <option key={type}>{type}</option>)}</select><input aria-label="Moeda do evento" value={currency} onChange={(event) => setCurrency(event.target.value.toUpperCase())} maxLength={3} /><input aria-label="Canonical ID do ativo" value={canonicalId} onChange={(event) => setCanonicalId(event.target.value)} placeholder="canonical_id (BUY/SELL)" /><input aria-label="Quantidade" value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="Quantidade" inputMode="decimal" /><input aria-label="Preço unitário" value={unitPrice} onChange={(event) => setUnitPrice(event.target.value)} placeholder="Preço unitário" inputMode="decimal" /><input aria-label="Valor bruto" value={grossAmount} onChange={(event) => setGrossAmount(event.target.value)} placeholder="Valor bruto" inputMode="decimal" /><button type="submit" disabled={!selectedId}>Registrar</button></div></form>
