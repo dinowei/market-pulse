@@ -90,9 +90,11 @@ def normalize_ohlcv(
     currency = payload.get("currency")
     if not isinstance(currency, str) or len(currency) != 3 or currency.upper() != currency:
         raise ValueError("Invalid currency")
-    if values["high"] < max(values["open"], values["close"]) or values["low"] > min(
-        values["open"], values["close"]
-    ) or values["high"] < values["low"]:
+    if (
+        values["high"] < max(values["open"], values["close"])
+        or values["low"] > min(values["open"], values["close"])
+        or values["high"] < values["low"]
+    ):
         raise ValueError("Invalid OHLC invariants")
     volume = None if payload.get("v") is None else _decimal(payload.get("v"), "volume")
     values_dict = {**values, **({"volume": volume} if volume is not None else {})}

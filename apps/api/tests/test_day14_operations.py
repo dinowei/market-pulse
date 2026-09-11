@@ -89,9 +89,7 @@ def test_backfill_reports_partial_failures_and_granular_invalidations():
     assert result.status is BackfillStatus.PARTIAL
     assert result.succeeded_items == 1
     assert result.failed_items == 1
-    assert result.invalidated_keys == (
-        "market_data:history:demo-quotes:equity.br.b3.petr4:1d:raw",
-    )
+    assert result.invalidated_keys == ("market_data:history:demo-quotes:equity.br.b3.petr4:1d:raw",)
 
 
 def test_reconciliation_detects_gaps_and_missing_provenance_without_weekend_false_positive():

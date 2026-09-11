@@ -71,8 +71,12 @@ class RefreshService:
     @staticmethod
     def _job_id(request: RefreshRequest) -> str:
         value = ":".join(
-            (request.dataset.provider, request.dataset.dataset,
-             request.capability.value, request.canonical_id)
+            (
+                request.dataset.provider,
+                request.dataset.dataset,
+                request.capability.value,
+                request.canonical_id,
+            )
         )
         return hashlib.sha256(value.encode("utf-8")).hexdigest()[:24]
 
