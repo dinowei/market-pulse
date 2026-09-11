@@ -90,7 +90,7 @@ Canvas, WebGL, provider ou dados reais.
 | 22 | Validador editorial e Morning Call factual: blocos tipados, fontes, estados, versionamento append-only e leitura pública | Dados e política de conteúdo canônica | Somente `PUBLISHED` é público; linguagem prescritiva é bloqueada; provenance editorial e fallback seguro passam |
 | 23 | Integração compatível com Neon PostgreSQL e Upstash Redis REST | Stack local verde | Migração, TTL, lock, fallback e falha segura passam sem provisionar externamente |
 | 24 | Testes frontend/a11y; P1 visual somente se orçamento permitir | UX P0 verde | Estados críticos cobertos; P1 feature-flagged, não bloqueante e com fallback |
-| 25 | E2E de conta, dashboard, watchlist, stale e Morning Call | Integração | Cenários determinísticos passam sem provider real no CI |
+| 25 | Painel operacional interno `/admin/system`: RBAC `ADMIN`, health, jobs, providers, quarentena, locks, editorial, volumetria e auditoria | Dia 24 e sessão HttpOnly | Contrato OpenAPI, request IDs, mascaramento, acesso ADMIN-only e estados degradados passam sem provider real |
 | 26 | Hardening: CORS, cookies, headers, rate limit e abuso | E2E verde | Testes negativos e checklist de segurança passam |
 | 27 | Logs estruturados, health, runbooks e OpenAPI | Operação | Correlação funciona; logs não contêm segredo/cookie/body bruto |
 | 28 | Artefatos para Vercel (web) e Render (API), non-root e shutdown | Checks verdes | Smoke local equivalente passa; nenhum login/deploy externo |
@@ -115,6 +115,18 @@ reset/seed repetidos com fingerprint lógico estável, health de PostgreSQL/Redi
 e E2E principal e de isolamento A/B. Estado, comandos e limitações em
 [DEMO_SEED_DAY_24.md](demo/DEMO_SEED_DAY_24.md). Esta reconciliação não declara
 o Dia 25 executado.
+
+### Execução autorizada do Dia 25
+
+O Dia 25 foi replanejado e executado como painel operacional interno em
+`/api/v1/admin/system` e `/admin/system`. O painel agrega somente diagnósticos
+seguros: PostgreSQL, Redis, contrato OpenAPI, jobs, governança default-deny de
+providers/datasets, quarentena, locks, consumo editorial e volumetria. O acesso
+exige sessão válida e papel `ADMIN`; tentativas permitidas e rejeitadas são
+registradas em `audit_logs` com `request_id`, sem credenciais, cookies, payloads
+brutos ou PII. O runbook canônico está em
+[ADMIN_SYSTEM_DAY_25.md](operations/ADMIN_SYSTEM_DAY_25.md). Nenhum provider
+real, dado real, Stripe, corretora, IA ativa ou deploy foi ativado.
 
 ### Adendo operacional do Dia 23
 

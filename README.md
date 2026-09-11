@@ -157,5 +157,5 @@ O repositório não adota licença open source neste momento; consulte [LICENSE]
 
 ## Próximo passo
 
-O **Dia 24** está concluído localmente. O Dia 25 não está autorizado por esta
-etapa.
+O **Dia 24** está concluído localmente. O Dia 25 entrega o painel operacional
+interno documentado em [ADMIN_SYSTEM_DAY_25.md](docs/operations/ADMIN_SYSTEM_DAY_25.md).

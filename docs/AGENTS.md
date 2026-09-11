@@ -46,6 +46,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Morning Call público e administrativo do Dia 23: [MORNING_CALL_ADMIN_DAY_23.md](editorial/MORNING_CALL_ADMIN_DAY_23.md)
 - Demo local validada do Dia 24: [DEMO_SEED_DAY_24.md](demo/DEMO_SEED_DAY_24.md)
 - Gate da Semana 3: [WEEK_3_GATE.md](engineering/WEEK_3_GATE.md)
+- Painel operacional interno do Dia 25: [ADMIN_SYSTEM_DAY_25.md](operations/ADMIN_SYSTEM_DAY_25.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.
