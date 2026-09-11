@@ -19,6 +19,11 @@ barreiras, dados sintéticos e gates executados. O único banco autorizado para
 reset ou seed é `market_pulse_demo`, local e isolado. Nunca execute limpeza,
 reset ou a suíte integrada contra o banco principal.
 
+O workflow isolado [Day 24 DEMO Integration Gate](.github/workflows/demo-integration.yml)
+executa migrations e os tres testes criticos de seed/reset em Postgres e Redis
+efemeros. Ele roda em PRs que tocam o fluxo DEMO, nightly e por
+`workflow_dispatch`; nao faz parte do job principal de qualidade.
+
 ## Escopo P0 do beta
 
 - Dashboard responsivo em tema escuro.
