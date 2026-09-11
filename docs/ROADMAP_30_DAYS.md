@@ -91,7 +91,7 @@ Canvas, WebGL, provider ou dados reais.
 | 23 | Integração compatível com Neon PostgreSQL e Upstash Redis REST | Stack local verde | Migração, TTL, lock, fallback e falha segura passam sem provisionar externamente |
 | 24 | Testes frontend/a11y; P1 visual somente se orçamento permitir | UX P0 verde | Estados críticos cobertos; P1 feature-flagged, não bloqueante e com fallback |
 | 25 | Painel operacional interno `/admin/system`: RBAC `ADMIN`, health, jobs, providers, quarentena, locks, editorial, volumetria e auditoria | Dia 24 e sessão HttpOnly | Contrato OpenAPI, request IDs, mascaramento, acesso ADMIN-only e estados degradados passam sem provider real |
-| 26 | Hardening: CORS, cookies, headers, rate limit e abuso | E2E verde | Testes negativos e checklist de segurança passam |
+| 26 | Comparação multiativo, benchmarks e calendário econômico: lotes de quotes/histórico, `PRICE`/`INDEX_100`, universo fixo DEMO e eventos factuais | Contratos públicos e OpenAPI | Máximo de 10 séries, `Decimal`, provenance/DataLevel/Freshness, gaps e fallback tabular, léxico sem recomendação, UI acessível e gates automatizados |
 | 27 | Logs estruturados, health, runbooks e OpenAPI | Operação | Correlação funciona; logs não contêm segredo/cookie/body bruto |
 | 28 | Artefatos para Vercel (web) e Render (API), non-root e shutdown | Checks verdes | Smoke local equivalente passa; nenhum login/deploy externo |
 | 29 | Preparar GitHub Actions agendado para chamar endpoint interno protegido | Refresh idempotente | Dry run/manual controlado; segredo não versionado; cold start/falha documentados |
@@ -127,6 +127,18 @@ registradas em `audit_logs` com `request_id`, sem credenciais, cookies, payloads
 brutos ou PII. O runbook canônico está em
 [ADMIN_SYSTEM_DAY_25.md](operations/ADMIN_SYSTEM_DAY_25.md). Nenhum provider
 real, dado real, Stripe, corretora, IA ativa ou deploy foi ativado.
+
+### Reconciliação autorizada do Dia 26
+
+O Dia 26 foi executado como comparação multiativo, benchmarks e calendário
+econômico, conforme o prompt direto aprovado. A implementação inclui contratos
+em lote para quotes e histórico, normalização `INDEX_100` com `Decimal`,
+benchmark fixo sintético `DEMO`, calendário factual com limite de 366 dias,
+proveniência, timezone IANA, bloqueio lexical e telas Particle Atlas com tabela
+acessível. A linha anterior de hardening de CORS/cookies/rate limit não é
+apagada do histórico; permanece como trabalho de hardening a ser replanejado
+depois deste gate. Detalhes e comandos estão em
+[DAY_26_MULTIATIVE_CALENDAR.md](market_data/DAY_26_MULTIATIVE_CALENDAR.md).
 
 ### Adendo operacional do Dia 23
 

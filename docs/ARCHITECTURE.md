@@ -114,6 +114,26 @@ Render e outros serviços compatíveis podem ter cold start. Healthchecks devem 
 
 Falhas esperadas — timeout, rate limit, provider indisponível, Redis ausente, payload inválido e banco indisponível — precisam de categorias internas, métricas e comportamento seguro. Retry é limitado e não mascara licença negada nem erro permanente.
 
+## Comparação multiativo, benchmarks e calendário econômico (Dia 26)
+
+O contrato público de mercado expõe lotes de cotações e séries históricas em
+`/api/v1/market-data/quotes/batch` e `/api/v1/market-data/history/batch`, com no
+máximo dez `canonical_id` únicos por requisição. O endpoint de histórico aceita
+`PRICE` e `INDEX_100`; a normalização usa `Decimal` e preserva os valores reais,
+moeda, timestamps, gaps e fallback tabular.
+
+`/api/v1/market-data/benchmarks` possui universo fixo para o beta
+(Ibovespa, CDI, IPCA, IFIX, USD/BRL, S&amp;P 500 e Nasdaq). Enquanto não houver
+provider e licença aprovados, cada item é explicitamente `DEMO`, com fonte e
+limitação; ele não é uma autorização para publicar cotação real.
+
+`/api/v1/economic-calendar` e seu endpoint de detalhe mantêm eventos factuais
+com status, importância, valor/forecast/previous, país, timezone IANA e
+proveniência. O intervalo máximo é de 366 dias e o texto passa por bloqueio
+lexical de recomendação, ação ou sinal. Eventos sintéticos permanecem `DEMO`
+até nova decisão documental de provider/licença; ausência ou revogação deve
+degradar para `UNAVAILABLE`, nunca para um valor inventado.
+
 ## Restrições de implantação
 
 O Dia 1 apenas prepara decisões e referências. Credenciais ficam fora do Git. Vercel, Render, Neon, Upstash, GitHub Actions agendado e Stripe não podem ser conectados, provisionados ou publicados sem autorização posterior. Docker Compose serve exclusivamente ao desenvolvimento local.
