@@ -113,8 +113,8 @@ múltiplas barreiras e preservação do banco principal e das proteções append
 O gate foi concluído localmente em 2026-09-07: migrations em banco DEMO vazio,
 reset/seed repetidos com fingerprint lógico estável, health de PostgreSQL/Redis
 e E2E principal e de isolamento A/B. Estado, comandos e limitações em
-[DEMO_SEED_DAY_24.md](demo/DEMO_SEED_DAY_24.md). Esta reconciliação não declara
-o Dia 25 executado.
+[DEMO_SEED_DAY_24.md](demo/DEMO_SEED_DAY_24.md). No momento desta reconciliação,
+o Dia 25 ainda não estava executado.
 
 ### Execução autorizada do Dia 25
 
