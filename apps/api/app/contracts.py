@@ -626,6 +626,90 @@ class PerformanceProvenance(StrictModel):
     limitations: tuple[str, ...] = ()
 
 
+class PortfolioIncomeType(StrEnum):
+    DIVIDEND = "DIVIDEND"
+    JCP = "JCP"
+    SPLIT = "SPLIT"
+    REVERSE_SPLIT = "REVERSE_SPLIT"
+
+
+class PortfolioIncomeStatus(StrEnum):
+    APPLIED = "APPLIED"
+    PENDING = "PENDING"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class MarkerSourceType(StrEnum):
+    LEDGER_EVENT = "LEDGER_EVENT"
+    CORPORATE_ACTION = "CORPORATE_ACTION"
+
+
+class PortfolioIncomeResponse(StrictModel):
+    portfolio_id: str
+    source_type: MarkerSourceType
+    source_id: str
+    canonical_id: str
+    event_type: PortfolioIncomeType
+    status: PortfolioIncomeStatus
+    ex_date: date | None = None
+    payment_date: date | None = None
+    payer: str
+    gross_amount_per_unit: Decimal | None = None
+    net_amount_per_unit: Decimal | None = None
+    quantity: Decimal | None = None
+    currency: str | None = Field(default=None, pattern="^[A-Z]{3}$")
+    split_ratio_from: Decimal | None = None
+    split_ratio_to: Decimal | None = None
+    provenance: PerformanceProvenance
+
+
+class PortfolioEventMarkerResponse(StrictModel):
+    portfolio_id: str
+    source_type: MarkerSourceType
+    source_id: str
+    event_type: str
+    canonical_id: str
+    occurred_at: datetime
+    quantity: Decimal | None = None
+    amount: Decimal | None = None
+    currency: str = Field(pattern="^[A-Z]{3}$")
+    provenance: PerformanceProvenance
+
+
+class PortfolioEventMarkersResponse(StrictModel):
+    portfolio_id: str
+    items: list[PortfolioEventMarkerResponse]
+
+
+class WebVitalsMetric(StrEnum):
+    LCP = "LCP"
+    INP = "INP"
+    CLS = "CLS"
+
+
+class WebVitalsRequest(StrictModel):
+    metric: WebVitalsMetric
+    value: Decimal = Field(ge=0)
+    route: str = Field(min_length=1, max_length=160, pattern=r"^/")
+    sample_count: int = Field(default=1, ge=1, le=100000)
+    observed_at: datetime | None = None
+
+    @model_validator(mode="after")
+    def require_aware_timestamp(self) -> "WebVitalsRequest":
+        if self.observed_at is not None:
+            if self.observed_at.tzinfo is None or self.observed_at.utcoffset() is None:
+                raise ValueError("observed_at must be timezone-aware")
+            self.observed_at = self.observed_at.astimezone(timezone.utc)
+        return self
+
+
+class WebVitalsAcceptedResponse(StrictModel):
+    status: str = "accepted"
+    metric: WebVitalsMetric
+    route: str
+    sample_count: int
+
+
 class PortfolioValuationPositionResponse(StrictModel):
     canonical_id: str
     quantity: Decimal

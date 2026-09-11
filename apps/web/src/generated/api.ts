@@ -589,6 +589,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/portfolios/{portfolio_id}/income": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portfolio Income */
+        get: operations["portfolio_income_api_v1_portfolios__portfolio_id__income_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}/event-markers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portfolio Event Markers */
+        get: operations["portfolio_event_markers_api_v1_portfolios__portfolio_id__event_markers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/telemetry/web-vitals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Web Vitals */
+        post: operations["record_web_vitals_api_v1_telemetry_web_vitals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/portfolio-events": {
         parameters: {
             query?: never;
@@ -1479,6 +1530,11 @@ export interface components {
             /** Password */
             password: string;
         };
+        /**
+         * MarkerSourceType
+         * @enum {string}
+         */
+        MarkerSourceType: "LEDGER_EVENT" | "CORPORATE_ACTION";
         /** PageMeta */
         PageMeta: {
             /** Limit */
@@ -1602,6 +1658,37 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /** PortfolioEventMarkerResponse */
+        PortfolioEventMarkerResponse: {
+            /** Portfolio Id */
+            portfolio_id: string;
+            source_type: components["schemas"]["MarkerSourceType"];
+            /** Source Id */
+            source_id: string;
+            /** Event Type */
+            event_type: string;
+            /** Canonical Id */
+            canonical_id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Quantity */
+            quantity?: string | null;
+            /** Amount */
+            amount?: string | null;
+            /** Currency */
+            currency: string;
+            provenance: components["schemas"]["PerformanceProvenance"];
+        };
+        /** PortfolioEventMarkersResponse */
+        PortfolioEventMarkersResponse: {
+            /** Portfolio Id */
+            portfolio_id: string;
+            /** Items */
+            items: components["schemas"]["PortfolioEventMarkerResponse"][];
+        };
         /** PortfolioEventRequest */
         PortfolioEventRequest: {
             event_type: components["schemas"]["PortfolioEventType"];
@@ -1670,6 +1757,47 @@ export interface components {
          * @enum {string}
          */
         PortfolioEventType: "BUY" | "SELL" | "CASH_DEPOSIT" | "CASH_WITHDRAWAL" | "FEE" | "DIVIDEND" | "SPLIT" | "ADJUSTMENT" | "REVERSAL";
+        /** PortfolioIncomeResponse */
+        PortfolioIncomeResponse: {
+            /** Portfolio Id */
+            portfolio_id: string;
+            source_type: components["schemas"]["MarkerSourceType"];
+            /** Source Id */
+            source_id: string;
+            /** Canonical Id */
+            canonical_id: string;
+            event_type: components["schemas"]["PortfolioIncomeType"];
+            status: components["schemas"]["PortfolioIncomeStatus"];
+            /** Ex Date */
+            ex_date?: string | null;
+            /** Payment Date */
+            payment_date?: string | null;
+            /** Payer */
+            payer: string;
+            /** Gross Amount Per Unit */
+            gross_amount_per_unit?: string | null;
+            /** Net Amount Per Unit */
+            net_amount_per_unit?: string | null;
+            /** Quantity */
+            quantity?: string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Split Ratio From */
+            split_ratio_from?: string | null;
+            /** Split Ratio To */
+            split_ratio_to?: string | null;
+            provenance: components["schemas"]["PerformanceProvenance"];
+        };
+        /**
+         * PortfolioIncomeStatus
+         * @enum {string}
+         */
+        PortfolioIncomeStatus: "APPLIED" | "PENDING" | "UNAVAILABLE";
+        /**
+         * PortfolioIncomeType
+         * @enum {string}
+         */
+        PortfolioIncomeType: "DIVIDEND" | "JCP" | "SPLIT" | "REVERSE_SPLIT";
         /** PortfolioListResponse */
         PortfolioListResponse: {
             /** Items */
@@ -2096,6 +2224,39 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** WebVitalsAcceptedResponse */
+        WebVitalsAcceptedResponse: {
+            /**
+             * Status
+             * @default accepted
+             */
+            status: string;
+            metric: components["schemas"]["WebVitalsMetric"];
+            /** Route */
+            route: string;
+            /** Sample Count */
+            sample_count: number;
+        };
+        /**
+         * WebVitalsMetric
+         * @enum {string}
+         */
+        WebVitalsMetric: "LCP" | "INP" | "CLS";
+        /** WebVitalsRequest */
+        WebVitalsRequest: {
+            metric: components["schemas"]["WebVitalsMetric"];
+            /** Value */
+            value: number | string;
+            /** Route */
+            route: string;
+            /**
+             * Sample Count
+             * @default 1
+             */
+            sample_count: number;
+            /** Observed At */
+            observed_at?: string | null;
         };
     };
     responses: never;
@@ -3427,6 +3588,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PerformanceDecompositionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_income_api_v1_portfolios__portfolio_id__income_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioIncomeResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_event_markers_api_v1_portfolios__portfolio_id__event_markers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioEventMarkersResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_web_vitals_api_v1_telemetry_web_vitals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebVitalsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebVitalsAcceptedResponse"];
                 };
             };
             /** @description Validation Error */

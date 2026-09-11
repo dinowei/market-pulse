@@ -54,8 +54,10 @@ from app.contracts import (
     PortfolioCreateRequest,
     PortfolioEventAccepted,
     PortfolioEventCreate,
+    PortfolioEventMarkersResponse,
     PortfolioEventRequest,
     PortfolioEventResponse,
+    PortfolioIncomeResponse,
     PortfolioListResponse,
     PortfolioPatchRequest,
     PortfolioPerformanceResponse,
@@ -74,6 +76,8 @@ from app.contracts import (
     WatchlistPatchRequest,
     WatchlistReorderRequest,
     WatchlistResponse,
+    WebVitalsAcceptedResponse,
+    WebVitalsRequest,
 )
 from app.core.config import get_settings
 from app.editorial.service import InMemoryEditorialService, PostgresEditorialService
@@ -99,6 +103,10 @@ from app.market_data.refresh_application import (
     RefreshBatchResponse,
     refresh_market_data,
 )
+from app.portfolios.day27 import (
+    PortfolioReadModelNotFound,
+    PostgresPortfolioDay27Service,
+)
 from app.portfolios.performance import PortfolioPerformanceService
 from app.portfolios.service import (
     PortfolioConflict,
@@ -107,6 +115,7 @@ from app.portfolios.service import (
     PortfolioValidationError,
     PostgresPortfolioService,
 )
+from app.telemetry import PostgresWebVitalsService, validate_web_vitals_payload
 from app.watchlists.service import (
     PostgresWatchlistService,
     WatchlistConflict,
@@ -131,6 +140,14 @@ def get_portfolio_service() -> PortfolioService:
 
 def get_portfolio_performance_service() -> PortfolioPerformanceService:
     return PortfolioPerformanceService(PostgresPortfolioService())
+
+
+def get_portfolio_day27_service() -> PostgresPortfolioDay27Service:
+    return PostgresPortfolioDay27Service()
+
+
+def get_web_vitals_service() -> PostgresWebVitalsService:
+    return PostgresWebVitalsService()
 
 
 def get_editorial_service() -> InMemoryEditorialService:
@@ -980,6 +997,57 @@ def portfolio_performance_decomposition(
         return service.decomposition_response(current_user.id, portfolio_id)
     except PortfolioNotFound as exc:
         raise _portfolio_error(exc) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/income",
+    response_model=list[PortfolioIncomeResponse],
+    tags=["portfolio-income"],
+)
+def portfolio_income(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresPortfolioDay27Service = Depends(get_portfolio_day27_service),
+) -> list[PortfolioIncomeResponse]:
+    try:
+        return service.income(current_user.id, portfolio_id)
+    except PortfolioReadModelNotFound as exc:
+        raise _portfolio_error(PortfolioNotFound()) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/event-markers",
+    response_model=PortfolioEventMarkersResponse,
+    tags=["portfolio-performance"],
+)
+def portfolio_event_markers(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PostgresPortfolioDay27Service = Depends(get_portfolio_day27_service),
+) -> PortfolioEventMarkersResponse:
+    try:
+        return service.markers(current_user.id, portfolio_id)
+    except PortfolioReadModelNotFound as exc:
+        raise _portfolio_error(PortfolioNotFound()) from exc
+
+
+@router.post(
+    "/telemetry/web-vitals",
+    response_model=WebVitalsAcceptedResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["telemetry"],
+)
+def record_web_vitals(
+    payload: WebVitalsRequest,
+    service: PostgresWebVitalsService = Depends(get_web_vitals_service),
+) -> WebVitalsAcceptedResponse:
+    aggregate = validate_web_vitals_payload(payload.model_dump(mode="json"))
+    service.record(aggregate)
+    return WebVitalsAcceptedResponse(
+        metric=payload.metric,
+        route=payload.route,
+        sample_count=payload.sample_count,
+    )
 
 
 @router.post(
