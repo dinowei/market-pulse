@@ -1,0 +1,76 @@
+name: Day 24 DEMO Integration Gate
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/demo-integration.yml"
+      - "apps/api/app/demo/**"
+      - "apps/api/app/market_data/**"
+      - "apps/api/app/portfolios/**"
+      - "apps/api/app/editorial/**"
+      - "apps/api/tests/test_demo_*.py"
+      - "apps/api/migrations/**"
+      - "docs/demo/**"
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo-idempotency:
+    name: DEMO seed/reset idempotency
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: market_pulse_demo
+          POSTGRES_USER: market_pulse
+          POSTGRES_PASSWORD: market_pulse_local_only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U market_pulse -d market_pulse_demo"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      APP_ENV: development
+      MARKET_PULSE_ENVIRONMENT: local
+      MARKET_PULSE_DEMO_ENABLED: "true"
+      MARKET_PULSE_DEMO_ALLOW_RECREATE: "true"
+      MARKET_PULSE_DEMO_INTEGRATION: "true"
+      MARKET_PULSE_DEMO_RESET_INTEGRATION: "true"
+      MARKET_PULSE_DATABASE_URL: postgresql://market_pulse:market_pulse_local_only@127.0.0.1:5432/market_pulse_demo
+      MARKET_PULSE_DEMO_DATABASE_URL: postgresql://market_pulse:market_pulse_local_only@127.0.0.1:5432/market_pulse_demo
+      MARKET_PULSE_REDIS_URL: redis://127.0.0.1:6379/15
+      PYTHONPATH: apps/api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+      - name: Install API dependencies
+        run: uv sync --project apps/api --group dev
+      - name: Apply migrations to the ephemeral DEMO database
+        run: uv run --directory apps/api alembic upgrade head
+      - name: Run DEMO idempotency and revocation tests
+        shell: bash
+        run: |
+          set -o pipefail
+          log_file="${RUNNER_TEMP}/demo-integration-pytest.log"
+          uv run --directory apps/api pytest -q -rs \
+            tests/test_demo_persistence_day24.py::test_seed_persists_scenario_via_existing_services_and_is_idempotent \
+            tests/test_demo_reset_day24.py::test_reset_seed_twice_produces_identical_persisted_logical_state \
+            tests/test_demo_persistence_day24.py::test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it \
+            | tee "$log_file"
+          if grep -Eiq '(^|[^0-9])[0-9]+ skipped|SKIPPED' "$log_file"; then
+            echo "DEMO integration gate was skipped; explicit opt-in is required."
+            exit 1
+          fi
