@@ -48,6 +48,7 @@ _OWNED_TABLES = frozenset(
         "users",
         "watchlist_items",
         "watchlists",
+        "web_vital_metrics",
     }
 )
 _LIFECYCLE_LOCK = 24012402
