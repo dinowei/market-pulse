@@ -9,6 +9,7 @@ on:
       - "apps/api/app/portfolios/**"
       - "apps/api/app/editorial/**"
       - "apps/api/tests/test_demo_*.py"
+      - "apps/api/tests/test_day27_integrated_gates.py"
       - "apps/api/migrations/**"
       - "docs/demo/**"
   schedule:
@@ -77,6 +78,7 @@ jobs:
             tests/test_demo_persistence_day24.py::test_seed_persists_scenario_via_existing_services_and_is_idempotent \
             tests/test_demo_reset_day24.py::test_reset_seed_twice_produces_identical_persisted_logical_state \
             tests/test_demo_persistence_day24.py::test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it \
+            tests/test_day27_integrated_gates.py \
             | tee "$log_file"
           if grep -Eiq '(^|[^0-9])[0-9]+ skipped|SKIPPED' "$log_file"; then
             echo "DEMO integration gate was skipped; explicit opt-in is required."
