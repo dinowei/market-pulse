@@ -49,6 +49,8 @@ jobs:
       MARKET_PULSE_DEMO_RESET_INTEGRATION: "true"
       MARKET_PULSE_DATABASE_URL: postgresql://market_pulse:market_pulse_local_only@127.0.0.1:5432/market_pulse_demo
       MARKET_PULSE_DEMO_DATABASE_URL: postgresql://market_pulse:market_pulse_local_only@127.0.0.1:5432/market_pulse_demo
+      MARKET_PULSE_MIGRATION_DATABASE_URL: postgresql://market_pulse:market_pulse_local_only@127.0.0.1:5432/market_pulse_migration_test
+      MARKET_PULSE_MIGRATION_REGRESSION: "true"
       MARKET_PULSE_REDIS_URL: redis://127.0.0.1:6379/15
       PYTHONPATH: apps/api
     steps:
@@ -60,6 +62,12 @@ jobs:
         run: uv sync --project apps/api --group dev
       - name: Apply migrations to the ephemeral DEMO database
         run: uv run --directory apps/api alembic upgrade head
+      - name: Create the dedicated migration regression database
+        run: >-
+          uv run --project apps/api python -c
+          "import psycopg; connection=psycopg.connect('postgresql://market_pulse:market_pulse_local_only@127.0.0.1:5432/postgres', autocommit=True); connection.execute('CREATE DATABASE market_pulse_migration_test'); connection.close()"
+      - name: Verify populated corporate-actions downgrade
+        run: uv run --directory apps/api pytest -q -rs tests/test_corporate_actions_migration_regression.py
       - name: Run DEMO idempotency and revocation tests
         shell: bash
         run: |
