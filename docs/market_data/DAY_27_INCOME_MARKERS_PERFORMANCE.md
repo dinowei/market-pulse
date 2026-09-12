@@ -2,6 +2,13 @@
 
 ## Escopo executado
 
+O gate opt-in `apps/api/tests/test_day27_integrated_gates.py` reconstitui o
+cenário no banco dedicado `market_pulse_demo`, carrega todos os marcadores de
+uma carteira DEMO pelo serviço PostgreSQL real e confere cada `source_id` contra
+a linha persistida correspondente. O teste exige pelo menos uma origem de
+ledger e uma de ação corporativa; nenhum marcador decorativo ou não ancorado é
+aceito.
+
 O Dia 27 expõe projeções factuais e somente leitura de proventos, JCP, splits e
 grupamentos para uma carteira do usuário em `GET /api/v1/portfolios/{id}/income`.
 Marcadores de gráfico são servidos por `GET /api/v1/portfolios/{id}/event-markers`.
@@ -15,6 +22,13 @@ tabela HTML equivalente ao gráfico, com estado de fonte, `DataLevel` e
 `Freshness` visíveis.
 
 ## Telemetria e privacidade
+
+O mesmo gate integrado envia LCP, INP e CLS ao endpoint real e audita
+`web_vital_metrics` diretamente no PostgreSQL DEMO. Além do `id` técnico, a
+tabela só pode conter `route`, `metric`, `bucket_start`, `value_sum`,
+`sample_count` e `updated_at`; as linhas são verificadas contra fragmentos de
+PII reconhecíveis. O workflow `demo-integration.yml` executa esse gate com as
+demais validações persistidas.
 
 `POST /api/v1/telemetry/web-vitals` aceita somente LCP, INP e CLS, rota e
 amostra agregada. A API rejeita chaves ou valores que pareçam PII e persiste

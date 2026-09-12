@@ -202,9 +202,10 @@ PostgreSQL e Redis no CI, aplica as migrations no banco `market_pulse_demo` e
 define explicitamente `MARKET_PULSE_DEMO_ENABLED`,
 `MARKET_PULSE_DEMO_INTEGRATION` e `MARKET_PULSE_DEMO_RESET_INTEGRATION`.
 
-O job executa somente os tres testes criticos de idempotencia/revogacao e falha
-se o relatorio do pytest contiver qualquer teste skipped. O gatilho e um PR que
-toque no fluxo DEMO, o agendamento nightly (`03:00 UTC`) ou
+O job executa os testes críticos de idempotência/revogação, a regressão de
+rollback populado e os gates integrados do Dia 27 para marcadores referenciados
+e telemetria agregada sem PII. Ele falha se o relatório do pytest contiver
+qualquer teste skipped. O gatilho é um PR que toque no fluxo DEMO, o agendamento nightly (`03:00 UTC`) ou
 `workflow_dispatch`. O job e separado do workflow principal para manter o gate
 explicito sem tornar todo build dependente de operacoes de reset.
 
@@ -219,7 +220,8 @@ python -m uv run --directory apps/api alembic upgrade head
 python -m uv run --directory apps/api pytest -q -rs `
   apps/api/tests/test_demo_persistence_day24.py::test_seed_persists_scenario_via_existing_services_and_is_idempotent `
   apps/api/tests/test_demo_reset_day24.py::test_reset_seed_twice_produces_identical_persisted_logical_state `
-  apps/api/tests/test_demo_persistence_day24.py::test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it
+  apps/api/tests/test_demo_persistence_day24.py::test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it `
+  apps/api/tests/test_day27_integrated_gates.py
 ```
 
 Uma execucao local nao substitui a execucao no provedor de CI. O
