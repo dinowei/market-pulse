@@ -155,3 +155,17 @@ O teste recusa explicitamente rodar contra o banco DEMO semeado, para não conta
 - **Falha no PostgreSQL**:
   - Rotas com persistência retornam 503.
   - Rotas de cotação pública degradam para o estado `UNAVAILABLE` com conformidade à política de integridade de dados financeiros (nunca inventam cotações nem quebram o contrato OpenAPI).
+
+---
+
+## 5. Pendências registradas para o Dia 29
+
+Itens identificados durante o Dia 28, **documentados e não resolvidos aqui**. Exigem autorização própria.
+
+### 5.1 Ordem de `lint` e `build` no pipeline de CI
+`eslint` deve nunca rodar depois de `next build`. `apps/web/tsconfig.json` inclui `.next/types/**/*.ts` e `.next/dev/types/**/*.ts`, e `eslint-config-next/typescript` usa lint tipado: com o diretório `.next` presente, o programa TypeScript passa a carregar a saída de build inteira e o processo morre com `FATAL ERROR: Zone Allocation failed - process out of memory`, mesmo com `.next/**` já listado em `globalIgnores`.
+
+Hoje os workflows executam `lint → typecheck → test → build` nessa ordem e por isso nunca atingem o problema; ele aparece no ambiente local de quem roda `lint` após um `build`. A pendência é tornar essa ordem explícita e protegida no CI (ou isolar o `tsconfig` usado pelo lint), para que a garantia não dependa de coincidência de ordenação.
+
+### 5.2 Fragilidade de ordem nos testes DEMO
+`tests/test_demo_persistence_day24.py::test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it` revoga o dataset DEMO e precisa rodar por último. O `demo-integration.yml` garante isso enumerando node ids na ordem correta, mas executar os arquivos inteiros quebra os demais testes do gate. A pendência é tornar a dependência de ordem explícita no próprio teste, em vez de depender da enumeração no workflow.
