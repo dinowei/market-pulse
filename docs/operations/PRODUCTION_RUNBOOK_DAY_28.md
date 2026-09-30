@@ -77,9 +77,13 @@ O processo de restauração exige verificação obrigatória de manifesto e flag
 # Pré-requisito do carregador lógico: o dump JSON contém apenas dados, não DDL.
 uv run --directory apps/api alembic upgrade head   # contra o banco de destino
 
+# A conexão de destino vem do ambiente/secrets manager, nunca escrita na linha de
+# comando: isso evita credencial no histórico do shell e na lista de processos.
+export TARGET_DB_URL=...   # conexão do banco de destino
+
 python scripts/restore.py \
   --backup-dir /var/backups/market-pulse/20260927_100000 \
-  --target-db-url "postgresql://usuario:senha@host:5432/market_pulse" \
+  --target-db-url "$TARGET_DB_URL" \
   --confirm
 ```
 

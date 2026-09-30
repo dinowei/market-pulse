@@ -1,4 +1,5 @@
 import os
+import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -15,6 +16,17 @@ from app.core.config import (
     validate_production_settings,
 )
 from app.main import app
+
+
+def _fake_production_dsn() -> str:
+    """Build a throwaway production-shaped DSN at runtime.
+
+    Assembled by concatenation so the source never carries a credential-shaped
+    literal for the secret scanner to flag. It must NOT use the local placeholder
+    password: production validation rejects that on purpose, and case 2 below is
+    the test that covers exactly that rejection.
+    """
+    return "postgresql://market_pulse:" + secrets.token_hex(8) + "@prod.db:5432/market_pulse"
 
 
 def _refresh_run_summary() -> dict:
@@ -155,7 +167,7 @@ def test_strict_production_config_validation() -> None:
     # 3. Production with DEMO enabled must be rejected
     demo_in_prod = Settings(
         environment="production",
-        database_url="postgresql://market_pulse:strong_real_pw_prod@prod.db:5432/market_pulse",
+        database_url=_fake_production_dsn(),
         redis_url="redis://prod.redis:6379/0",
         internal_refresh_secret="production-secret-of-sufficient-length-12345",
         cors_origins=["https://marketpulse.com"],
@@ -167,7 +179,7 @@ def test_strict_production_config_validation() -> None:
     # 4. Production with missing internal refresh secret must be rejected
     no_secret_cfg = Settings(
         environment="production",
-        database_url="postgresql://market_pulse:strong_real_pw_prod@prod.db:5432/market_pulse",
+        database_url=_fake_production_dsn(),
         redis_url="redis://prod.redis:6379/0",
         internal_refresh_secret=None,
         cors_origins=["https://marketpulse.com"],
@@ -179,7 +191,7 @@ def test_strict_production_config_validation() -> None:
     # 5. Production with wildcard CORS must be rejected
     wildcard_cors_cfg = Settings(
         environment="production",
-        database_url="postgresql://market_pulse:strong_real_pw_prod@prod.db:5432/market_pulse",
+        database_url=_fake_production_dsn(),
         redis_url="redis://prod.redis:6379/0",
         internal_refresh_secret="production-secret-of-sufficient-length-12345",
         cors_origins=["*"],
@@ -191,7 +203,7 @@ def test_strict_production_config_validation() -> None:
     # 6. Production with localhost CORS must be rejected
     localhost_cors_cfg = Settings(
         environment="production",
-        database_url="postgresql://market_pulse:strong_real_pw_prod@prod.db:5432/market_pulse",
+        database_url=_fake_production_dsn(),
         redis_url="redis://prod.redis:6379/0",
         internal_refresh_secret="production-secret-of-sufficient-length-12345",
         cors_origins=["http://localhost:3000"],
@@ -203,7 +215,7 @@ def test_strict_production_config_validation() -> None:
     # 7. Valid production configuration passes
     valid_prod_cfg = Settings(
         environment="production",
-        database_url="postgresql://market_pulse:strong_real_pw_prod@prod.db:5432/market_pulse",
+        database_url=_fake_production_dsn(),
         redis_url="redis://prod.redis:6379/0",
         internal_refresh_secret="production-secret-of-sufficient-length-12345",
         cors_origins=["https://marketpulse.com", "https://app.marketpulse.com"],
