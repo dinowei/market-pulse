@@ -171,6 +171,13 @@ Itens identificados durante o Dia 28, **documentados e não resolvidos aqui**. E
 
 Hoje os workflows executam `lint → typecheck → test → build` nessa ordem e por isso nunca atingem o problema; ele aparece no ambiente local de quem roda `lint` após um `build`. A pendência é tornar essa ordem explícita e protegida no CI (ou isolar o `tsconfig` usado pelo lint), para que a garantia não dependa de coincidência de ordenação.
 
+### 5.1.1 Decisão: `audit_logs` fica fora do expurgo
+A rotina de retenção (`app/retention.py`) purga apenas registros operacionais: quarentena de market data, quarentena de ações corporativas, payloads brutos e agregados de Web Vitals. **`audit_logs` foi deliberadamente deixado de fora**, junto do ledger financeiro.
+
+**Motivo:** `audit_logs` é trilha de auditoria append-only. Ela registra tentativas de acesso permitidas e negadas ao painel administrativo, eventos de revisão editorial e a própria exclusão de conta — inclusive os registros que sustentam a anonimização descrita em §4.2. Expurgar trilha de auditoria é decisão de compliance, com prazo próprio, e não decorre do prazo de retenção de dados operacionais. Aplicá-la de carona no mesmo `MARKET_PULSE_RETENTION_DAYS` apagaria evidência de auditoria por efeito colateral de uma configuração pensada para outra coisa.
+
+`audit_logs` está em `PROTECTED_TABLES`, e `assert_plan_is_safe()` falha fechado se o plano de expurgo algum dia passar a nomeá-la. Definir retenção para auditoria é trabalho separado, que exige decisão explícita sobre prazo legal e destino dos registros (expurgo versus arquivamento frio).
+
 ### 5.2 Gate de segredos do próprio repositório está vermelho
 `python scripts/week1_gate.py secrets` sai com **exit 1** e aponta seis ocorrências. Nenhuma é segredo real:
 
