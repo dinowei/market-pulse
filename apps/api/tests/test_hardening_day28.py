@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -217,6 +218,93 @@ def test_account_endpoints_registered() -> None:
     } | {r.path for r in routers.router.routes if hasattr(r, "path")}
     assert any("/account/data-export" in p for p in all_paths)
     assert any(p.endswith("/account") for p in all_paths)
+
+
+def _account_fixture(conn, email: str) -> tuple[str, str, str]:
+    """Persist a user with one portfolio, one ledger event and one watchlist."""
+    user_id = str(
+        conn.execute(
+            "INSERT INTO users (email, password_hash) VALUES (%s, %s) RETURNING id",
+            (email, "argon2-placeholder-not-a-real-hash"),
+        ).fetchone()[0]
+    )
+    portfolio_id = str(
+        conn.execute(
+            "INSERT INTO portfolios (user_id, name, base_currency) "
+            "VALUES (%s, %s, %s) RETURNING id",
+            (user_id, "Carteira hardening", "BRL"),
+        ).fetchone()[0]
+    )
+    event_id = str(
+        conn.execute(
+            "INSERT INTO portfolio_events (portfolio_id, event_type, event_date, currency, "
+            "cash_amount, created_by, idempotency_key, request_id) "
+            "VALUES (%s, 'CASH_DEPOSIT', %s, 'BRL', %s, %s, %s, %s) RETURNING id",
+            (portfolio_id, "2026-09-01", "100.00", user_id, f"hardening-{uuid4()}", "hardening"),
+        ).fetchone()[0]
+    )
+    conn.execute("INSERT INTO watchlists (user_id, name) VALUES (%s, %s)", (user_id, "Acompanhar"))
+    conn.commit()
+    return user_id, portfolio_id, event_id
+
+
+@pytest.mark.skipif(
+    os.environ.get("MARKET_PULSE_ACCOUNT_LIFECYCLE") != "true",
+    reason="writes a ledger row that the append-only trigger forbids deleting, so it "
+    "requires an explicitly dedicated disposable local database",
+)
+def test_account_deletion_anonymizes_and_preserves_append_only_ledger(monkeypatch) -> None:
+    # Documented decision: DELETE /api/v1/account anonymizes instead of hard-deleting,
+    # because portfolio_events and audit_logs are append-only financial/audit records
+    # (a database trigger, prevent_immutable_portfolio_event_change, enforces it).
+    import psycopg
+
+    url = os.environ.get("MARKET_PULSE_ACCOUNT_LIFECYCLE_DATABASE_URL", "")
+    if "127.0.0.1" not in url or "market_pulse_demo" in url:
+        raise AssertionError(
+            "MARKET_PULSE_ACCOUNT_LIFECYCLE_DATABASE_URL must target a local disposable "
+            "database that is not the seeded DEMO database"
+        )
+    monkeypatch.setattr(routers, "get_settings", lambda: Settings(database_url=url))
+
+    email = f"hardening-{uuid4()}@example.invalid"
+    with psycopg.connect(url) as conn:
+        user_id, portfolio_id, event_id = _account_fixture(conn, email)
+        user = routers.AuthUserResponse(id=user_id, email=email, status="ACTIVE")
+        app.dependency_overrides[routers.get_current_user] = lambda: user
+        try:
+            client = TestClient(app)
+            origin = {"Origin": "http://localhost:3000"}
+
+            export = client.get("/api/v1/account/data-export", headers=origin)
+            assert export.status_code == 200
+            assert email in export.text
+            assert portfolio_id in export.text
+
+            deleted = client.delete("/api/v1/account", headers=origin)
+            assert deleted.status_code == 204
+        finally:
+            app.dependency_overrides.pop(routers.get_current_user, None)
+
+        row = conn.execute(
+            "SELECT email, password_hash, status FROM users WHERE id = %s", (user_id,)
+        ).fetchone()
+        assert row is not None, "the user row must survive as an anonymized record"
+        assert row[0] == f"deleted-{user_id}@market-pulse.invalid"
+        assert email not in row[0]
+        assert row[1] != "argon2-placeholder-not-a-real-hash"
+        assert row[2] == "DELETED"
+
+        assert conn.execute(
+            "SELECT archived_at FROM portfolios WHERE id = %s", (portfolio_id,)
+        ).fetchone()[0] is not None
+        assert conn.execute(
+            "SELECT COUNT(*) FROM watchlists WHERE user_id = %s", (user_id,)
+        ).fetchone()[0] == 0
+        # The ledger is the point: it must still be there, untouched.
+        assert conn.execute(
+            "SELECT COUNT(*) FROM portfolio_events WHERE id = %s", (event_id,)
+        ).fetchone()[0] == 1
 
 
 def test_backup_restore_manifest_roundtrip() -> None:
