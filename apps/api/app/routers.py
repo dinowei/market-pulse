@@ -1,7 +1,7 @@
-import hashlib
 import json
 import secrets
 from datetime import date, timedelta
+from uuid import uuid4
 
 import psycopg
 from fastapi import (
@@ -52,8 +52,6 @@ from app.contracts import (
     PerformanceDecompositionResponse,
     PortfolioCashBalanceResponse,
     PortfolioCreateRequest,
-    PortfolioEventAccepted,
-    PortfolioEventCreate,
     PortfolioEventMarkersResponse,
     PortfolioEventRequest,
     PortfolioEventResponse,
@@ -1050,50 +1048,6 @@ def record_web_vitals(
     )
 
 
-@router.post(
-    "/portfolio-events",
-    response_model=PortfolioEventAccepted,
-    status_code=status.HTTP_202_ACCEPTED,
-    tags=["portfolio-events"],
-)
-def create_portfolio_event(
-    payload: PortfolioEventCreate,
-    request: Request,
-    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
-) -> PortfolioEventAccepted:
-    if not idempotency_key or len(idempotency_key) > 128:
-        raise HTTPException(status_code=422, detail="Idempotency-Key header is required")
-    body_hash = hashlib.sha256(payload.model_dump_json().encode()).hexdigest()
-    settings = get_settings()
-    with psycopg.connect(settings.database_url) as conn:
-        row = conn.execute(
-            "SELECT body_hash, response_json FROM idempotency_keys "
-            "WHERE key=%s AND method=%s AND path=%s",
-            (idempotency_key, request.method, request.url.path),
-        ).fetchone()
-        if row:
-            if row[0] != body_hash:
-                raise HTTPException(
-                    status_code=409, detail="Idempotency-Key was reused with a different payload"
-                )
-            stored_response = row[1] if isinstance(row[1], dict) else json.loads(row[1])
-            return PortfolioEventAccepted.model_validate(stored_response)
-        response = PortfolioEventAccepted(idempotency_key=idempotency_key)
-        conn.execute(
-            "INSERT INTO idempotency_keys (key, method, path, body_hash, "
-            "response_json) VALUES (%s,%s,%s,%s,%s)",
-            (
-                idempotency_key,
-                request.method,
-                request.url.path,
-                body_hash,
-                response.model_dump_json(),
-            ),
-        )
-        conn.commit()
-    return response
-
-
 @router.get("/performance", tags=["performance"])
 def performance() -> dict[str, list]:
     return {"items": []}
@@ -1405,3 +1359,268 @@ def public_editorial_version(
         (item for item in service.public_versions(slug) if item.version == version_number), None
     )
     return _editorial_response(version)
+
+
+def _record_account_audit(
+    *,
+    actor_user_id: str,
+    action: str,
+    resource: str,
+    result: str,
+    request_id: str,
+    metadata: dict | None = None,
+) -> None:
+    try:
+        meta = {
+            "actor": actor_user_id,
+            "resource": resource,
+            "result": result,
+            "request_id": request_id,
+            **(metadata or {}),
+        }
+        with psycopg.connect(
+            get_settings().database_url,
+            connect_timeout=max(1, int(get_settings().database_timeout_seconds)),
+        ) as conn:
+            conn.execute(
+                "INSERT INTO audit_logs "
+                "(entity_type, action, actor_user_id, occurred_at, metadata, "
+                "resource, result, request_id) "
+                "VALUES (%s, %s, %s, now(), %s::jsonb, %s, %s, %s)",
+                (
+                    "account",
+                    action,
+                    actor_user_id,
+                    json.dumps(meta),
+                    resource,
+                    result,
+                    request_id,
+                ),
+            )
+            conn.commit()
+    except Exception:
+        pass
+
+
+@router.get(
+    "/account/data-export",
+    tags=["account"],
+)
+def export_user_data(
+    request: Request,
+    current_user: AuthUserResponse = Depends(get_current_user),
+) -> dict:
+    req_id = request_id_for(request)
+    settings = get_settings()
+
+    try:
+        with psycopg.connect(settings.database_url) as conn:
+            # 1. Profile
+            user_row = conn.execute(
+                "SELECT id, email, status, created_at FROM users WHERE id = %s",
+                (current_user.id,),
+            ).fetchone()
+
+            if not user_row:
+                raise HTTPException(status_code=404, detail="User profile not found")
+
+            profile = {
+                "id": str(user_row[0]),
+                "email": str(user_row[1]),
+                "status": str(user_row[2]),
+                "created_at": user_row[3].isoformat() if user_row[3] else None,
+            }
+
+            # 2. Watchlists and Items
+            watchlist_rows = conn.execute(
+                "SELECT w.id, w.name, wi.id, wi.instrument_id, i.canonical_id "
+                "FROM watchlists w "
+                "LEFT JOIN watchlist_items wi ON wi.watchlist_id = w.id "
+                "LEFT JOIN instruments i ON wi.instrument_id = i.id "
+                "WHERE w.user_id = %s",
+                (current_user.id,),
+            ).fetchall()
+
+            watchlists_dict = {}
+            for row in watchlist_rows:
+                w_id = str(row[0])
+                w_name = str(row[1])
+                item_id = str(row[2]) if row[2] else None
+                instrument_id = str(row[3]) if row[3] else None
+                canonical_id = str(row[4]) if row[4] else None
+
+                if w_id not in watchlists_dict:
+                    watchlists_dict[w_id] = {
+                        "id": w_id,
+                        "name": w_name,
+                        "items": [],
+                    }
+                if item_id:
+                    watchlists_dict[w_id]["items"].append({
+                        "id": item_id,
+                        "instrument_id": instrument_id,
+                        "canonical_id": canonical_id,
+                    })
+
+            # 3. Portfolios
+            portfolio_rows = conn.execute(
+                "SELECT id, name, base_currency, created_at, archived_at "
+                "FROM portfolios "
+                "WHERE user_id = %s",
+                (current_user.id,),
+            ).fetchall()
+
+            portfolios = []
+            for row in portfolio_rows:
+                portfolios.append({
+                    "id": str(row[0]),
+                    "name": str(row[1]),
+                    "base_currency": str(row[2]),
+                    "created_at": row[3].isoformat() if row[3] else None,
+                    "archived_at": row[4].isoformat() if row[4] else None,
+                })
+
+            # 4. Ledger (Portfolio Events)
+            ledger_rows = conn.execute(
+                "SELECT pe.id, pe.portfolio_id, pe.event_type, pe.event_date, "
+                "pe.instrument_id, i.canonical_id, pe.quantity, pe.price, "
+                "pe.gross_amount, pe.fees, pe.cash_amount, pe.currency, pe.created_at "
+                "FROM portfolio_events pe "
+                "LEFT JOIN instruments i ON pe.instrument_id = i.id "
+                "WHERE pe.created_by = %s",
+                (current_user.id,),
+            ).fetchall()
+
+            ledger = []
+            for row in ledger_rows:
+                ledger.append({
+                    "id": str(row[0]),
+                    "portfolio_id": str(row[1]),
+                    "event_type": str(row[2]),
+                    "event_date": row[3].isoformat() if row[3] else None,
+                    "instrument_id": str(row[4]) if row[4] else None,
+                    "canonical_id": str(row[5]) if row[5] else None,
+                    "quantity": float(row[6]) if row[6] is not None else None,
+                    "price": float(row[7]) if row[7] is not None else None,
+                    "gross_amount": float(row[8]) if row[8] is not None else None,
+                    "fees": float(row[9]) if row[9] is not None else None,
+                    "cash_amount": float(row[10]) if row[10] is not None else None,
+                    "currency": str(row[11]),
+                    "created_at": row[12].isoformat() if row[12] else None,
+                })
+
+        # Audit Log
+        _record_account_audit(
+            actor_user_id=current_user.id,
+            action="data_export",
+            resource="account",
+            result="success",
+            request_id=req_id,
+        )
+
+        return {
+            "profile": profile,
+            "watchlists": list(watchlists_dict.values()),
+            "portfolios": portfolios,
+            "ledger": ledger,
+        }
+    except Exception as exc:
+        _record_account_audit(
+            actor_user_id=current_user.id,
+            action="data_export",
+            resource="account",
+            result="failed",
+            request_id=req_id,
+            metadata={"error": str(exc)},
+        )
+        raise HTTPException(status_code=500, detail="Data export failed")
+
+
+@router.delete(
+    "/account",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["account"],
+)
+def delete_user_account(
+    request: Request,
+    response: Response,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    session_token: str | None = Cookie(default=None, alias="market_pulse_session"),
+) -> Response:
+    req_id = request_id_for(request)
+    settings = get_settings()
+    cookie_name = settings.auth_cookie_name
+    token = (
+        request.cookies.get(cookie_name) if cookie_name != "market_pulse_session" else session_token
+    )
+
+    try:
+        # Revoke session in Redis immediately
+        if token:
+            try:
+                get_auth_service().logout(token)
+            except Exception:
+                pass
+
+        with psycopg.connect(settings.database_url) as conn:
+            with conn.cursor() as cur:
+                # 1. Anonymize user personal data and set status to DELETED
+                # Preserves referential integrity for tables like portfolio_events and audit_logs
+                dummy_email = f"deleted-{current_user.id}@market-pulse.invalid"
+                dummy_hash = f"deleted_placeholder_{uuid4()}"
+
+                cur.execute(
+                    "UPDATE users SET email = %s, password_hash = %s, status = 'DELETED', "
+                    "updated_at = now() WHERE id = %s",
+                    (dummy_email, dummy_hash, current_user.id),
+                )
+
+                # 2. Delete all user sessions from the DB
+                cur.execute(
+                    "DELETE FROM sessions WHERE user_id = %s",
+                    (current_user.id,),
+                )
+
+                # 3. Clean up watchlists and watchlist items (non-audit critical)
+                cur.execute(
+                    "DELETE FROM watchlist_items WHERE watchlist_id IN "
+                    "(SELECT id FROM watchlists WHERE user_id = %s)",
+                    (current_user.id,),
+                )
+                cur.execute(
+                    "DELETE FROM watchlists WHERE user_id = %s",
+                    (current_user.id,),
+                )
+
+                # 4. Inactivate portfolios preserving immutable ledger history
+                cur.execute(
+                    "UPDATE portfolios SET archived_at = now() WHERE user_id = %s",
+                    (current_user.id,),
+                )
+
+            conn.commit()
+
+        # Audit Log
+        _record_account_audit(
+            actor_user_id=current_user.id,
+            action="account_deletion",
+            resource="account",
+            result="success",
+            request_id=req_id,
+        )
+
+        # Expire/delete the cookie in the response headers
+        response_obj = Response(status_code=status.HTTP_204_NO_CONTENT)
+        response_obj.delete_cookie(cookie_name, path="/")
+        return response_obj
+
+    except Exception as exc:
+        _record_account_audit(
+            actor_user_id=current_user.id,
+            action="account_deletion",
+            resource="account",
+            result="failed",
+            request_id=req_id,
+            metadata={"error": str(exc)},
+        )
+        raise HTTPException(status_code=500, detail="Account deletion failed")

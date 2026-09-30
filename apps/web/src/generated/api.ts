@@ -640,23 +640,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/portfolio-events": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create Portfolio Event */
-        post: operations["create_portfolio_event_api_v1_portfolio_events_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/performance": {
         parameters: {
             query?: never;
@@ -891,6 +874,40 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/data-export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export User Data */
+        get: operations["export_user_data_api_v1_account_data_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete User Account */
+        delete: operations["delete_user_account_api_v1_account_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1622,41 +1639,6 @@ export interface components {
             name: string;
             /** Base Currency */
             base_currency: string;
-        };
-        /** PortfolioEventAccepted */
-        PortfolioEventAccepted: {
-            /**
-             * Status
-             * @default accepted
-             */
-            status: string;
-            /** Idempotency Key */
-            idempotency_key: string;
-        };
-        /** PortfolioEventCreate */
-        PortfolioEventCreate: {
-            /** Portfolio Id */
-            portfolio_id: string;
-            event_type: components["schemas"]["PortfolioEventType"];
-            /**
-             * Event Date
-             * Format: date
-             */
-            event_date: string;
-            /** Currency */
-            currency: string;
-            /** Quantity */
-            quantity?: number | string | null;
-            /** Price */
-            price?: number | string | null;
-            /** Gross Amount */
-            gross_amount?: number | string | null;
-            /** Fees */
-            fees?: number | string | null;
-            /** Cash Amount */
-            cash_amount?: number | string | null;
-            /** Note */
-            note?: string | null;
         };
         /** PortfolioEventMarkerResponse */
         PortfolioEventMarkerResponse: {
@@ -3700,41 +3682,6 @@ export interface operations {
             };
         };
     };
-    create_portfolio_event_api_v1_portfolio_events_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "Idempotency-Key"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PortfolioEventCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PortfolioEventAccepted"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     performance_api_v1_performance_get: {
         parameters: {
             query?: never;
@@ -4180,6 +4127,68 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["EditorialPostResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_user_data_api_v1_account_data_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_user_account_api_v1_account_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

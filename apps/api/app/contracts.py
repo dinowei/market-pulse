@@ -497,19 +497,6 @@ class BatchQuoteResponse(StrictModel):
     items: list[PublicQuote]
 
 
-class PortfolioEventCreate(StrictModel):
-    portfolio_id: str
-    event_type: PortfolioEventType
-    event_date: date
-    currency: str = Field(pattern="^[A-Z]{3}$")
-    quantity: Decimal | None = None
-    price: Decimal | None = None
-    gross_amount: Decimal | None = None
-    fees: Decimal | None = None
-    cash_amount: Decimal | None = None
-    note: str | None = Field(default=None, max_length=2000)
-
-
 class PortfolioCreateRequest(StrictModel):
     name: str = Field(min_length=1, max_length=120)
     base_currency: str = Field(pattern="^[A-Z]{3}$")
@@ -785,11 +772,6 @@ class PortfolioPerformanceResponse(StrictModel):
     methodology: str
     missing_inputs: tuple[str, ...] = ()
     provenance: tuple[PerformanceProvenance, ...] = ()
-
-
-class PortfolioEventAccepted(StrictModel):
-    status: str = "accepted"
-    idempotency_key: str
 
 
 class ErrorProblem(StrictModel):
