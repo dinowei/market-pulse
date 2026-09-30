@@ -60,7 +60,10 @@ def public_quote(canonical_id: str, request_id: str) -> PublicQuote:
         from app.demo.dataset import DEMO_LIMITATIONS
         from app.demo.read_models import bar_rows, quote_row
 
-        row = quote_row(canonical_id)
+        try:
+            row = quote_row(canonical_id)
+        except Exception:
+            row = None
         if row is None:
             return _unavailable_quote(entry, canonical_id, request_id)
         bars = bar_rows(canonical_id)
@@ -184,7 +187,10 @@ def public_history(
         from app.demo.dataset import DEMO_LIMITATIONS
         from app.demo.read_models import bar_rows, history_points
 
-        rows = bar_rows(canonical_id, period) if adjustment_type == "UNADJUSTED" else []
+        try:
+            rows = bar_rows(canonical_id, period) if adjustment_type == "UNADJUSTED" else []
+        except Exception:
+            rows = []
         if not rows:
             return _unavailable_history(entry, period, mode, request_id)
         latest = rows[-1]

@@ -151,9 +151,12 @@ FUTURE_CANDIDATE_UNIVERSE = frozenset(
 
 def get_catalog() -> tuple[InstrumentCatalogEntry, ...]:
     if get_settings().demo_enabled:
-        from app.demo.read_models import catalog_entries
+        try:
+            from app.demo.read_models import catalog_entries
 
-        return catalog_entries()
+            return catalog_entries()
+        except Exception:
+            return MASTER_CATALOG
     return MASTER_CATALOG
 
 
