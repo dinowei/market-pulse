@@ -147,12 +147,27 @@ class RedisRateLimiter:
         )
         self.settings = settings
 
-    def allow(self, key: str) -> bool:
+    def allow(
+        self,
+        key: str,
+        window_seconds: int | None = None,
+        max_attempts: int | None = None,
+    ) -> bool:
         try:
+            w = (
+                window_seconds
+                if window_seconds is not None
+                else self.settings.auth_rate_limit_window_seconds
+            )
+            m = (
+                max_attempts
+                if max_attempts is not None
+                else self.settings.auth_rate_limit_max_attempts
+            )
             current = int(self.client.incr(key))
             if current == 1:
-                self.client.expire(key, self.settings.auth_rate_limit_window_seconds)
-            return current <= self.settings.auth_rate_limit_max_attempts
+                self.client.expire(key, w)
+            return current <= m
         except Exception as exc:
             raise AuthUnavailable from exc
 
@@ -202,9 +217,15 @@ class InMemoryRateLimiter:
         self.max_attempts = max_attempts
         self.counts: dict[str, int] = {}
 
-    def allow(self, key: str) -> bool:
+    def allow(
+        self,
+        key: str,
+        window_seconds: int | None = None,
+        max_attempts: int | None = None,
+    ) -> bool:
         self.counts[key] = self.counts.get(key, 0) + 1
-        return self.counts[key] <= self.max_attempts
+        m = max_attempts if max_attempts is not None else self.max_attempts
+        return self.counts[key] <= m
 
 
 @dataclass
