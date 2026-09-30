@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     auth_rate_limit_max_attempts: int = 5
     auth_rate_limit_window_seconds: int = 60
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    retention_days: int = 90
 
 
 def validate_production_settings(settings: Settings) -> None:
