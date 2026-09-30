@@ -6,11 +6,23 @@ O Market Pulse é um terminal web autenticado para acompanhamento **informativo 
 
 ## Status atual
 
-O repositório possui a implementação até o **Dia 24**, incluindo autenticação,
-watchlists, carteiras, Morning Call e uma demonstração local persistida,
-determinística e isolada. O Dia 24 foi validado com PostgreSQL e Redis locais,
-migrations, reset/seed do banco DEMO e E2E de fluxo principal e isolamento entre
-usuários. Nenhum provider real, Stripe ou deploy foi ativado por esta etapa.
+Os **Dias 24 a 27** estão fechados: autenticação, watchlists, carteiras,
+Morning Call, demonstração local persistida e isolada, painel operacional
+interno, comparação multiativo, calendário econômico, proventos, marcadores e
+telemetria Web Vitals. Nenhum provider real, Stripe ou deploy foi ativado.
+
+O **Dia 28** (hardening enterprise) está **implementado e commitado**, com
+validação final **pendente**. Entregas: remoção de endpoint sem autenticação,
+CSRF unificado para todo método mutante, cabeçalhos de segurança, validação
+estrita de configuração de produção, export e exclusão de conta por
+anonimização, backup/restore com verificação de integridade e expurgo de
+registros operacionais.
+
+A suíte completa não foi executada na sessão de fechamento por limite de
+memória da máquina, e o CI do repositório está com falha de startup desde antes
+desta branch, portanto sem evidência automatizada. O estado é **PARCIAL** até a
+suíte rodar verde. Detalhes, decisões e pendências em
+[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).
 
 ## Demonstração local — Dia 24
 
@@ -157,5 +169,8 @@ O repositório não adota licença open source neste momento; consulte [LICENSE]
 
 ## Próximo passo
 
-O **Dia 24** está concluído localmente. O Dia 25 entrega o painel operacional
-interno documentado em [ADMIN_SYSTEM_DAY_25.md](docs/operations/ADMIN_SYSTEM_DAY_25.md).
+Executar a suíte completa do Dia 28 numa máquina com memória suficiente e
+registrar a evidência. Só então o Dia 28 pode ser declarado concluído e o Dia 29
+(GitHub Actions agendado para o endpoint interno protegido) pode começar.
+Pendências registradas em
+[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).

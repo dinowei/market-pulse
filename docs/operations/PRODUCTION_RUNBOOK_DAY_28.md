@@ -167,5 +167,24 @@ Itens identificados durante o Dia 28, **documentados e não resolvidos aqui**. E
 
 Hoje os workflows executam `lint → typecheck → test → build` nessa ordem e por isso nunca atingem o problema; ele aparece no ambiente local de quem roda `lint` após um `build`. A pendência é tornar essa ordem explícita e protegida no CI (ou isolar o `tsconfig` usado pelo lint), para que a garantia não dependa de coincidência de ordenação.
 
-### 5.2 Fragilidade de ordem nos testes DEMO
+### 5.2 Gate de segredos do próprio repositório está vermelho
+`python scripts/week1_gate.py secrets` sai com **exit 1** e aponta seis ocorrências. Nenhuma é segredo real:
+
+- cinco em `apps/api/tests/test_hardening_day28.py`: uma DSN PostgreSQL fictícia cuja senha é `strong_real_pw_prod`, apontando para o host inexistente `prod.db`, usada nos testes que verificam a **rejeição** de configuração de produção;
+- uma na seção 3.2 deste runbook: a DSN de exemplo do comando de restore, cuja senha é a palavra `senha`.
+
+As ocorrências não são citadas aqui em forma completa de DSN, justamente para não gerar novos achados no scanner.
+
+O scanner está correto: por desenho, só isenta as senhas-placeholder explícitas `local_only` e `market_pulse_local_only`, justamente para que nenhuma senha real passe despercebida. Como `ci.yml`, `day26-compliance.yml` e `day27-compliance.yml` executam esse gate, os três falhariam. A correção é trocar os dois valores pelos placeholders sancionados; não foi feita por estar fora do escopo autorizado desta execução.
+
+### 5.3 Nenhuma execução de CI jamais teve sucesso
+As 128 execuções registradas no GitHub Actions terminaram em `startup_failure` com 0s, incluindo as agendadas na `main`, muito antes desta branch existir. Actions está habilitado, os cinco arquivos de workflow são YAML válido e o repositório não está arquivado nem desabilitado. A causa provável é cota/cobrança de Actions em repositório privado, mas confirmar exigiria escopo `user` no token, o que implicaria novo login e não foi feito. **Consequência: não há evidência automatizada de suíte verde; o Dia 28 não pode ser fechado por CI enquanto isso não for resolvido.**
+
+### 5.4 Link quebrado em `AGENTS.md`
+`AGENTS.md:107` aponta para `docs/AGENTS.md`, que deixou de existir com o rename aprovado para `docs/CLAUDE.md`. A Definition of Done exige links relativos internos válidos. Corrigir exige autorização, por tocar em documento de hierarquia superior.
+
+### 5.5 Rastreabilidade do commit 296be6f
+O commit `fix(security)` remove o endpoint `POST /portfolio-events` e, por dividir `routers.py` com trabalho anterior ainda não commitado, carrega também os endpoints de conta (`/account/data-export`, `DELETE /account`) e de telemetria. A mensagem do commit declara isso explicitamente no seu último parágrafo. O histórico não foi reescrito para separar os dois assuntos.
+
+### 5.6 Fragilidade de ordem nos testes DEMO
 `tests/test_demo_persistence_day24.py::test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it` revoga o dataset DEMO e precisa rodar por último. O `demo-integration.yml` garante isso enumerando node ids na ordem correta, mas executar os arquivos inteiros quebra os demais testes do gate. A pendência é tornar a dependência de ordem explícita no próprio teste, em vez de depender da enumeração no workflow.
