@@ -1,5 +1,66 @@
 # Instruções complementares para documentação
+# Instruções do projeto
 
+## Idioma
+
+- Responda sempre em português do Brasil.
+- Seja direto e objetivo.
+- Não repita minha solicitação.
+- Não explique conceitos básicos quando eu já demonstrar conhecimento.
+- Use inglês somente para código, nomes de APIs, comandos, bibliotecas, variáveis e termos técnicos quando necessário.
+
+## Forma de trabalhar
+
+- Antes de modificar arquivos, entenda primeiro a estrutura relevante do projeto.
+- Não altere arquivos que não sejam necessários para a tarefa.
+- Não crie arquivos desnecessários.
+- Preserve a arquitetura existente quando ela estiver funcionando.
+- Prefira soluções simples, robustas e fáceis de manter.
+- Não introduza dependências novas sem justificar.
+- Não faça mudanças cosméticas que não foram solicitadas.
+
+## Código
+
+- Escreva código limpo e legível.
+- Siga os padrões já utilizados no projeto.
+- Reutilize funções e componentes existentes antes de criar novos.
+- Evite duplicação.
+- Não use comentários óbvios.
+- Não deixe código morto, temporário ou de debug.
+
+## Antes de alterar
+
+- Leia os arquivos relevantes.
+- Identifique dependências e possíveis impactos.
+- Se houver mais de uma abordagem razoável, escolha a mais simples e explique brevemente.
+
+## Depois de alterar
+
+- Verifique os arquivos modificados.
+- Execute os testes ou verificações disponíveis.
+- Corrija erros encontrados.
+- Informe somente:
+  1. o que foi alterado;
+  2. quais arquivos foram alterados;
+  3. quais verificações foram executadas;
+  4. qualquer problema restante.
+
+## Economia de contexto
+
+- Não leia arquivos inteiros sem necessidade.
+- Procure primeiro por símbolos, funções, classes, rotas e referências relevantes.
+- Não carregue documentação extensa se a parte necessária puder ser localizada diretamente.
+- Não repita informações já disponíveis no contexto.
+- Para tarefas grandes, divida o trabalho em etapas.
+- Use Skills para conhecimentos específicos em vez de colocar documentação extensa neste arquivo.
+- Quando o contexto estiver ficando grande, compacte a sessão.
+
+## Segurança
+
+- Nunca exponha ou copie secrets, tokens, senhas ou chaves privadas.
+- Não altere configurações de produção sem confirmação explícita.
+- Não execute comandos destrutivos sem confirmação.
+- Não faça `git reset --hard`, `git clean`, remoções em massa ou operações equivalentes sem confirmação.
 Estas regras se somam ao [`AGENTS.md` da raiz](../AGENTS.md). Em conflito, prevalece a hierarquia definida na raiz.
 
 A baseline enterprise é o documento canônico de engenharia. Se a implementação divergir da baseline, pare antes de escrever e reporte o conflito, impacto e opção segura.
