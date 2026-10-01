@@ -42,7 +42,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 
 ### H-05 GitHub: bloqueio de cobrança e `startup_failure` do CI
 - **Origem:** runbook §5.3.
-- **Motivo:** todas as 130 execuções do GitHub Actions medidas terminaram em `startup_failure` com 0 s, inclusive as agendadas na `main`, antes da existência da branch do Dia 28. Não há evidência automatizada de suíte verde. O usuário informa bloqueio de cobrança de Actions e Codespaces.
+- **Motivo:** todas as execuções do GitHub Actions medidas (135 em 2026-10-01; o número cresce com as agendadas) terminaram em `startup_failure` com 0 s, inclusive as agendadas na `main`, antes da existência da branch do Dia 28. Não há evidência automatizada de suíte verde. O usuário informa bloqueio de cobrança de Actions e Codespaces.
 - **Critério de pronto:** causa confirmada na fonte (configuração de cobrança do GitHub); uma execução do `ci.yml` concluída com sucesso, com saída vista; os workflows com `schedule` só habilitados depois disso.
 - **Prova hoje:** os `startup_failure` e a contagem foram **medidos** (`gh run list`). A causa (cobrança) é **informada pelo usuário**; confirmar exigiria escopo `user` no token, o que implicaria novo login e não foi feito.
 
@@ -123,6 +123,13 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** o teste fixa `redis://localhost:6379/15`; sem Redis local o rate limit devolve 503 antes do CSRF responder 403. Não há brecha. É a única falha na suíte na nuvem.
 - **Critério de pronto:** o teste declara essa dependência de forma explícita, ou deixa de depender dela, sem alterar o comportamento de segurança.
 - **Prova hoje:** **medida** na nuvem; passou com Redis local na validação informada.
+
+### H-18 Dívida de lint e formatação preexistente
+- **Origem:** `ruff` executado pelo ambiente do projeto em 2026-10-01, após o commit `3a3d940`.
+- **Motivo:** `ruff check .` em `apps/api` acusa **82 erros** (78 E501 e 4 I001), **todos em `migrations/`**; `app` e `tests` estão limpos. `ruff format --check .` aponta **23 arquivos** fora do formato (migrations, `env.py`, `admin/system.py`, `market_data/comparison.py`, `portfolios/day27.py`, `portfolios/income.py` e alguns testes do Dia 25 em diante). Os arquivos alterados no Dia 28 foram formatados no commit `3a3d940`.
+- **CI:** `ci.yml` roda `ruff check apps/api/app apps/api/tests` (e os workflows dos Dias 26 e 27 rodam `ruff check app tests`). Nenhum workflow roda `ruff format --check` nem `ruff check` em `migrations/`; portanto o gate atual **não falharia** por esta dívida. Se o gate for ampliado para o projeto inteiro, falhará até esta pendência fechar.
+- **Critério de pronto:** `ruff check .` e `ruff format --check .` limpos no projeto inteiro, em commit dedicado só de lint/formatação (sem mudança de comportamento, migrations incluídas apenas se o histórico Alembic não for alterado em semântica), com a suíte completa verde depois.
+- **Prova hoje:** **medida** (contagens acima). Não corrigido agora, por decisão de escopo.
 
 ## F. Não transferidas: continuam abertas no Dia 28
 
