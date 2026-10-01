@@ -104,22 +104,59 @@ def backup_postgres(database_url: str, output_path: Path) -> dict[str, str | int
     }
 
 
-def backup_redis(redis_url: str, output_path: Path) -> dict[str, str]:
-    """Trigger Redis snapshot via BGSAVE and record metadata."""
+SNAPSHOT_OK = "OK"
+SNAPSHOT_NOT_SUPPORTED = "NAO_SUPORTADO"  # the server answered and refused the command
+SNAPSHOT_UNAVAILABLE = "INDISPONIVEL"  # no connection, timeout or invalid URL
+
+_LEGACY_STATUS = {
+    SNAPSHOT_OK: "bgsave_triggered",
+    SNAPSHOT_NOT_SUPPORTED: "bgsave_not_supported",
+    SNAPSHOT_UNAVAILABLE: "redis_unavailable",
+}
+
+
+def backup_redis(redis_url: str, output_path: Path) -> dict[str, str | None]:
+    """Ask Redis for a snapshot and record, explicitly, what happened.
+
+    Managed Redis services commonly refuse LASTSAVE and BGSAVE. A refusal is reported in
+    the "snapshot" field (OK, NAO_SUPORTADO or INDISPONIVEL), never swallowed, and the rest
+    of the backup continues: Redis is a non-authoritative cache and PostgreSQL is the source
+    of truth. Only the exception NAME is recorded, never its message, which may carry a
+    host or a value.
+    """
     from redis import Redis
+    from redis.exceptions import ConnectionError as RedisConnectionError
+    from redis.exceptions import RedisError
+    from redis.exceptions import TimeoutError as RedisTimeoutError
 
-    client = Redis.from_url(redis_url, socket_timeout=5)
-    last_save = client.lastsave()
+    unreachable = (RedisConnectionError, RedisTimeoutError, OSError, ValueError)
+    snapshot = SNAPSHOT_OK
+    detail: str | None = None
+    last_save = None
     try:
+        client = Redis.from_url(redis_url, socket_timeout=5)
+        try:
+            last_save = client.lastsave()
+        except unreachable:
+            raise
+        except RedisError as exc:
+            # LASTSAVE refused; BGSAVE may still be accepted, so keep going and say so.
+            detail = f"LASTSAVE:{type(exc).__name__}"
         client.bgsave()
-    except Exception:
-        # BGSAVE may fail if another save is already in progress, which is acceptable
-        pass
+    except unreachable as exc:
+        snapshot, detail = SNAPSHOT_UNAVAILABLE, type(exc).__name__
+    except RedisError as exc:
+        if "already in progress" in str(exc).lower():
+            snapshot, detail = SNAPSHOT_OK, "BGSAVE_ALREADY_RUNNING"
+        else:
+            snapshot, detail = SNAPSHOT_NOT_SUPPORTED, type(exc).__name__
 
-    info = {
+    info: dict[str, str | None] = {
         "redis_target": mask_url(redis_url),
-        "last_save_timestamp": last_save.isoformat() if hasattr(last_save, "isoformat") else str(last_save),
-        "status": "bgsave_triggered",
+        "last_save_timestamp": last_save.isoformat() if hasattr(last_save, "isoformat") else None,
+        "snapshot": snapshot,
+        "detail": detail,
+        "status": _LEGACY_STATUS[snapshot],
     }
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(info, f, indent=2)
@@ -169,11 +206,22 @@ def main() -> None:
 
     redis_file = target_dir / "market_pulse_redis.json"
     redis_meta = backup_redis(args.redis_url, redis_file)
+    print(f"REDIS_SNAPSHOT={redis_meta['snapshot']}")
+    if redis_meta["snapshot"] != SNAPSHOT_OK:
+        print(
+            "AVISO: o snapshot do Redis NAO foi feito "
+            f"(detalhe: {redis_meta['detail']}). O backup do PostgreSQL esta completo; "
+            "o Redis e cache nao autoritativo.",
+            file=sys.stderr,
+        )
     print(f"Redis backup recorded: {redis_file}")
 
     manifest_path = create_backup_manifest(target_dir, pg_meta, redis_meta, args.environment)
     print(f"Manifest created: {manifest_path}")
-    print("Backup completed successfully.")
+    if redis_meta["snapshot"] == SNAPSHOT_OK:
+        print("Backup completed successfully.")
+    else:
+        print(f"Backup completed with warnings: PostgreSQL OK, Redis snapshot {redis_meta['snapshot']}.")
 
 
 if __name__ == "__main__":

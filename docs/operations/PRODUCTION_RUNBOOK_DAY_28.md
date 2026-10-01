@@ -66,7 +66,7 @@ python scripts/backup.py --output-dir /var/backups/market-pulse --environment pr
 ```
 
 - **PostgreSQL**: Executa `pg_dump` no formato custom comprimido (`-F c`), ou fallback para dump lógico JSON se utilitário de sistema não estiver presente.
-- **Redis**: Dispara snapshot assíncrono via comando `BGSAVE` e registra metadados de persistência.
+- **Redis**: Tenta um snapshot assíncrono via `BGSAVE` e registra, explicitamente, o que aconteceu: a saída traz `REDIS_SNAPSHOT=OK`, `REDIS_SNAPSHOT=NAO_SUPORTADO` (o servidor recusou o comando, caso comum em Redis gerenciado) ou `REDIS_SNAPSHOT=INDISPONIVEL` (sem conexão ou timeout). Em qualquer estado diferente de `OK` o backup do PostgreSQL e o manifesto continuam, com aviso em `stderr` e a mensagem final "Backup completed with warnings"; o código de saída permanece 0 porque o PostgreSQL, a fonte de verdade, está completo e o Redis é cache não autoritativo. O manifesto grava `redis_backup.snapshot` e só o **nome** da exceção, nunca a mensagem.
 - **Manifesto Assinado**: Cria `backup_manifest.json` com hashes SHA-256 e tamanhos em bytes para verificação de integridade pós-transferência.
 - **Segurança**: Todas as URLs registradas têm senhas mascaradas (`***`).
 
@@ -245,8 +245,10 @@ A tabela `sessions` existe no schema, mas a autenticação guarda sessões apena
 ### 5.8 `test_demo_browser_day24` depende de Redis local não declarado
 O teste fixa `redis://localhost:6379/15` e, sem Redis local, o rate limit (que falha fechado no login e roda antes do CSRF) devolve 503 no lugar do 403 esperado. Não há brecha: o login forjado é recusado de qualquer forma. Na execução na nuvem foi a única falha. Passa com Redis em `localhost`, o que a validação local confirmou (etapa E8).
 
-### 5.9 `backup.py` e Redis gerenciado
-`scripts/backup.py` chama `LASTSAVE` fora do `try`, e depois `BGSAVE`. São comandos administrativos que um Redis gerenciado pode recusar, o que abortaria o backup. Tratar antes do Dia 29.
+### 5.9 `backup.py` e Redis gerenciado — tratamento feito, validação real transferida
+**Status:** o tratamento de erro foi feito em 2026-10-01. A versão anterior tinha dois defeitos, ambos reproduzidos: `LASTSAVE` ficava **fora** do `try`, então um Redis que o recusasse **abortava o backup depois do dump do PostgreSQL e antes do manifesto** (dump sem manifesto não é restaurável); e o `except: pass` engolia a recusa do `BGSAVE` enquanto o manifesto gravava `bgsave_triggered`, uma afirmação falsa. Agora a recusa vira `REDIS_SNAPSHOT=NAO_SUPORTADO` e o restante do backup continua (ver §3.1). Sete testes com um Redis falso que recusa, inclusive o `main()` de ponta a ponta.
+
+**Ainda não verificado:** o comportamento contra o **Redis gerenciado real** (Upstash). Transferido ao Dia 29, item H-04 de [DAY29_HANDOFF.md](../DAY29_HANDOFF.md), junto da decisão sobre se o Redis precisa de backup.
 
 ### 5.10 Ordem entre CSRF e rate limit no `main.py`
 Hoje o rate limit roda antes do CSRF, então a recusa por CSRF depende do Redis e uma requisição forjada consome cota. Decisão de segurança a discutir; não alterar sem ADR ou aprovação.
