@@ -25,6 +25,21 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     da opção B e as pendências de [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md)
     (artefatos de deploy, CSP, `sessions`, cadastro aberto etc.).
 
-O Dia 28 só pode ser declarado concluído depois que as rodadas locais rodarem
-verdes e a evidência for registrada. Detalhes em
-[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).
+- **Decisões de 2026-10-01 (decididas pelo usuário):** exclusão de conta =
+  anonimização com D1–D5; artefatos de deploy (Dockerfile non-root, shutdown
+  gracioso) saem do Dia 28 e vão para o Dia 29 ([DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md)).
+- **Dívida de lint preexistente:** 82 erros em `migrations/` e 23 arquivos fora do
+  `ruff format` (handoff H-18); `app` e `tests` passam no `ruff check` do CI.
+
+## Retomada: próximo passo exato
+
+1. **Rodada 1:** reiniciar o PC, abrir só o Docker Desktop e rodar
+   `powershell -ExecutionPolicy Bypass -File C:\Projetos\mp-local-checkun_local.ps1`.
+2. **Rodada 2:** reiniciar sem abrir o Docker e rodar o `run_frontend.ps1` da mesma pasta.
+3. Analisar 429/403/5xx do E2E **sem relaxar rate limit nem CSRF**.
+4. Push só com autorização explícita.
+5. Declarar o Dia 28 fechado **somente** com as duas rodadas verdes e a evidência
+   registrada. Se uma janela dos scripts for fechada à força, renomear
+   `appspi\.env.mp-local-check-hold` de volta para `.env`.
+
+Detalhes em [PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).

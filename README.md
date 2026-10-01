@@ -50,6 +50,11 @@ O que **falta** para fechar o Dia 28:
    shutdown gracioso), CSP do frontend, tabela `sessions` sem uso, cadastro aberto
    e demais itens em [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
 
+Decisões de 2026-10-01 (decididas pelo usuário): exclusão de conta =
+anonimização com D1–D5 (risco residual em `portfolio_events.note`, ADR da opção B
+obrigatória antes de abrir o produto a outros usuários); artefatos de deploy
+saem do Dia 28 e passam ao Dia 29.
+
 Decisões e pendências em
 [PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).
 
