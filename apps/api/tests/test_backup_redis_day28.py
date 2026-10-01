@@ -126,8 +126,17 @@ def test_the_command_line_says_so_and_still_writes_the_manifest(
     monkeypatch.setattr(
         sys,
         "argv",
-        ["backup.py", "--output-dir", str(tmp_path), "--db-url", LOCAL_DB,
-         "--redis-url", "redis://127.0.0.1:6379/0", "--environment", "local"],
+        [
+            "backup.py",
+            "--output-dir",
+            str(tmp_path),
+            "--db-url",
+            LOCAL_DB,
+            "--redis-url",
+            "redis://127.0.0.1:6379/0",
+            "--environment",
+            "local",
+        ],
     )
 
     backup.main()  # must not raise or exit non-zero: the PostgreSQL backup is complete

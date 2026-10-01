@@ -132,9 +132,7 @@ def _install(monkeypatch, sessions, connections: list[_FakeConnection]):
         opened.append(connection)
         return connection
 
-    auth = AuthService(
-        store=InMemoryAuthStore(), sessions=sessions, limiter=InMemoryRateLimiter()
-    )
+    auth = AuthService(store=InMemoryAuthStore(), sessions=sessions, limiter=InMemoryRateLimiter())
     monkeypatch.setattr(routers, "psycopg", SimpleNamespace(connect=connect))
     monkeypatch.setattr(routers, "get_auth_service", lambda: auth)
     user = _user()
@@ -144,9 +142,7 @@ def _install(monkeypatch, sessions, connections: list[_FakeConnection]):
 
 def _audit_rows(connection: _FakeConnection) -> list[tuple]:
     return [
-        params
-        for sql, params in connection.statements
-        if sql.startswith("INSERT INTO audit_logs")
+        params for sql, params in connection.statements if sql.startswith("INSERT INTO audit_logs")
     ]
 
 
@@ -180,8 +176,10 @@ def test_successful_anonymization_writes_audit_in_the_same_transaction(monkeypat
     ]
     assert order == sorted(order), "audit row must be the last write before the commit"
     assert not any("sessions" in sql for sql in statements), "sessions live only in Redis"
-    assert not any(sql.startswith(("DELETE FROM portfolio_events", "UPDATE portfolio_events"))
-                   for sql in statements), "the ledger must never be touched"
+    assert not any(
+        sql.startswith(("DELETE FROM portfolio_events", "UPDATE portfolio_events"))
+        for sql in statements
+    ), "the ledger must never be touched"
 
     update_users = next(p for sql, p in main.statements if sql.startswith("UPDATE users"))
     assert update_users[0] == f"deleted-{user.id}@market-pulse.invalid"
@@ -337,9 +335,19 @@ class _ExportConnection:
     """Answers the four export queries with fixed rows, selected by table."""
 
     ledger_row = (
-        uuid4(), uuid4(), "BUY", date(2026, 9, 1), uuid4(), "equity.br.b3.petr4",
-        Decimal("10.50000000"), Decimal("50.12345678"), Decimal("526.29000000"),
-        Decimal("1.00000000"), None, "BRL", datetime(2026, 9, 1, tzinfo=timezone.utc),
+        uuid4(),
+        uuid4(),
+        "BUY",
+        date(2026, 9, 1),
+        uuid4(),
+        "equity.br.b3.petr4",
+        Decimal("10.50000000"),
+        Decimal("50.12345678"),
+        Decimal("526.29000000"),
+        Decimal("1.00000000"),
+        None,
+        "BRL",
+        datetime(2026, 9, 1, tzinfo=timezone.utc),
         "nota escrita pelo proprio usuario",
     )
 
@@ -367,9 +375,7 @@ class _ExportConnection:
             rows = [self.ledger_row]
         else:
             rows = []
-        return SimpleNamespace(
-            fetchone=lambda: rows[0] if rows else None, fetchall=lambda: rows
-        )
+        return SimpleNamespace(fetchone=lambda: rows[0] if rows else None, fetchall=lambda: rows)
 
 
 def _no_floats(value) -> None:

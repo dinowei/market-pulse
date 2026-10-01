@@ -137,12 +137,16 @@ def test_csrf_middleware_protection() -> None:
     assert "CSRF" in resp.json()["detail"]
 
     # 2. Mutating request with auth cookie and external/unauthorized Origin -> 403 Forbidden
-    resp = client.post("/api/v1/auth/logout", cookies=cookie, headers={"Origin": "http://evil-attacker.com"})
+    resp = client.post(
+        "/api/v1/auth/logout", cookies=cookie, headers={"Origin": "http://evil-attacker.com"}
+    )
     assert resp.status_code == 403
     assert "CSRF" in resp.json()["detail"]
 
     # 3. Mutating request with auth cookie and allowed Origin -> passes CSRF check
-    resp = client.post("/api/v1/auth/logout", cookies=cookie, headers={"Origin": "http://localhost:3000"})
+    resp = client.post(
+        "/api/v1/auth/logout", cookies=cookie, headers={"Origin": "http://localhost:3000"}
+    )
     assert resp.status_code != 403
     assert resp.status_code in {204, 401, 503}
 
@@ -225,9 +229,11 @@ def test_strict_production_config_validation() -> None:
 
 
 def test_account_endpoints_registered() -> None:
-    all_paths = {r.path for r in app.routes if hasattr(r, "path")} | {
-        f"/api/v1{r.path}" for r in routers.router.routes if hasattr(r, "path")
-    } | {r.path for r in routers.router.routes if hasattr(r, "path")}
+    all_paths = (
+        {r.path for r in app.routes if hasattr(r, "path")}
+        | {f"/api/v1{r.path}" for r in routers.router.routes if hasattr(r, "path")}
+        | {r.path for r in routers.router.routes if hasattr(r, "path")}
+    )
     assert any("/account/data-export" in p for p in all_paths)
     assert any(p.endswith("/account") for p in all_paths)
 
@@ -307,20 +313,30 @@ def test_account_deletion_anonymizes_and_preserves_append_only_ledger(monkeypatc
         assert row[1] != "argon2-placeholder-not-a-real-hash"
         assert row[2] == "DELETED"
 
-        assert conn.execute(
-            "SELECT archived_at FROM portfolios WHERE id = %s", (portfolio_id,)
-        ).fetchone()[0] is not None
-        assert conn.execute(
-            "SELECT COUNT(*) FROM watchlists WHERE user_id = %s", (user_id,)
-        ).fetchone()[0] == 0
+        assert (
+            conn.execute(
+                "SELECT archived_at FROM portfolios WHERE id = %s", (portfolio_id,)
+            ).fetchone()[0]
+            is not None
+        )
+        assert (
+            conn.execute(
+                "SELECT COUNT(*) FROM watchlists WHERE user_id = %s", (user_id,)
+            ).fetchone()[0]
+            == 0
+        )
         # The ledger is the point: it must still be there, untouched.
-        assert conn.execute(
-            "SELECT COUNT(*) FROM portfolio_events WHERE id = %s", (event_id,)
-        ).fetchone()[0] == 1
+        assert (
+            conn.execute(
+                "SELECT COUNT(*) FROM portfolio_events WHERE id = %s", (event_id,)
+            ).fetchone()[0]
+            == 1
+        )
 
 
 def test_backup_restore_manifest_roundtrip() -> None:
     import sys
+
     repo_root = Path(__file__).resolve().parents[3]
     if str(repo_root) not in sys.path:
         sys.path.insert(0, str(repo_root))

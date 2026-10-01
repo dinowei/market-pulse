@@ -1489,11 +1489,13 @@ def export_user_data(
                         "items": [],
                     }
                 if item_id:
-                    watchlists_dict[w_id]["items"].append({
-                        "id": item_id,
-                        "instrument_id": instrument_id,
-                        "canonical_id": canonical_id,
-                    })
+                    watchlists_dict[w_id]["items"].append(
+                        {
+                            "id": item_id,
+                            "instrument_id": instrument_id,
+                            "canonical_id": canonical_id,
+                        }
+                    )
 
             # 3. Portfolios
             portfolio_rows = conn.execute(
@@ -1505,13 +1507,15 @@ def export_user_data(
 
             portfolios = []
             for row in portfolio_rows:
-                portfolios.append({
-                    "id": str(row[0]),
-                    "name": str(row[1]),
-                    "base_currency": str(row[2]),
-                    "created_at": row[3].isoformat() if row[3] else None,
-                    "archived_at": row[4].isoformat() if row[4] else None,
-                })
+                portfolios.append(
+                    {
+                        "id": str(row[0]),
+                        "name": str(row[1]),
+                        "base_currency": str(row[2]),
+                        "created_at": row[3].isoformat() if row[3] else None,
+                        "archived_at": row[4].isoformat() if row[4] else None,
+                    }
+                )
 
             # 4. Ledger (Portfolio Events)
             ledger_rows = conn.execute(
@@ -1527,23 +1531,25 @@ def export_user_data(
 
             ledger = []
             for row in ledger_rows:
-                ledger.append({
-                    "id": str(row[0]),
-                    "portfolio_id": str(row[1]),
-                    "event_type": str(row[2]),
-                    "event_date": row[3].isoformat() if row[3] else None,
-                    "instrument_id": str(row[4]) if row[4] else None,
-                    "canonical_id": str(row[5]) if row[5] else None,
-                    # Decimal strings, never float: money and quantities must not lose precision.
-                    "quantity": str(row[6]) if row[6] is not None else None,
-                    "price": str(row[7]) if row[7] is not None else None,
-                    "gross_amount": str(row[8]) if row[8] is not None else None,
-                    "fees": str(row[9]) if row[9] is not None else None,
-                    "cash_amount": str(row[10]) if row[10] is not None else None,
-                    "currency": str(row[11]),
-                    "created_at": row[12].isoformat() if row[12] else None,
-                    "note": str(row[13]) if row[13] is not None else None,
-                })
+                ledger.append(
+                    {
+                        "id": str(row[0]),
+                        "portfolio_id": str(row[1]),
+                        "event_type": str(row[2]),
+                        "event_date": row[3].isoformat() if row[3] else None,
+                        "instrument_id": str(row[4]) if row[4] else None,
+                        "canonical_id": str(row[5]) if row[5] else None,
+                        # Decimal strings, never float: money and quantities keep precision.
+                        "quantity": str(row[6]) if row[6] is not None else None,
+                        "price": str(row[7]) if row[7] is not None else None,
+                        "gross_amount": str(row[8]) if row[8] is not None else None,
+                        "fees": str(row[9]) if row[9] is not None else None,
+                        "cash_amount": str(row[10]) if row[10] is not None else None,
+                        "currency": str(row[11]),
+                        "created_at": row[12].isoformat() if row[12] else None,
+                        "note": str(row[13]) if row[13] is not None else None,
+                    }
+                )
 
         # Audit Log
         _record_account_audit(

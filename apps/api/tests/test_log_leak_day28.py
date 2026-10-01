@@ -53,9 +53,7 @@ def test_credentials_never_reach_logs_or_error_responses(caplog) -> None:
     assert csrf.status_code == 403
     assert body_echo.status_code in {401, 422, 503}
 
-    _assert_nothing_leaked(
-        caplog, not_found.text, invalid.text, csrf.text, body_echo.text
-    )
+    _assert_nothing_leaked(caplog, not_found.text, invalid.text, csrf.text, body_echo.text)
 
 
 def test_error_responses_never_expose_the_configured_database_url(caplog) -> None:
