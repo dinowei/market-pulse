@@ -140,6 +140,33 @@ apagada do histórico; permanece como trabalho de hardening a ser replanejado
 depois deste gate. Detalhes e comandos estão em
 [DAY_26_MULTIATIVE_CALENDAR.md](market_data/DAY_26_MULTIATIVE_CALENDAR.md).
 
+### Reconciliação autorizada do Dia 28 (2026-10-01)
+
+**Decidido pelo usuário em 2026-10-01.** O Dia 28 foi executado como hardening de
+segurança, privacidade e operação: remoção do endpoint de ledger sem
+autenticação, CSRF por Origin em todo método mutante, cabeçalhos de segurança,
+validação estrita de configuração de produção, exclusão de conta por
+anonimização com revogação de sessões e auditoria atômica, export com valores
+decimais, backup/restore com verificação de integridade e expurgo de registros
+operacionais com dry-run por padrão. Estado do dia: **PARCIAL**.
+
+A linha do Dia 28 da tabela acima, "Artefatos para Vercel (web) e Render (API),
+non-root e shutdown", com o gate "Smoke local equivalente passa", **não é
+apagada do histórico**. Por decisão do usuário nesta data, esses artefatos
+(Dockerfiles non-root, shutdown gracioso e a confirmação de que Vercel e Render
+exigem ou dispensam imagem) **saem do Dia 28 e passam ao Dia 29**, porque não são
+validáveis sem um ambiente com memória suficiente para construir imagens e porque
+o plano de deploy ainda precisa confirmar, na fonte oficial, se as plataformas
+exigem imagem. O gate de smoke local equivalente fica, portanto, **não executado**
+no Dia 28 e é herdado pelo Dia 29.
+
+O Dia 29 passa a acumular o escopo da sua linha da tabela (GitHub Actions
+agendado para o endpoint interno protegido) com as pendências transferidas, cada
+uma com origem, motivo e critério de pronto, em
+[DAY29_HANDOFF.md](DAY29_HANDOFF.md). Esta reconciliação não autoriza deploy,
+login externo, contratação nem provisionamento. Decisões e evidências do Dia 28
+estão em [PRODUCTION_RUNBOOK_DAY_28.md](operations/PRODUCTION_RUNBOOK_DAY_28.md).
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento

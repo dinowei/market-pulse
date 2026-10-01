@@ -269,13 +269,15 @@ O que **ainda não** foi feito: o dry-run contra o `market_pulse_demo` local (et
 ### 5.13 ADR da opção B antes de abrir o produto
 Ver risco residual D3-A em §4.2. A ADR (anular apenas `portfolio_events.note` sob trigger) é obrigatória antes de qualquer abertura a outros usuários.
 
-### 5.14 Artefatos de deploy ausentes — divergência com o roadmap, decisão pendente
-A linha do Dia 28 em `docs/ROADMAP_30_DAYS.md` (linha 96) fala em **"Artefatos para Vercel (web) e Render (API), non-root e shutdown"**, com gate **"Smoke local equivalente passa; nenhum login/deploy externo"**. O trabalho do Dia 28 seguiu outro recorte, o de hardening de segurança, privacidade e operação, e o repositório **não tem nenhum Dockerfile** (só o `docker-compose.yml` de Postgres e Redis para desenvolvimento). Por isso não existe imagem non-root nem comportamento de shutdown verificável, e o smoke local equivalente do gate não pode ser executado.
+### 5.14 Artefatos de deploy — mudança formal de escopo, transferidos ao Dia 29
+**Decisão (2026-10-01, decidida pelo usuário):** os artefatos de deploy (Dockerfiles non-root, shutdown gracioso e a confirmação de que Vercel e Render exigem ou dispensam imagem) **saem do Dia 28 e vão para o Dia 29**.
 
-Não foram criados Dockerfiles por três motivos: não há como construir e testar imagem nesta máquina (sem memória para o Docker), fixar imagem base exige verificar a fonte oficial e registrar a evidência (`AGENTS.md`), e criar artefato de Render/Vercel antecipa decisões do Dia 29. **Decisão necessária:** (a) tratar esses artefatos como parte do Dia 28 e criá-los agora, validando o build em outro ambiente, ou (b) registrar formalmente que o escopo do Dia 28 mudou e movê-los para o Dia 29, com reconciliação do roadmap.
+Origem da divergência: a linha do Dia 28 em `docs/ROADMAP_30_DAYS.md` (linha 96) fala em **"Artefatos para Vercel (web) e Render (API), non-root e shutdown"**, com gate **"Smoke local equivalente passa; nenhum login/deploy externo"**. O trabalho do Dia 28 seguiu o recorte de hardening de segurança, privacidade e operação, e o repositório **não tem nenhum Dockerfile** (só o `docker-compose.yml` de Postgres e Redis para desenvolvimento).
+
+Motivo da transferência: não são validáveis sem um ambiente com memória suficiente para construir imagens, fixar imagem base exige verificar a fonte oficial e registrar a evidência (`AGENTS.md`), e o plano de deploy ainda precisa confirmar se Vercel e Render exigem imagem. O gate "Smoke local equivalente passa" fica **não executado** no Dia 28 e é herdado pelo Dia 29. O roadmap foi reconciliado por adendo, sem apagar a linha original: ver "Reconciliação autorizada do Dia 28" em `docs/ROADMAP_30_DAYS.md`. Critério de pronto e demais pendências em [DAY29_HANDOFF.md](../DAY29_HANDOFF.md).
 
 ### 5.15 CSP e cabeçalhos de segurança do frontend
-Os cabeçalhos de segurança (`Content-Security-Policy`, `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) estão implementados e testados **na API**. O frontend Next.js não define cabeçalhos próprios. Uma CSP no frontend precisa ser validada com o E2E e o teste de acessibilidade no navegador, porque pode quebrar script inline e estilos, e por isso não foi adicionada às cegas. Fica para antes da exposição pública (Dia 29).
+Os cabeçalhos de segurança (`Content-Security-Policy`, `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) estão implementados e testados **na API**. O frontend Next.js não define cabeçalhos próprios. Uma CSP no frontend precisa ser validada com o E2E e o teste de acessibilidade no navegador, porque pode quebrar script inline e estilos, e por isso não foi adicionada às cegas. **Transferida ao Dia 29** (ver [DAY29_HANDOFF.md](../DAY29_HANDOFF.md)), depois de o E2E passar sem CSP.
 
 ---
 
