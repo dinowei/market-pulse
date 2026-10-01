@@ -1,8 +1,34 @@
 import contextlib
 import os
+from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 import redis
+from dotenv import dotenv_values
+
+# Optional remote test targets (e.g. a Neon dev-branch database and a dedicated Upstash
+# database). They are read from dedicated variables, never from MARKET_PULSE_DATABASE_URL
+# or MARKET_PULSE_REDIS_URL, so an application URL in apps/api/.env can never become the
+# test target by accident: the default suite runs TRUNCATE ... CASCADE on users,
+# portfolios and the ledger. Only these two keys are taken from the dotenv file.
+_TEST_DATABASE_NAME = "market_pulse_test"
+_dotenv = dotenv_values(Path(__file__).resolve().parents[1] / ".env")
+_test_database_url = os.environ.get("MARKET_PULSE_TEST_DATABASE_URL") or _dotenv.get(
+    "MARKET_PULSE_TEST_DATABASE_URL"
+)
+_test_redis_url = os.environ.get("MARKET_PULSE_TEST_REDIS_URL") or _dotenv.get(
+    "MARKET_PULSE_TEST_REDIS_URL"
+)
+if _test_database_url:
+    if urlsplit(_test_database_url).path.lstrip("/") != _TEST_DATABASE_NAME:
+        raise RuntimeError(
+            "MARKET_PULSE_TEST_DATABASE_URL must point to a database named "
+            f"{_TEST_DATABASE_NAME}; the suite truncates tables and refuses any other target."
+        )
+    os.environ["MARKET_PULSE_DATABASE_URL"] = _test_database_url
+if _test_redis_url:
+    os.environ["MARKET_PULSE_REDIS_URL"] = _test_redis_url
 
 os.environ.setdefault("APP_ENV", "development")
 os.environ.setdefault("MARKET_PULSE_ENVIRONMENT", "local")
