@@ -1402,6 +1402,39 @@ def _record_account_audit(
         pass
 
 
+ANONYMIZATION_ACTION = "USER_ACCOUNT_ANONYMIZED"
+ANONYMIZATION_REASON = "LGPD_USER_REQUEST"
+
+
+def _anonymization_audit(user_id: str, request_id: str, result: str, **extra: object):
+    """Statement and parameters for the anonymization audit row.
+
+    The metadata is built from a fixed set of keys on purpose: nothing taken from the
+    user's record (e-mail, name, portfolio names, notes) and no raw exception text, which
+    database drivers may fill with the offending value.
+    """
+    metadata = {
+        "reason": ANONYMIZATION_REASON,
+        "result": result,
+        "request_id": request_id,
+        **extra,
+    }
+    statement = (
+        "INSERT INTO audit_logs (entity_type, entity_id, action, actor_user_id, "
+        "occurred_at, metadata, resource, result, request_id) "
+        "VALUES ('user', %s, %s, %s, now(), %s::jsonb, 'account', %s, %s)"
+    )
+    params = (
+        user_id,
+        ANONYMIZATION_ACTION,
+        user_id,
+        json.dumps(metadata),
+        result,
+        request_id,
+    )
+    return statement, params
+
+
 @router.get(
     "/account/data-export",
     tags=["account"],
@@ -1484,7 +1517,8 @@ def export_user_data(
             ledger_rows = conn.execute(
                 "SELECT pe.id, pe.portfolio_id, pe.event_type, pe.event_date, "
                 "pe.instrument_id, i.canonical_id, pe.quantity, pe.price, "
-                "pe.gross_amount, pe.fees, pe.cash_amount, pe.currency, pe.created_at "
+                "pe.gross_amount, pe.fees, pe.cash_amount, pe.currency, pe.created_at, "
+                "pe.note "
                 "FROM portfolio_events pe "
                 "LEFT JOIN instruments i ON pe.instrument_id = i.id "
                 "WHERE pe.created_by = %s",
@@ -1500,13 +1534,15 @@ def export_user_data(
                     "event_date": row[3].isoformat() if row[3] else None,
                     "instrument_id": str(row[4]) if row[4] else None,
                     "canonical_id": str(row[5]) if row[5] else None,
-                    "quantity": float(row[6]) if row[6] is not None else None,
-                    "price": float(row[7]) if row[7] is not None else None,
-                    "gross_amount": float(row[8]) if row[8] is not None else None,
-                    "fees": float(row[9]) if row[9] is not None else None,
-                    "cash_amount": float(row[10]) if row[10] is not None else None,
+                    # Decimal strings, never float: money and quantities must not lose precision.
+                    "quantity": str(row[6]) if row[6] is not None else None,
+                    "price": str(row[7]) if row[7] is not None else None,
+                    "gross_amount": str(row[8]) if row[8] is not None else None,
+                    "fees": str(row[9]) if row[9] is not None else None,
+                    "cash_amount": str(row[10]) if row[10] is not None else None,
                     "currency": str(row[11]),
                     "created_at": row[12].isoformat() if row[12] else None,
+                    "note": str(row[13]) if row[13] is not None else None,
                 })
 
         # Audit Log
@@ -1531,7 +1567,7 @@ def export_user_data(
             resource="account",
             result="failed",
             request_id=req_id,
-            metadata={"error": str(exc)},
+            metadata={"error_type": type(exc).__name__},
         )
         raise HTTPException(status_code=500, detail="Data export failed")
 
@@ -1545,23 +1581,15 @@ def delete_user_account(
     request: Request,
     response: Response,
     current_user: AuthUserResponse = Depends(get_current_user),
-    session_token: str | None = Cookie(default=None, alias="market_pulse_session"),
 ) -> Response:
     req_id = request_id_for(request)
     settings = get_settings()
     cookie_name = settings.auth_cookie_name
-    token = (
-        request.cookies.get(cookie_name) if cookie_name != "market_pulse_session" else session_token
-    )
+    auth = get_auth_service()
+    marker_written = False
+    committed = False
 
     try:
-        # Revoke session in Redis immediately
-        if token:
-            try:
-                get_auth_service().logout(token)
-            except Exception:
-                pass
-
         with psycopg.connect(settings.database_url) as conn:
             with conn.cursor() as cur:
                 # 1. Anonymize user personal data and set status to DELETED
@@ -1592,22 +1620,30 @@ def delete_user_account(
                     (current_user.id,),
                 )
 
-                # 4. Inactivate portfolios preserving immutable ledger history
+                # 4. Archive the portfolios and neutralize their free-text name. The ledger
+                # (portfolio_events) is untouched and stays bound to user_id; id, user_id,
+                # base_currency and dates do not change.
                 cur.execute(
-                    "UPDATE portfolios SET archived_at = now() WHERE user_id = %s",
+                    "UPDATE portfolios SET archived_at = now(), "
+                    "name = 'Carteira removida ' || id::text WHERE user_id = %s",
                     (current_user.id,),
                 )
 
-            conn.commit()
+                # 5. Revoke every session in Redis BEFORE the commit, so an unreachable
+                # Redis rolls the whole anonymization back instead of leaving other devices
+                # logged in. The marker is flagged first: revoke_user writes it before it
+                # does anything else that can fail.
+                marker_written = True
+                sessions_revoked = auth.revoke_user(current_user.id)
 
-        # Audit Log
-        _record_account_audit(
-            actor_user_id=current_user.id,
-            action="account_deletion",
-            resource="account",
-            result="success",
-            request_id=req_id,
-        )
+                # 6. Audit row in the same transaction: no anonymization without a record.
+                statement, params = _anonymization_audit(
+                    current_user.id, req_id, "success", sessions_revoked=sessions_revoked
+                )
+                cur.execute(statement, params)
+
+            conn.commit()
+            committed = True
 
         # Expire/delete the cookie in the response headers
         response_obj = Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -1615,12 +1651,20 @@ def delete_user_account(
         return response_obj
 
     except Exception as exc:
-        _record_account_audit(
-            actor_user_id=current_user.id,
-            action="account_deletion",
-            resource="account",
-            result="failed",
-            request_id=req_id,
-            metadata={"error": str(exc)},
-        )
+        # A failure before the commit means the account was NOT anonymized, so the user
+        # must not stay locked out for the whole session TTL by a marker we wrote.
+        if marker_written and not committed:
+            try:
+                auth.restore_user(current_user.id)
+            except Exception:
+                pass
+        try:
+            statement, params = _anonymization_audit(
+                current_user.id, req_id, "failed", error_type=type(exc).__name__
+            )
+            with psycopg.connect(settings.database_url) as audit_conn:
+                audit_conn.execute(statement, params)
+                audit_conn.commit()
+        except Exception:
+            pass
         raise HTTPException(status_code=500, detail="Account deletion failed")

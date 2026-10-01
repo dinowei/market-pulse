@@ -46,6 +46,10 @@ class SessionStore(Protocol):
 
     def revoke(self, token_hash: str) -> None: ...
 
+    def revoke_user(self, user_id: str) -> int: ...
+
+    def restore_user(self, user_id: str) -> None: ...
+
     def available(self) -> bool: ...
 
 
@@ -124,6 +128,9 @@ class RedisSessionStore:
             if datetime.fromisoformat(values["expires_at"]) <= datetime.now(timezone.utc):
                 self.revoke(token_hash)
                 return None
+            if self._user_revoked(values["user_id"]):
+                self.revoke(token_hash)
+                return None
             return AuthUserResponse(
                 id=values["user_id"], email=values["email"], status=values["status"]
             )
@@ -133,6 +140,40 @@ class RedisSessionStore:
     def revoke(self, token_hash: str) -> None:
         try:
             self.client.delete(f"auth:session:{token_hash}")
+        except Exception as exc:
+            raise AuthUnavailable from exc
+
+    @staticmethod
+    def _revoked_key(user_id: str) -> str:
+        return f"auth:revoked_user:{user_id}"
+
+    def _user_revoked(self, user_id: str) -> bool:
+        try:
+            return bool(self.client.exists(self._revoked_key(user_id)))
+        except Exception as exc:
+            raise AuthUnavailable from exc
+
+    def revoke_user(self, user_id: str) -> int:
+        # Sessions are keyed by token hash with no per-user index, so a scan is the only
+        # way to reach the other devices. The marker is written first so that a session
+        # created or read while the scan runs is rejected as well.
+        try:
+            self.client.set(
+                self._revoked_key(user_id), "1", ex=self.settings.auth_session_ttl_seconds
+            )
+            removed = 0
+            for key in self.client.scan_iter(match="auth:session:*", count=500):
+                if self.client.hget(key, "user_id") == user_id:
+                    removed += int(self.client.delete(key))
+            return removed
+        except Exception as exc:
+            raise AuthUnavailable from exc
+
+    def restore_user(self, user_id: str) -> None:
+        # Undo of the marker only. Sessions already deleted by revoke_user stay deleted:
+        # the user logs in again, which beats being locked out for the whole session TTL.
+        try:
+            self.client.delete(self._revoked_key(user_id))
         except Exception as exc:
             raise AuthUnavailable from exc
 
@@ -211,6 +252,16 @@ class InMemorySessionStore:
     def revoke(self, token_hash: str) -> None:
         self.sessions.pop(token_hash, None)
 
+    def revoke_user(self, user_id: str) -> int:
+        doomed = [h for h, (user, _) in self.sessions.items() if user.id == user_id]
+        for token_hash in doomed:
+            self.sessions.pop(token_hash, None)
+        return len(doomed)
+
+    def restore_user(self, user_id: str) -> None:
+        # No marker exists in memory; deleted sessions are not brought back.
+        return None
+
 
 class InMemoryRateLimiter:
     def __init__(self, max_attempts: int = 5):
@@ -288,3 +339,13 @@ class AuthService:
     def logout(self, token: str | None) -> None:
         if token and self.sessions is not None:
             self.sessions.revoke(self._hash_token(token))
+
+    def revoke_user(self, user_id: str) -> int:
+        if self.sessions is None:
+            raise AuthUnavailable
+        return self.sessions.revoke_user(user_id)
+
+    def restore_user(self, user_id: str) -> None:
+        if self.sessions is None:
+            raise AuthUnavailable
+        self.sessions.restore_user(user_id)

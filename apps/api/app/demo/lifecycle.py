@@ -192,7 +192,7 @@ def _cache_for_reset(settings):
         cache.close()
         raise DemoSafetyError("DEMO cache ownership rejected")
     keys = list(cache.scan_iter())
-    allowed = ("auth:session:", "auth:register:ip:", "auth:login:ip:")
+    allowed = ("auth:session:", "auth:revoked_user:", "auth:register:ip:", "auth:login:ip:")
     if any(key != DEMO_CACHE_MARKER and not key.startswith(allowed) for key in keys):
         cache.close()
         raise DemoSafetyError("Unrecognized DEMO cache entry; recreation denied")
