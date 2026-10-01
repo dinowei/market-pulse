@@ -11,17 +11,34 @@ Morning Call, demonstração local persistida e isolada, painel operacional
 interno, comparação multiativo, calendário econômico, proventos, marcadores e
 telemetria Web Vitals. Nenhum provider real, Stripe ou deploy foi ativado.
 
-O **Dia 28** (hardening enterprise) está **implementado e commitado**, com
-validação final **pendente**. Entregas: remoção de endpoint sem autenticação,
-CSRF unificado para todo método mutante, cabeçalhos de segurança, validação
-estrita de configuração de produção, export e exclusão de conta por
-anonimização, backup/restore com verificação de integridade e expurgo de
-registros operacionais.
+O **Dia 28** (hardening enterprise) está **implementado, commitado e validado
+fora do CI**, com pendências abertas. Entregas: remoção de endpoint sem
+autenticação, CSRF unificado para todo método mutante, cabeçalhos de segurança,
+validação estrita de configuração de produção, exclusão de conta por
+anonimização com revogação de todas as sessões e auditoria atômica, export de
+dados com valores decimais, backup/restore com verificação de integridade e
+expurgo de registros operacionais.
 
-A suíte completa não foi executada na sessão de fechamento por limite de
-memória da máquina, e o CI do repositório está com falha de startup desde antes
-desta branch, portanto sem evidência automatizada. O estado é **PARCIAL** até a
-suíte rodar verde. Detalhes, decisões e pendências em
+Evidências, por origem:
+
+- **Suíte de backend na nuvem** (Neon `dev` + Upstash), executada e conferida por
+  Claude Code em 2026-10-01: **320 passed, 1 failed, 10 skipped** em 96 s. A única
+  falha é `test_demo_browser_day24`, que depende de Redis local não declarado
+  (503 no lugar de 403 sem Redis em `localhost`); não há brecha, o login forjado é
+  recusado de qualquer forma. Os 10 skips são testes opt-in que exigem banco local.
+  A execução de 2026-09-30, antes das correções de conta e do scanner, deu
+  299 passed, 1 failed, 9 skipped.
+- **Validação local E1–E13** (Docker, DEMO semeado): informada como **todas OK**
+  pelo responsável pelo produto, com 10 testes opt-in passando, teste negativo
+  com 9 skipped e expurgo em dry-run com `audit_logs` intacto. O `resultado.log`
+  não está no repositório e não foi conferido por Claude Code.
+- **CI do GitHub Actions**: sem evidência. Todas as execuções, inclusive as da
+  `main`, terminam em `startup_failure` desde antes desta branch.
+
+O Dia 28 **não está declarado fechado**: falta o teste ponta a ponta da
+anonimização em banco local, o expurgo real (só houve dry-run), a resolução do
+CI e o push das últimas correções. Como rodar a suíte na nuvem e a validação
+local, decisões (incluindo a exclusão de conta de 2026-10-01) e pendências em
 [PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).
 
 ## Demonstração local — Dia 24
@@ -169,8 +186,8 @@ O repositório não adota licença open source neste momento; consulte [LICENSE]
 
 ## Próximo passo
 
-Executar a suíte completa do Dia 28 numa máquina com memória suficiente e
-registrar a evidência. Só então o Dia 28 pode ser declarado concluído e o Dia 29
-(GitHub Actions agendado para o endpoint interno protegido) pode começar.
-Pendências registradas em
-[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).
+Fechar as pendências do Dia 28 listadas na seção 5 do
+[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md),
+em especial o teste ponta a ponta da anonimização em banco local e o
+`startup_failure` do CI. Só então o Dia 28 pode ser declarado concluído e o
+Dia 29 (GitHub Actions agendado para o endpoint interno protegido) pode começar.
