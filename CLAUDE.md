@@ -12,25 +12,19 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
 - **Dias 24 a 27: fechados.** Demonstração local persistida e isolada, painel
   operacional interno, comparação multiativo, calendário econômico, proventos,
   marcadores e telemetria Web Vitals.
-- **Dia 28: PARTIAL.** Implementado e commitado na branch
-  `feature/dia-28-hardening`, validado fora do CI, com pendências abertas.
-  - Suíte de backend na nuvem (Neon + Upstash), conferida em 2026-10-01:
-    **329 passed, 1 failed, 10 skipped**. A falha é `test_demo_browser_day24`,
-    que depende de Redis em `localhost`; os 10 skips são testes opt-in de banco
-    local.
-  - Validação local E1–E13: informada como OK pelo responsável pelo produto; o
-    log não foi conferido por Claude Code.
-  - O CI do repositório está em `startup_failure`, condição anterior a esta
-    branch, portanto **não há evidência automatizada**.
-  - Expurgo (`python -m app.cli.retention`): executado de verdade em Postgres real
-    descartável (14 de 14 verificações); falta só o dry-run no DEMO local.
-  - **Ainda não rodaram:** o teste ponta a ponta da anonimização de conta em banco
-    local e o E2E do frontend (Playwright). Não existe nenhum Dockerfile; o
-    roadmap pede artefatos non-root para o Dia 28 (runbook, seção 5.14).
-  - Decisão de 2026-10-01 (usuário): exclusão de conta = anonimização +
-    desativação. Risco residual: `portfolio_events.note`; a ADR da opção B é
-    obrigatória antes de abrir o produto a outros usuários.
+- **Dia 28: PARCIAL (não fechado).** Implementado e commitado localmente na branch
+  `feature/dia-28-hardening`; a branch está à frente do remoto.
+  - **Medido** (Claude Code, 2026-10-01, Neon `dev` + Upstash): suíte de backend com
+    338 passed, 1 failed (`test_demo_browser_day24`, depende de Redis local), 10
+    skipped (opt-in, exigem banco local). Expurgo real validado em Postgres
+    descartável. Números observados, não meta.
+  - **Informado, não conferido:** validação local E1–E13 (usuário), causa do bloqueio
+    do GitHub, cota do Upstash.
+  - **Falta:** Rodada 1 (`run_local.ps1`), Rodada 2 (`run_frontend.ps1`), push
+    autorizado, resolução do CI (`startup_failure`, sem evidência automatizada), ADR
+    da opção B e as pendências de [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md)
+    (artefatos de deploy, CSP, `sessions`, cadastro aberto etc.).
 
-O Dia 28 só pode ser declarado concluído depois de fechadas as pendências e
-registrada a evidência. Como rodar na nuvem e localmente, decisões e pendências
-em [PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).
+O Dia 28 só pode ser declarado concluído depois que as rodadas locais rodarem
+verdes e a evidência for registrada. Detalhes em
+[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).

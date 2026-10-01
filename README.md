@@ -11,40 +11,46 @@ Morning Call, demonstração local persistida e isolada, painel operacional
 interno, comparação multiativo, calendário econômico, proventos, marcadores e
 telemetria Web Vitals. Nenhum provider real, Stripe ou deploy foi ativado.
 
-O **Dia 28** (hardening enterprise) está **implementado, commitado e validado
-fora do CI**, com pendências abertas. Entregas: remoção de endpoint sem
-autenticação, CSRF unificado para todo método mutante, cabeçalhos de segurança,
-validação estrita de configuração de produção, exclusão de conta por
-anonimização com revogação de todas as sessões e auditoria atômica, export de
-dados com valores decimais, backup/restore com verificação de integridade e
+O **Dia 28** (hardening enterprise) está **PARCIAL**: implementado e commitado
+localmente, com validação parcial e pendências abertas. Não está fechado.
+Entregas: remoção de endpoint sem autenticação, CSRF unificado para todo método
+mutante, cabeçalhos de segurança, validação estrita de configuração de produção,
+exclusão de conta por anonimização com revogação de todas as sessões e auditoria
+atômica, export de dados com valores decimais, backup/restore com verificação de
+integridade (o backup informa `REDIS_SNAPSHOT=OK|NAO_SUPORTADO|INDISPONIVEL`) e
 expurgo de registros operacionais.
 
-Evidências, por origem:
+Evidência **medida** por Claude Code (2026-10-01):
 
-- **Suíte de backend na nuvem** (Neon `dev` + Upstash), executada e conferida por
-  Claude Code em 2026-10-01: **329 passed, 1 failed, 10 skipped** em 78 s. A única
-  falha é `test_demo_browser_day24`, que depende de Redis local não declarado
-  (503 no lugar de 403 sem Redis em `localhost`); não há brecha, o login forjado é
-  recusado de qualquer forma. Os 10 skips são testes opt-in que exigem banco local.
-  A execução de 2026-09-30, antes das correções de conta e do scanner, deu
-  299 passed, 1 failed, 9 skipped.
-- **Validação local E1–E13** (Docker, DEMO semeado): informada como **todas OK**
-  pelo responsável pelo produto, com 10 testes opt-in passando, teste negativo
-  com 9 skipped e expurgo em dry-run com `audit_logs` intacto. O `resultado.log`
-  não está no repositório e não foi conferido por Claude Code.
-- **Expurgo de registros operacionais** (`python -m app.cli.retention`, dry-run por
-  padrão): executado de verdade em Postgres real descartável (Neon `market_pulse_test`)
-  e conferido por Claude Code, 14 de 14 verificações. `--execute` apaga só as linhas
-  antigas na ordem certa das chaves estrangeiras, preserva as recentes e o
-  `audit_logs`, e a segunda execução é idempotente. Falta o dry-run no DEMO local.
-- **CI do GitHub Actions**: sem evidência. Todas as execuções, inclusive as da
-  `main`, terminam em `startup_failure` desde antes desta branch.
+- **Suíte de backend na nuvem** (Neon `dev` + Upstash): **338 passed, 1 failed,
+  10 skipped** em 80 s. A falha é `test_demo_browser_day24`, que depende de Redis
+  local não declarado (503 no lugar de 403); o login forjado é recusado de qualquer
+  forma. Os 10 skips são testes opt-in que exigem banco local descartável.
+  Estes números são o que foi observado, não uma meta.
+- **Expurgo** (`python -m app.cli.retention`, dry-run por padrão): executado de
+  verdade em Postgres real descartável (Neon `market_pulse_test`), 14 de 14
+  verificações; preserva `audit_logs` e linhas recentes e é idempotente.
+- **Restore** em banco descartável, com paridade de tabelas e linhas.
 
-O Dia 28 **não está declarado fechado**: falta o teste ponta a ponta da
-anonimização em banco local, o E2E do frontend no navegador, os artefatos de
-deploy (nenhum Dockerfile existe; ver o runbook, seção 5.14), a resolução do CI e
-o push das últimas correções. Como rodar a suíte na nuvem e a validação
-local, decisões (incluindo a exclusão de conta de 2026-10-01) e pendências em
+Evidência apenas **informada** pelo responsável (não conferida por Claude Code):
+
+- Validação local E1–E13 (Docker, DEMO semeado) como todas OK; o `resultado.log`
+  não está no repositório.
+- Causa do bloqueio do GitHub Actions e cota do Upstash.
+
+O que **falta** para fechar o Dia 28:
+
+1. **Rodada 1:** `run_local.ps1` (backend local com Docker) executado e verde.
+2. **Rodada 2:** `run_frontend.ps1` (E2E do frontend no navegador) executado e verde.
+3. **Push autorizado** dos commits locais (a branch está à frente do remoto) e
+   resolução do CI, hoje em `startup_failure` (nenhuma execução automatizada).
+4. **ADR** da opção B (decisão de exclusão de conta), antes de qualquer mudança
+   material de política.
+5. **Pendências transferidas ao Dia 29**: artefatos de deploy (Dockerfile non-root,
+   shutdown gracioso), CSP do frontend, tabela `sessions` sem uso, cadastro aberto
+   e demais itens em [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
+
+Decisões e pendências em
 [PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).
 
 ## Demonstração local — Dia 24
@@ -192,8 +198,7 @@ O repositório não adota licença open source neste momento; consulte [LICENSE]
 
 ## Próximo passo
 
-Fechar as pendências do Dia 28 listadas na seção 5 do
-[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md),
-em especial o teste ponta a ponta da anonimização em banco local e o
-`startup_failure` do CI. Só então o Dia 28 pode ser declarado concluído e o
-Dia 29 (GitHub Actions agendado para o endpoint interno protegido) pode começar.
+Fechar o Dia 28: Rodada 1 (`run_local.ps1`), Rodada 2 (`run_frontend.ps1`), push
+autorizado e resolução do `startup_failure` do CI. As demais pendências estão em
+[DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md). O Dia 29 só começa com autorização
+explícita.
