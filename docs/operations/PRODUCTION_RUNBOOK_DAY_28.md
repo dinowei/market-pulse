@@ -202,6 +202,17 @@ A rotina de retenção (`app/retention.py`) purga apenas registros operacionais:
 
 **Motivo:** `audit_logs` é trilha de auditoria append-only. Ela registra tentativas de acesso permitidas e negadas ao painel administrativo, eventos de revisão editorial e a própria exclusão de conta — inclusive os registros que sustentam a anonimização descrita em §4.2. Expurgar trilha de auditoria é decisão de compliance, com prazo próprio, e não decorre do prazo de retenção de dados operacionais. Aplicá-la de carona no mesmo `MARKET_PULSE_RETENTION_DAYS` apagaria evidência de auditoria por efeito colateral de uma configuração pensada para outra coisa.
 
+**Uso** (a partir de `apps/api`, com `PYTHONPATH=.`):
+
+```bash
+python -m app.cli.retention                    # dry-run (padrão): relata e não apaga nada
+python -m app.cli.retention --dry-run          # igual ao padrão, com a intenção explícita
+python -m app.cli.retention --execute          # apaga as linhas expiradas (irreversível)
+python -m app.cli.retention --retention-days 30
+```
+
+A janela vem de `MARKET_PULSE_RETENTION_DAYS` (padrão 90). `--dry-run` e `--execute` são mutuamente exclusivos. A saída traz só o **nome** do banco, nunca a conexão, e uma falha imprime o tipo da exceção, nunca a mensagem, porque o driver pode pôr o valor ofensor nela. Códigos de saída: `0` ok, `1` falha ao purgar, `2` abortado antes de tocar no banco (plano nomeia tabela protegida, janela inválida ou argumentos incompatíveis). Faça backup (§3.1) antes de qualquer `--execute` em ambiente com dado que importe.
+
 `audit_logs` está em `PROTECTED_TABLES`, e `assert_plan_is_safe()` falha fechado se o plano de expurgo algum dia passar a nomeá-la. Definir retenção para auditoria é trabalho separado, que exige decisão explícita sobre prazo legal e destino dos registros (expurgo versus arquivamento frio).
 
 ### 5.2 Gate de segredos do próprio repositório estava vermelho — RESOLVIDO
@@ -240,14 +251,31 @@ O teste fixa `redis://localhost:6379/15` e, sem Redis local, o rate limit (que f
 ### 5.10 Ordem entre CSRF e rate limit no `main.py`
 Hoje o rate limit roda antes do CSRF, então a recusa por CSRF depende do Redis e uma requisição forjada consome cota. Decisão de segurança a discutir; não alterar sem ADR ou aprovação.
 
-### 5.11 Expurgo real nunca executado
-`app/retention.py` só teve o plano testado e um dry-run contra o banco DEMO. A primeira execução real (`dry_run=False`) ainda precisa de ensaio em banco descartável.
+### 5.11 Expurgo real — RESOLVIDO em banco descartável
+**Status:** executado de verdade, pelo CLI, no banco descartável `market_pulse_test` (Neon, branch `dev`), em 2026-10-01. Foram semeadas linhas antigas (200 dias) e recentes (1 dia) em quatro tabelas operacionais, incluindo uma cadeia com chave estrangeira (quarentenas apontando para um `raw_payload_records` antigo), e um `audit_logs` de 400 dias. Resultado, 14 de 14 verificações:
+
+- `--dry-run` (padrão) reporta o que seria removido e **não apaga nada**;
+- `--execute` remove só as linhas antigas das quatro tabelas, **na ordem correta das chaves estrangeiras** (sem violação), e preserva as recentes;
+- o `audit_logs` de 400 dias permanece intacto;
+- a segunda execução é **idempotente** (`deleted=0` em todas);
+- `--retention-days 365` preserva a linha de 200 dias (a janela é respeitada);
+- a saída não contém DSN, host nem credencial; a limpeza não deixou resíduo.
+
+O que **ainda não** foi feito: o dry-run contra o `market_pulse_demo` local (etapa E13 do script de validação local, que agora chama o CLI) e qualquer execução em produção, que não deve ocorrer sem decisão explícita de prazo e backup prévio.
 
 ### 5.12 Ponta a ponta da anonimização ainda não executado
 `test_anonymization_end_to_end_on_a_real_database` é opt-in e roda só em banco local descartável. Ainda não foi executado; está incluído nas etapas E2 e E12 do script local de validação.
 
 ### 5.13 ADR da opção B antes de abrir o produto
 Ver risco residual D3-A em §4.2. A ADR (anular apenas `portfolio_events.note` sob trigger) é obrigatória antes de qualquer abertura a outros usuários.
+
+### 5.14 Artefatos de deploy ausentes — divergência com o roadmap, decisão pendente
+A linha do Dia 28 em `docs/ROADMAP_30_DAYS.md` (linha 96) fala em **"Artefatos para Vercel (web) e Render (API), non-root e shutdown"**, com gate **"Smoke local equivalente passa; nenhum login/deploy externo"**. O trabalho do Dia 28 seguiu outro recorte, o de hardening de segurança, privacidade e operação, e o repositório **não tem nenhum Dockerfile** (só o `docker-compose.yml` de Postgres e Redis para desenvolvimento). Por isso não existe imagem non-root nem comportamento de shutdown verificável, e o smoke local equivalente do gate não pode ser executado.
+
+Não foram criados Dockerfiles por três motivos: não há como construir e testar imagem nesta máquina (sem memória para o Docker), fixar imagem base exige verificar a fonte oficial e registrar a evidência (`AGENTS.md`), e criar artefato de Render/Vercel antecipa decisões do Dia 29. **Decisão necessária:** (a) tratar esses artefatos como parte do Dia 28 e criá-los agora, validando o build em outro ambiente, ou (b) registrar formalmente que o escopo do Dia 28 mudou e movê-los para o Dia 29, com reconciliação do roadmap.
+
+### 5.15 CSP e cabeçalhos de segurança do frontend
+Os cabeçalhos de segurança (`Content-Security-Policy`, `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) estão implementados e testados **na API**. O frontend Next.js não define cabeçalhos próprios. Uma CSP no frontend precisa ser validada com o E2E e o teste de acessibilidade no navegador, porque pode quebrar script inline e estilos, e por isso não foi adicionada às cegas. Fica para antes da exposição pública (Dia 29).
 
 ---
 
@@ -315,10 +343,10 @@ Sequência, equivalente ao job `demo-idempotency`:
 4. `alembic upgrade head` em `market_pulse_demo` e depois em `market_pulse_restore_test`; `python -m app.demo seed_demo`.
 5. Rodar, com `-rs` e nesta ordem: `test_demo_browser_day24`; os dois testes DEMO que o CI não executa (`persistence` linhas 75 e 146); a regressão de migration; a sequência crítica do CI (seed idempotente, reset duas vezes, revogação por último, gates do Dia 27); e os dois testes de ciclo de vida da conta com `MARKET_PULSE_ACCOUNT_LIFECYCLE=true`.
 6. Teste negativo: sem nenhuma variável de opt-in, os testes opt-in devem **continuar pulados** (10).
-7. Expurgo: `purge_expired_records(dry_run=True)` contra `market_pulse_demo`, confirmando que `audit_logs` e `portfolio_events` não estão no plano e que as contagens não mudam.
+7. Expurgo: `python -m app.cli.retention --dry-run` contra `market_pulse_demo`, confirmando que `audit_logs` e `portfolio_events` não estão no plano (`audit_logs_in_plan=false`, `portfolio_events_in_plan=false`) e que as contagens das tabelas não mudam.
 8. `docker compose stop` ao final.
 
-Não existe CLI `app.cli.retention`; o expurgo é chamado como função. O script usado na validação mora fora do repositório.
+O expurgo é o comando `python -m app.cli.retention` (ver §5.1.1 e §5.11). O script de validação local, que o chama, mora fora do repositório.
 
 ### 7.1 Resultado informado
 Resultado informado pelo responsável pelo produto a partir do `resultado.log` local da validação E1–E13 (o log não está no repositório e não foi conferido por Claude Code): **todas as etapas OK**, 10 testes opt-in passando, teste negativo com 9 skipped e expurgo em dry-run com `audit_logs` intacto. Essa execução é anterior ao teste ponta a ponta da anonimização (pendência 5.12), que portanto ainda não foi exercitado em banco local.

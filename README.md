@@ -22,7 +22,7 @@ expurgo de registros operacionais.
 Evidências, por origem:
 
 - **Suíte de backend na nuvem** (Neon `dev` + Upstash), executada e conferida por
-  Claude Code em 2026-10-01: **320 passed, 1 failed, 10 skipped** em 96 s. A única
+  Claude Code em 2026-10-01: **329 passed, 1 failed, 10 skipped** em 78 s. A única
   falha é `test_demo_browser_day24`, que depende de Redis local não declarado
   (503 no lugar de 403 sem Redis em `localhost`); não há brecha, o login forjado é
   recusado de qualquer forma. Os 10 skips são testes opt-in que exigem banco local.
@@ -32,12 +32,18 @@ Evidências, por origem:
   pelo responsável pelo produto, com 10 testes opt-in passando, teste negativo
   com 9 skipped e expurgo em dry-run com `audit_logs` intacto. O `resultado.log`
   não está no repositório e não foi conferido por Claude Code.
+- **Expurgo de registros operacionais** (`python -m app.cli.retention`, dry-run por
+  padrão): executado de verdade em Postgres real descartável (Neon `market_pulse_test`)
+  e conferido por Claude Code, 14 de 14 verificações. `--execute` apaga só as linhas
+  antigas na ordem certa das chaves estrangeiras, preserva as recentes e o
+  `audit_logs`, e a segunda execução é idempotente. Falta o dry-run no DEMO local.
 - **CI do GitHub Actions**: sem evidência. Todas as execuções, inclusive as da
   `main`, terminam em `startup_failure` desde antes desta branch.
 
 O Dia 28 **não está declarado fechado**: falta o teste ponta a ponta da
-anonimização em banco local, o expurgo real (só houve dry-run), a resolução do
-CI e o push das últimas correções. Como rodar a suíte na nuvem e a validação
+anonimização em banco local, o E2E do frontend no navegador, os artefatos de
+deploy (nenhum Dockerfile existe; ver o runbook, seção 5.14), a resolução do CI e
+o push das últimas correções. Como rodar a suíte na nuvem e a validação
 local, decisões (incluindo a exclusão de conta de 2026-10-01) e pendências em
 [PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).
 
