@@ -172,7 +172,6 @@ def test_successful_anonymization_writes_audit_in_the_same_transaction(monkeypat
         next(i for i, sql in enumerate(statements) if sql.startswith(prefix))
         for prefix in (
             "UPDATE users",
-            "DELETE FROM sessions",
             "DELETE FROM watchlist_items",
             "DELETE FROM watchlists",
             "UPDATE portfolios",
@@ -180,6 +179,7 @@ def test_successful_anonymization_writes_audit_in_the_same_transaction(monkeypat
         )
     ]
     assert order == sorted(order), "audit row must be the last write before the commit"
+    assert not any("sessions" in sql for sql in statements), "sessions live only in Redis"
     assert not any(sql.startswith(("DELETE FROM portfolio_events", "UPDATE portfolio_events"))
                    for sql in statements), "the ledger must never be touched"
 

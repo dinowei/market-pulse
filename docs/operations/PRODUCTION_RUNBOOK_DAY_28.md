@@ -144,7 +144,7 @@ Decisões complementares da mesma data, também do usuário:
 | `users.password_hash` | Substituído por `deleted_placeholder_<uuid aleatório>` | Inutilizável; a coluna é `NOT NULL`, então nulo não é possível |
 | `users.status` | `DELETED` | O login só procura `status='ACTIVE'` |
 | Sessões no Redis | **Todas** as sessões do usuário, em todos os dispositivos | Ver "Revogação de sessões" abaixo |
-| Tabela `sessions` do banco | `DELETE` sem efeito | A autenticação não usa essa tabela (pendência 5.7) |
+| Tabela `sessions` do banco | Não é tocada | A autenticação não usa essa tabela; o `DELETE` sem efeito foi removido em 2026-10-01 (pendência 5.7) |
 | `watchlists` / `watchlist_items` | Removidos fisicamente (favoritos incluídos, são uma watchlist de sistema) | Preferência do usuário, não registro contábil nem auditoria |
 | `portfolios` | `archived_at` preenchido e `name` neutralizado | Mantém o vínculo dos lançamentos; o nome é texto livre escolhido pelo usuário |
 | `portfolio_events` | **Preservados, intocados** | Ledger append-only; exclusão e alteração são proibidas por trigger e por política |
@@ -240,7 +240,7 @@ O commit `fix(security)` remove o endpoint `POST /portfolio-events` e, por divid
 `tests/test_demo_persistence_day24.py::test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it` revoga o dataset DEMO e precisa rodar por último. O `demo-integration.yml` garante isso enumerando node ids na ordem correta, mas executar os arquivos inteiros quebra os demais testes do gate. A pendência é tornar a dependência de ordem explícita no próprio teste, em vez de depender da enumeração no workflow.
 
 ### 5.7 Tabela `sessions` não é usada pela autenticação
-A tabela `sessions` existe no schema, mas a autenticação guarda sessões apenas no Redis. A única referência a ela no código da API é o `DELETE FROM sessions` da exclusão de conta, que portanto **não tem efeito**. Ele foi mantido para não mudar o escopo da correção. A pendência é decidir entre remover a tabela e o `DELETE` por uma migration (com ADR, por mexer no schema) ou passar a usá-la de verdade.
+A tabela `sessions` existe no schema, mas a autenticação guarda sessões apenas no Redis. A única referência a ela no código da API era o `DELETE FROM sessions` da exclusão de conta, que **não tinha efeito**. Em 2026-10-01 (decidido pelo usuário), uma busca no repositório inteiro (sem `node_modules`, `.venv`, `.next`, `.git`) confirmou que nenhum outro código a lê ou escreve; restam apenas a migration `0001`, `PROTECTED_TABLES` em `app/retention.py`, a lista de `tests/test_schema.py` e a documentação. O `DELETE` foi removido de `routers.py` e o teste de anonimização (criado nesta sessão, não preexistente) passou a afirmar que nenhum comando SQL toca `sessions`. A tabela continua no schema. A pendência restante é decidir entre remover a tabela por migration (com ADR, por mexer no schema) ou passar a usá-la de verdade (handoff H-10).
 
 ### 5.8 `test_demo_browser_day24` depende de Redis local não declarado
 O teste fixa `redis://localhost:6379/15` e, sem Redis local, o rate limit (que falha fechado no login e roda antes do CSRF) devolve 503 no lugar do 403 esperado. Não há brecha: o login forjado é recusado de qualquer forma. Na execução na nuvem foi a única falha. Passa com Redis em `localhost`, o que a validação local confirmou (etapa E8).

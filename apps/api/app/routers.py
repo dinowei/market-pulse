@@ -1603,11 +1603,8 @@ def delete_user_account(
                     (dummy_email, dummy_hash, current_user.id),
                 )
 
-                # 2. Delete all user sessions from the DB
-                cur.execute(
-                    "DELETE FROM sessions WHERE user_id = %s",
-                    (current_user.id,),
-                )
+                # 2. Sessions live only in Redis (revoked below); the legacy "sessions" table
+                # is unused by any code, so nothing is deleted from it.
 
                 # 3. Clean up watchlists and watchlist items (non-audit critical)
                 cur.execute(
