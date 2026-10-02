@@ -20,6 +20,9 @@ from starlette.requests import Request
 
 from app.core.config import get_settings
 
+TELEMETRY_PATH = "/api/v1/telemetry/web-vitals"
+TELEMETRY_RATE_LIMIT_MAX = 30
+
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -132,6 +135,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             window = 60
             limit = 100
             key_prefix = "rate_limit:public"
+            fail_closed = False
+        elif path == TELEMETRY_PATH:
+            # Anonymous beacons must not drain the bucket that protects the authenticated
+            # routes (found by the E2E on 2026-10-01): own bucket, same 30/60 s.
+            window = 60
+            limit = TELEMETRY_RATE_LIMIT_MAX
+            key_prefix = "rate_limit:telemetry"
             fail_closed = False
         else:
             window = 60
