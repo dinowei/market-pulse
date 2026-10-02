@@ -33,6 +33,8 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** o Upstash atual, plano Free, é de **teste**. A fixture `_reset_rate_limit_state` apaga as chaves `rate_limit:*` do banco apontado e os testes gravam chaves de sessão, então ele não pode ser o Redis da aplicação.
 - **Critério de pronto:** instância de produção distinta e nomeada como tal; nenhuma variável `MARKET_PULSE_TEST_*` aponta para ela; confirmação, na fonte oficial, da política de eviction e do plano; documentado qual banco/instância cada ambiente usa.
 - **Prova hoje:** que o Redis de teste existe e funciona com a suíte, medido. A política de eviction e os limites do plano **NÃO VERIFICADO**.
+- **Decisão do usuário (2026-10-01), staging privado:** o Redis do staging será o **Render Key Value grátis** (opção R2), que **não tem persistência** (ver H-07). Fica aceito que sessões e contadores de rate limit podem zerar em restart, por ser staging privado de 1 usuário. A suíte da nuvem continua no Upstash atual, sem mudança. Nenhuma variável `MARKET_PULSE_TEST_*` pode apontar para o Key Value do staging.
+- **Pendência obrigatória antes de abrir o produto a outras pessoas:** migrar para Redis persistente, ou com Upstash pay-as-you-go num banco novo (R1, exige cartão), ou com a suíte da nuvem passando a usar Redis local e o banco Upstash Free virando o de produção (R3). A escolha deve ser registrada.
 
 ### H-04 `backup.py` com Redis gerenciado
 - **Origem:** runbook §5.9.
@@ -46,6 +48,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** causa confirmada na fonte (configuração de cobrança do GitHub); uma execução do `ci.yml` concluída com sucesso, com saída vista; os workflows com `schedule` só habilitados depois disso.
 - **Prova hoje:** os `startup_failure` e a contagem foram **medidos** (`gh run list`). A causa (cobrança) é **informada pelo usuário**; confirmar exigiria escopo `user` no token, o que implicaria novo login e não foi feito.
 - **Atualização de 2026-10-01 (decisão do usuário):** o workflow agendado `market-pulse-refresh` (cron a cada 15 min) é desabilitado pelo usuário **pela interface do GitHub**, sem mudança de código. Só deve ser reativado depois de uma execução do `ci.yml` concluída com sucesso. A desabilitação é **informada pelo usuário**, não verificada por Claude Code.
+- **Decisão do usuário (2026-10-01), cron do staging:** opção C4, **sem cron no staging**. O refresh é disparado manualmente, e o `market-pulse-refresh` continua desabilitado. Motivos: sem provider `PUBLIC_APPROVED` (H-12) o refresh só roda em `DRY_RUN` sobre DEMO; as alternativas pesquisadas no H-07 têm restrições (Vercel Hobby uma vez por dia, Render Cron pago, Cloudflare Free com 10 ms de CPU). Além disso, um cron frequente manteria a API grátis do Render acordada e consumiria a cota mensal de horas.
 
 ### H-06 Custo do `EXISTS` por requisição autenticada na cota do Upstash
 - **Origem:** commit `7ec1792`. `RedisSessionStore.get` faz um `EXISTS` extra (marcador `auth:revoked_user:`) por requisição autenticada.
@@ -57,7 +60,28 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Origem:** plano de deploy do Dia 29.
 - **Motivo:** nenhum limite de plano, preço, exigência de cartão ou regra de uso foi conferido.
 - **Critério de pronto:** cada fato conferido na documentação oficial da plataforma, com data da consulta, antes de qualquer contratação ou cadastro.
-- **Prova hoje:** **NÃO VERIFICADO**. Nenhum número deste item deve ser tratado como fato.
+- **Prova hoje:** documentação oficial consultada em 2026-10-01 por Claude Code, sem criar conta nem fazer login. Os valores mudam: confira de novo antes de qualquer cadastro ou contratação. "Não encontrado" significa que não estava na fonte oficial consultada.
+  - **Render:**
+    - Há instâncias grátis de web service, Postgres e Key Value.
+    - Web service grátis "dorme" após 15 min sem tráfego e volta em cerca de 1 min.
+    - A cota é de 750 horas grátis por workspace por mês; esgotada, os serviços são suspensos até o mês seguinte. Fonte: <https://render.com/docs/free>.
+    - O Key Value grátis roda Valkey 8, compatível com Redis, e **não tem persistência**: os dados se perdem em restart. Fonte: <https://render.com/docs/key-value>.
+    - Cron Job é pago, com mínimo de US$ 1 por mês por job; a frequência mínima não é documentada. Fonte: <https://render.com/docs/cronjobs>.
+    - Cartão: "No credit card is required" aparece apenas num artigo do site oficial (<https://render.com/articles/platforms-with-a-real-free-tier-for-developers-in-2026>), não nas docs. Nas docs: não encontrado.
+  - **Vercel:**
+    - Hobby é grátis e **restrito a uso pessoal e não comercial**. Qualquer uso profissional ou comercial exige plano pago e passa pelo compliance (H-13).
+    - O cartão aparece só no upgrade para Pro. Fonte: <https://vercel.com/docs/plans/hobby>.
+    - Cron no Hobby roda no máximo uma vez por dia, com precisão de ±59 min. Fonte: <https://vercel.com/docs/cron-jobs/usage-and-pricing>.
+    - A Vercel não tem Redis próprio: usa integrações do Marketplace, e o antigo Vercel KV foi migrado para o Upstash. Fonte: <https://vercel.com/docs/redis>.
+    - Comportamento de cold start: não encontrado.
+  - **Cloudflare:**
+    - Workers Free tem 100 mil requisições por dia; KV grátis tem 1 GB e não é Redis. Fonte: <https://developers.cloudflare.com/workers/platform/pricing/>.
+    - Cron Triggers: 5 por conta no Free e 10 ms de CPU por execução; intervalo mínimo não encontrado. Fonte: <https://developers.cloudflare.com/workers/platform/limits/>.
+    - Exigência de cartão e oferta compatível com Redis: não encontradas.
+  - **Upstash:**
+    - Free: 1 banco por conta, 500 mil comandos por mês, 256 MB e sem cartão. Isso confirma a cota citada no H-06.
+    - Pay-as-you-go: US$ 0,20 por 100 mil comandos e exige cartão. Fonte: <https://upstash.com/pricing/redis>.
+    - Cold start: não encontrado.
 
 ## C. Segurança e produto
 
