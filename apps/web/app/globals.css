@@ -151,7 +151,8 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 @media (max-width: 700px) { .watchlists-header { display: block; } .watchlists-back { display: inline-block; margin-top: .5rem; } .watchlists-toolbar { grid-template-columns: 1fr; } .watchlists-grid { grid-template-columns: 1fr; } .watchlist-items li { display: block; } .watchlist-item-actions { justify-content: flex-start; margin-top: .7rem; } }
 .portfolios-page { min-height: 100vh; padding: clamp(1rem, 4vw, 3rem); }
 .portfolios-header { align-items: flex-start; display: flex; gap: 1rem; justify-content: space-between; margin: 0 auto 1rem; max-width: 74rem; }
-.portfolios-back, .portfolios-link { color: var(--pa-market-flat); font-size: .8rem; }
+.portfolios-back { color: var(--pa-market-flat); font-size: .8rem; }
+.portfolios-link { display: inline-block; font-size: .8rem; text-align: center; text-decoration: none; }
 .portfolios-disclaimer { border-left: 2px solid var(--pa-market-flat); color: var(--pa-text-secondary); margin: 0 auto 1.5rem; max-width: 74rem; padding: .6rem .8rem; }
 .portfolios-toolbar, .portfolio-summary-grid, .portfolio-selector, .portfolios-card { margin: 0 auto 1rem; max-width: 74rem; }
 .portfolios-toolbar, .portfolio-summary-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
