@@ -131,6 +131,12 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** `ruff check .` e `ruff format --check .` limpos no projeto inteiro, em commit dedicado só de lint/formatação (sem mudança de comportamento, migrations incluídas apenas se o histórico Alembic não for alterado em semântica), com a suíte completa verde depois.
 - **Prova hoje:** **medida** (contagens acima). Não corrigido agora, por decisão de escopo.
 
+### H-19 Limite de requisições por sessão nas rotas autenticadas (opção B)
+- **Origem:** achado do E2E de 2026-10-01 (runbook §5.17).
+- **Motivo:** o balde `standard` é por IP; usuários atrás do mesmo NAT dividem 30 requisições por 60 s. Limite por sessão exige a chave de sessão no middleware (que roda antes da autenticação) e decisão sobre o IP como segunda chave.
+- **Critério de pronto:** decisão registrada (ADR se mudar a política); testes: um usuário não consome o balde de outro no mesmo IP, e o 31º pedido continua barrado; sem relaxar o limite.
+- **Prova hoje:** **não verificado**; é análise de código, sem medição.
+
 ## F. Não transferidas: continuam abertas no Dia 28
 
 Estas não vão para o Dia 29; sem elas o Dia 28 não fecha.
