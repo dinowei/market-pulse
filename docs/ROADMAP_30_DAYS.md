@@ -148,7 +148,7 @@ autenticação, CSRF por Origin em todo método mutante, cabeçalhos de seguran�
 validação estrita de configuração de produção, exclusão de conta por
 anonimização com revogação de sessões e auditoria atômica, export com valores
 decimais, backup/restore com verificação de integridade e expurgo de registros
-operacionais com dry-run por padrão. Estado do dia: **PARCIAL**.
+operacionais com dry-run por padrão. Estado do dia: **FECHADO em 2026-10-01**, por decisão do usuário, com as rodadas locais executadas e informadas pelo responsável e as pendências transferidas ao Dia 29 (ver [DAY29_HANDOFF.md](DAY29_HANDOFF.md)).
 
 A linha do Dia 28 da tabela acima, "Artefatos para Vercel (web) e Render (API),
 non-root e shutdown", com o gate "Smoke local equivalente passa", **não é

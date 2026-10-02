@@ -174,7 +174,7 @@ MARKET_PULSE_ACCOUNT_LIFECYCLE_DATABASE_URL="postgresql://market_pulse:market_pu
 uv run --directory apps/api pytest -q tests/test_hardening_day28.py::test_account_deletion_anonymizes_and_preserves_append_only_ledger tests/test_account_anonymization_day28.py::test_anonymization_end_to_end_on_a_real_database
 ```
 
-O SQL novo (renomear carteiras e inserir a auditoria) foi validado em PostgreSQL 16 real, numa transação sempre revertida. O teste ponta a ponta **ainda não foi executado** em banco local.
+O SQL novo (renomear carteiras e inserir a auditoria) foi validado em PostgreSQL 16 real, numa transação sempre revertida. O teste ponta a ponta foi executado na Rodada 1 de 2026-10-01 (executada e informada pelo responsável; ver 5.12).
 
 `GET /api/v1/account/data-export` retorna somente os dados do usuário autenticado (perfil, watchlists, carteiras e ledger próprios, incluindo as notas), escopado por `current_user.id`. Quantidades e valores saem como strings decimais, nunca `float`. O endpoint não declara `response_model`, então o contrato OpenAPI e o cliente TypeScript não mudam.
 
@@ -263,10 +263,10 @@ Hoje o rate limit roda antes do CSRF, então a recusa por CSRF depende do Redis 
 - `--retention-days 365` preserva a linha de 200 dias (a janela é respeitada);
 - a saída não contém DSN, host nem credencial; a limpeza não deixou resíduo.
 
-O que **ainda não** foi feito: o dry-run contra o `market_pulse_demo` local (etapa E13 do script de validação local, que agora chama o CLI) e qualquer execução em produção, que não deve ocorrer sem decisão explícita de prazo e backup prévio.
+O dry-run contra o `market_pulse_demo` local (etapa E13) foi executado na Rodada 1 de 2026-10-01 e informado como OK pelo responsável. Continua **não feito**: qualquer execução em produção, que não deve ocorrer sem decisão explícita de prazo e backup prévio.
 
-### 5.12 Ponta a ponta da anonimização ainda não executado
-`test_anonymization_end_to_end_on_a_real_database` é opt-in e roda só em banco local descartável. Ainda não foi executado; está incluído nas etapas E2 e E12 do script local de validação.
+### 5.12 Ponta a ponta da anonimização — executado na Rodada 1 (informado pelo responsável)
+`test_anonymization_end_to_end_on_a_real_database` é opt-in e roda só em banco local descartável. Foi executado na Rodada 1 de 2026-10-01 (etapas E2 e E12; 11 testes opt-in passed), **executada e informada pelo responsável**; o log não foi conferido por Claude Code.
 
 ### 5.13 ADR da opção B antes de abrir o produto
 Ver risco residual D3-A em §4.2. A ADR (anular apenas `portfolio_events.note` sob trigger) é obrigatória antes de qualquer abertura a outros usuários.
@@ -291,6 +291,11 @@ Medido no mesmo log: 60 requisições à API, 11 com 429 (5 `POST /telemetry/web
 
 ### 5.18 Por que o E2E local roda espaçado (decisão do usuário, 2026-10-01)
 O `run_frontend.ps1` (fora do repositório) executa o F9 em três rodadas do Playwright (`day27-a11y.spec.ts`, `demo.spec.ts --grep principal`, `demo.spec.ts --grep isolation`) com 65 s de pausa antes da 2ª e da 3ª, porque o balde `standard` (30 por 60 s por IP, janela fixa) recebe cerca de 50 requisições do E2E inteiro, mas no máximo 26 por rodada. O produto e os specs do repositório **não foram alterados** e o limite de 30 continua sendo exercido e provado (`test_rate_limit_buckets_day28.py`); só o ritmo do teste muda. Nenhuma página isolada passa de 9 requisições. O espaçamento é um paliativo local: a redução de requisições (H-21) e o limite por sessão (H-19) estão no [DAY29_HANDOFF.md](../DAY29_HANDOFF.md). Só `day27-a11y.spec.ts` roda em workflow de CI (`day27-compliance.yml`).
+
+### 5.19 Fechamento do Dia 28: 12º 404 (H-22) e queda do Docker por RAM
+Decidido pelo usuário em 2026-10-01. Evidência do E2E: execução das 22:02 (**executada e informada pelo responsável**): E2E 6/6, nenhum 403/429/5xx. Identificação do 12º 404: execução das 22:59, que mostrou `404 POST /api/v1/market-data/history/batch` durante F9.1 (a11y, 4/4 OK), na página `/compare`. Causa lida no código: o `/compare` envia `equity.br.b3.petr4` por padrão (`multi-asset-comparison.tsx:11`), o catálogo com DEMO ligado só tem ids `demo.*` (`instruments/catalog.py:152-157`) e o batch converte o `KeyError` em 404 (`routers.py:535-536`); a página mostra "Comparação indisponível" em `role="alert"`. Defeito do Dia 26, sem risco de segurança, transferido como H-22. Os 401 (deslogado e pós-logout) e 11 dos 404 (isolamento entre usuários, 404 intencional em `routers.py:599-606`) são esperados.
+
+**Evento de ambiente, não regressão:** na repetição das 22:59 o Docker Desktop caiu (`docker compose stop` falhou com "failed to connect to the docker API"; RAM livre chegou a 13 MB com API e frontend no ar; o PC não havia sido reiniciado), e F9.2 e F9.3 falharam com 503 em `GET /health/ready`. O F6 tinha dado `/health/ready` 200 antes da queda e o código do repositório não mudou entre as 22:02 e as 22:59 (só o `run_frontend.ps1`). Mitigação: reiniciar o PC antes de cada rodada oficial.
 
 ## 6. Como rodar a suíte de backend na nuvem (Neon + Upstash)
 

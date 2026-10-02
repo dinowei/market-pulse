@@ -3,7 +3,7 @@
 - **Data do registro:** 2026-10-01
 - **Decisão de escopo:** decidida pelo usuário em 2026-10-01. Ver "Reconciliação
   autorizada do Dia 28" em [ROADMAP_30_DAYS.md](ROADMAP_30_DAYS.md).
-- **Estado do Dia 28:** PARCIAL. Evidências, decisões e o restante das pendências em
+- **Estado do Dia 28:** FECHADO em 2026-10-01 (decisão do usuário). Evidências, decisões e o restante das pendências em
   [PRODUCTION_RUNBOOK_DAY_28.md](operations/PRODUCTION_RUNBOOK_DAY_28.md).
 - **Este documento não autoriza** deploy, login externo, contratação, provisionamento,
   push nem uso de dado ou provider real.
@@ -150,11 +150,15 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** sem refetch completo após cada mutação de watchlist; endpoint em lote para os detalhes de `/portfolios` (contrato OpenAPI e cliente gerado atualizados, sem editar o cliente à mão); contagem por fluxo medida de novo, sem relaxar o limite de 30.
 - **Prova hoje:** contagem por **leitura de código**, não medida em execução.
 
-## F. Não transferidas: continuam abertas no Dia 28
+### H-22 `/compare` abre em estado de erro com DEMO ligado
+- **Origem:** defeito do Dia 26 encontrado pelo E2E do Dia 28 em 2026-10-01 (execução das 22:59, informada pelo responsável). O `/compare` usa ids padrão fixos (`equity.br.b3.petr4`) que não existem no catálogo DEMO, e com DEMO ligado a página abre em estado de erro (`404 POST /api/v1/market-data/history/batch`).
+- **Direção preferida:** ids padrão escolhidos a partir do catálogo disponível (não hardcode de ids DEMO), funcionando tanto em DEMO quanto com provider real.
+- **Decisão em aberto:** o batch deve devolver resultado parcial (série marcada como indisponível) em vez de 404 total quando um id falha? Isso mexe em contrato OpenAPI e exige decisão.
+- **Critério de pronto:** `/compare` mostra a comparação por padrão no DEMO, e o E2E afirma o CONTEÚDO (não só a acessibilidade da tela de erro).
+- **Prova hoje:** causa **lida no código** (`multi-asset-comparison.tsx:11`, `instruments/catalog.py:152-157`, `routers.py:535-536`); o 404 foi **informado** pelo responsável a partir do log. Sem risco de segurança.
 
-Estas não vão para o Dia 29; sem elas o Dia 28 não fecha.
+## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 
-- **Rodada 1** (`run_local.ps1`, validação local com Docker): inclui o teste ponta a ponta da anonimização de conta em banco local e o dry-run do expurgo no DEMO. **Não executada** depois das últimas mudanças.
-- **Rodada 2** (`run_frontend.ps1`, E2E no navegador): **não executada**.
-- **Push autorizado** da branch `feature/dia-28-hardening`: não feito; sem autorização.
-- **ADR da opção B** (H-08): obrigatória antes de abrir o produto a outros usuários; consta aqui por constar também na lista de transferidas.
+- **Rodada 1** (`run_local.ps1`) e **Rodada 2** (`run_frontend.ps1`): executadas e informadas pelo responsável, ambas OK (ver runbook §5.19).
+- **Push** da branch `feature/dia-28-hardening`: autorizado pelo usuário em 2026-10-01, somente para esse branch.
+- **ADR da opção B** (H-08): **continua aberta**; obrigatória antes de abrir o produto a outros usuários.

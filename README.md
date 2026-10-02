@@ -11,51 +11,52 @@ Morning Call, demonstração local persistida e isolada, painel operacional
 interno, comparação multiativo, calendário econômico, proventos, marcadores e
 telemetria Web Vitals. Nenhum provider real, Stripe ou deploy foi ativado.
 
-O **Dia 28** (hardening enterprise) está **PARCIAL**: implementado e commitado
-localmente, com validação parcial e pendências abertas. Não está fechado.
-Entregas: remoção de endpoint sem autenticação, CSRF unificado para todo método
-mutante, cabeçalhos de segurança, validação estrita de configuração de produção,
-exclusão de conta por anonimização com revogação de todas as sessões e auditoria
-atômica, export de dados com valores decimais, backup/restore com verificação de
-integridade (o backup informa `REDIS_SNAPSHOT=OK|NAO_SUPORTADO|INDISPONIVEL`) e
+O **Dia 28** (hardening enterprise) está **FECHADO em 2026-10-01**, por decisão do
+usuário. Entregas: remoção de endpoint sem autenticação, CSRF unificado para todo
+método mutante, cabeçalhos de segurança, validação estrita de configuração de
+produção, exclusão de conta por anonimização com revogação de todas as sessões e
+auditoria atômica, export de dados com valores decimais, backup/restore com
+verificação de integridade (`REDIS_SNAPSHOT=OK|NAO_SUPORTADO|INDISPONIVEL`) e
 expurgo de registros operacionais.
 
-Evidência **medida** por Claude Code (2026-10-01):
+Evidência de fechamento, por origem (2026-10-01):
 
-- **Suíte de backend na nuvem** (Neon `dev` + Upstash): **338 passed, 1 failed,
-  10 skipped** em 80 s. A falha é `test_demo_browser_day24`, que depende de Redis
-  local não declarado (503 no lugar de 403); o login forjado é recusado de qualquer
-  forma. Os 10 skips são testes opt-in que exigem banco local descartável.
-  Estes números são o que foi observado, não uma meta.
-- **Expurgo** (`python -m app.cli.retention`, dry-run por padrão): executado de
-  verdade em Postgres real descartável (Neon `market_pulse_test`), 14 de 14
-  verificações; preserva `audit_logs` e linhas recentes e é idempotente.
-- **Restore** em banco descartável, com paridade de tabelas e linhas.
+**Medida por Claude Code** (Neon `dev` + Upstash):
 
-Evidência apenas **informada** pelo responsável (não conferida por Claude Code):
+- Suíte de backend: **341 passed, 1 failed, 10 skipped** em 111 s. A falha é
+  `test_demo_browser_day24`, que depende de Redis local não declarado (503 no lugar
+  de 403); o login forjado é recusado de qualquer forma. Os 10 skips são testes
+  opt-in que exigem banco local descartável. Números observados, não meta.
+- Testes unitários do frontend: 33 passed; `tsc` e `eslint` limpos.
+- Expurgo (`python -m app.cli.retention`, dry-run por padrão) executado de verdade
+  em Postgres descartável: 14 de 14 verificações. Restore com paridade de tabelas.
 
-- Validação local E1–E13 (Docker, DEMO semeado) como todas OK; o `resultado.log`
-  não está no repositório.
-- Causa do bloqueio do GitHub Actions e cota do Upstash.
+**Executada e informada pelo responsável** (logs fora do repositório, não conferidos
+por Claude Code):
 
-O que **falta** para fechar o Dia 28:
+- **Rodada 1** (`run_local.ps1`, 21:11): E1–E13 OK, teste negativo com 10 skipped,
+  11 testes opt-in passed (inclui a anonimização ponta a ponta em banco real),
+  retenção em dry-run OK.
+- **Rodada 2** (`run_frontend.ps1`, 22:02): 33 testes unitários passed, build OK, E2E
+  6 passed (a11y 4, principal 1, isolation 1) em 3 execuções espaçadas por 65 s;
+  status HTTP 200:61, 201:2, 202:40, 204:5, 401:2, 404:12, nenhum 403/429/5xx. Os 2
+  × 401 e 11 dos 404 são esperados (deslogado e isolamento entre usuários). Uma
+  repetição às 22:59 identificou o 12º 404 (`POST /market-data/history/batch` em
+  `/compare`; defeito do Dia 26, handoff H-22); nela o Docker caiu por falta de RAM
+  (evento de ambiente, não regressão) e F9.2 e F9.3 não completaram.
 
-1. **Rodada 1:** `run_local.ps1` (backend local com Docker) executado e verde.
-2. **Rodada 2:** `run_frontend.ps1` (E2E do frontend no navegador) executado e verde.
-3. **Push autorizado** dos commits locais (a branch está à frente do remoto) e
-   resolução do CI, hoje em `startup_failure` (nenhuma execução automatizada).
-4. **ADR** da opção B (decisão de exclusão de conta), antes de qualquer mudança
-   material de política.
-5. **Pendências transferidas ao Dia 29**: artefatos de deploy (Dockerfile non-root,
-   shutdown gracioso), CSP do frontend, tabela `sessions` sem uso, cadastro aberto
-   e demais itens em [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
+**Achados corrigidos pelo E2E:** contraste do link "Ir para login" em `/portfolios`
+(1,97:1 para 18,58:1) e balde de rate limit próprio para a telemetria (30/60 s por
+IP; o limite de 30 do balde `standard` permanece), com aviso acessível para 429.
 
-Decisões de 2026-10-01 (decididas pelo usuário): exclusão de conta =
-anonimização com D1–D5 (risco residual em `portfolio_events.note`, ADR da opção B
-obrigatória antes de abrir o produto a outros usuários); artefatos de deploy
-saem do Dia 28 e passam ao Dia 29.
+**Sem prova automatizada:** o CI do GitHub Actions está em `startup_failure` (135 de
+135 execuções), anterior a esta branch. Pendências, inclusive as transferidas ao
+Dia 29, em [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
 
-Decisões e pendências em
+Decisões de 2026-10-01 (decididas pelo usuário): exclusão de conta = anonimização
+com D1–D5 (risco residual em `portfolio_events.note`; ADR da opção B obrigatória
+antes de abrir o produto a outros usuários); artefatos de deploy saem do Dia 28 e
+passam ao Dia 29. Decisões e pendências em
 [PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).
 
 ## Demonstração local — Dia 24
@@ -203,7 +204,6 @@ O repositório não adota licença open source neste momento; consulte [LICENSE]
 
 ## Próximo passo
 
-Fechar o Dia 28: Rodada 1 (`run_local.ps1`), Rodada 2 (`run_frontend.ps1`), push
-autorizado e resolução do `startup_failure` do CI. As demais pendências estão em
-[DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md). O Dia 29 só começa com autorização
+Dia 29: GitHub Actions agendado para o endpoint interno protegido, acumulando as
+pendências de [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md). Só começa com autorização
 explícita.
