@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { components } from "../generated/api";
+import { isRateLimited, parseRetryAfter, RateLimitNotice, retryAfterSeconds } from "./rate-limit-notice";
 
 type Watchlist = components["schemas"]["WatchlistResponse"];
 type WatchlistList = components["schemas"]["WatchlistListResponse"];
@@ -22,6 +23,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const error = new Error(`HTTP ${response.status}`);
     (error as Error & { status?: number }).status = response.status;
+    (error as Error & { retryAfter?: number }).retryAfter = parseRetryAfter(response.headers.get("Retry-After"));
     throw error;
   }
   if (response.status === 204) return undefined as T;
@@ -40,10 +42,12 @@ export function WatchlistsPanel() {
   const [loading, setLoading] = useState(true);
   const [signedOut, setSignedOut] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [rateLimit, setRateLimit] = useState<{ retryAfter?: number } | undefined>();
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(undefined);
+    setRateLimit(undefined);
     try {
       const data = await requestJson<WatchlistList>("/api/v1/watchlists");
       setWatchlists(data.items);
@@ -51,6 +55,7 @@ export function WatchlistsPanel() {
       setSignedOut(false);
     } catch (reason) {
       if (isSignedOut(reason)) setSignedOut(true);
+      else if (isRateLimited(reason)) setRateLimit({ retryAfter: retryAfterSeconds(reason) });
       else setError("Não foi possível carregar suas listas.");
     } finally {
       setLoading(false);
@@ -69,6 +74,7 @@ export function WatchlistsPanel() {
       .catch((reason) => {
         if (!active) return;
         if (isSignedOut(reason)) setSignedOut(true);
+        else if (isRateLimited(reason)) setRateLimit({ retryAfter: retryAfterSeconds(reason) });
         else setError("Não foi possível carregar suas listas.");
       })
       .finally(() => {
@@ -181,8 +187,9 @@ export function WatchlistsPanel() {
           <div className="watchlist-form-row"><input id="watchlist-canonical-id" value={canonicalId} onChange={(event) => setCanonicalId(event.target.value)} placeholder="equity.br.b3.petr4" disabled={!selectedId} /><button type="submit" disabled={!selectedId}>Adicionar</button></div>
         </form>
       </section>
+      {rateLimit && <RateLimitNotice retryAfter={rateLimit.retryAfter} onRetry={() => void load()} />}
       {error && <p className="state-note" role="alert">{error}</p>}
-      {watchlists.length === 0 && <section className="watchlists-card"><p className="muted">Nenhuma lista criada ainda. O estado vazio não contém dados inventados.</p></section>}
+      {watchlists.length === 0 && !rateLimit && <section className="watchlists-card"><p className="muted">Nenhuma lista criada ainda. O estado vazio não contém dados inventados.</p></section>}
       <div className="watchlists-grid">
         {watchlists.map((list) => (
           <section className="watchlists-card" key={list.id} aria-labelledby={`watchlist-${list.id}`}>

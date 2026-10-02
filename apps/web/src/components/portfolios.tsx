@@ -5,6 +5,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { components } from "../generated/api";
 import { EquityChart } from "./equity-chart";
 import { DataStateBadge } from "./market-data";
+import { isRateLimited, parseRetryAfter, RateLimitNotice, retryAfterSeconds } from "./rate-limit-notice";
 
 type Portfolio = components["schemas"]["PortfolioResponse"];
 type PortfolioList = components["schemas"]["PortfolioListResponse"];
@@ -29,8 +30,9 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json", Accept: "application/json", ...init?.headers },
   });
   if (!response.ok) {
-    const error = new Error(`HTTP ${response.status}`) as Error & { status?: number };
+    const error = new Error(`HTTP ${response.status}`) as Error & { status?: number; retryAfter?: number };
     error.status = response.status;
+    error.retryAfter = parseRetryAfter(response.headers.get("Retry-After"));
     throw error;
   }
   return response.json() as Promise<T>;
@@ -62,6 +64,8 @@ export function PortfoliosPanel() {
   const [loading, setLoading] = useState(true);
   const [signedOut, setSignedOut] = useState(false);
   const [error, setError] = useState<string>();
+  const [rateLimit, setRateLimit] = useState<{ retryAfter?: number }>();
+  const [attempt, setAttempt] = useState(0);
 
   const loadDetails = useCallback(async (portfolioId: string) => {
     if (!portfolioId) return;
@@ -86,6 +90,7 @@ export function PortfoliosPanel() {
       setMarkers(nextMarkers);
     } catch (reason) {
       if (isSignedOut(reason)) setSignedOut(true);
+      else if (isRateLimited(reason)) setRateLimit({ retryAfter: retryAfterSeconds(reason) });
       else setError("Não foi possível carregar os detalhes da carteira.");
     }
   }, []);
@@ -102,11 +107,12 @@ export function PortfoliosPanel() {
       .catch((reason) => {
         if (!active) return;
         if (isSignedOut(reason)) setSignedOut(true);
+        else if (isRateLimited(reason)) setRateLimit({ retryAfter: retryAfterSeconds(reason) });
         else setError("Não foi possível carregar suas carteiras.");
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [attempt]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -133,10 +139,11 @@ export function PortfoliosPanel() {
     }).catch((reason) => {
       if (!active) return;
       if (isSignedOut(reason)) setSignedOut(true);
+      else if (isRateLimited(reason)) setRateLimit({ retryAfter: retryAfterSeconds(reason) });
       else setError("Não foi possível carregar os detalhes da carteira.");
     });
     return () => { active = false; };
-  }, [selectedId]);
+  }, [selectedId, attempt]);
 
   async function createPortfolio(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -174,12 +181,15 @@ export function PortfoliosPanel() {
     } catch { setError("Evento inválido ou saldo/posição insuficiente."); }
   }
 
+  const retry = () => { setRateLimit(undefined); setError(undefined); setLoading(true); setAttempt((current) => current + 1); };
+
   if (loading) return <main className="portfolios-page terminal-root"><h1 className="sr-only">Carteiras informativas</h1><p className="loading-state">Carregando carteiras…</p></main>;
   if (signedOut) return <main className="portfolios-page terminal-root"><section className="portfolios-card" aria-labelledby="portfolios-title"><p className="eyebrow">ÁREA PRIVADA</p><h1 id="portfolios-title">Carteiras</h1><p className="muted">Entre para acessar suas carteiras informativas.</p><Link className="auth-submit portfolios-link" href="/login">Ir para login</Link></section></main>;
 
   return <main className="portfolios-page terminal-root" data-theme="dark">
     <header className="portfolios-header"><div><p className="eyebrow">PARTICLE ATLAS / ÁREA PRIVADA</p><h1 id="portfolios-title">Carteiras informativas</h1></div><Link href="/" className="portfolios-back">Voltar ao terminal</Link></header>
     <p className="portfolios-disclaimer">Esta carteira mostra eventos, caixa, posições, valuation, P&amp;L e TWR factuais, sempre acompanhados de metodologia. Estados possíveis: DEMO, STALE, PARTIAL e UNAVAILABLE.</p>
+    {rateLimit && <RateLimitNotice retryAfter={rateLimit.retryAfter} onRetry={retry} />}
     {error && <p className="state-note" role="alert">{error}</p>}
     {valuation?.provenance[0] && <DataStateBadge dataLevel={valuation.provenance[0].data_level} freshness={valuation.provenance[0].freshness} />}
     <section className="portfolios-toolbar" aria-label="Controles de carteira">
