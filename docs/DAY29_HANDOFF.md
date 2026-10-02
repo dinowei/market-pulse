@@ -136,12 +136,19 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** o balde `standard` é por IP; usuários atrás do mesmo NAT dividem 30 requisições por 60 s. Limite por sessão exige a chave de sessão no middleware (que roda antes da autenticação) e decisão sobre o IP como segunda chave.
 - **Critério de pronto:** decisão registrada (ADR se mudar a política); testes: um usuário não consome o balde de outro no mesmo IP, e o 31º pedido continua barrado; sem relaxar o limite.
 - **Prova hoje:** **não verificado**; é análise de código, sem medição.
+- **CI:** apenas `day27-compliance.yml` roda Playwright, e só `e2e/day27-a11y.spec.ts` (cerca de 4 requisições no balde standard, abaixo de 30). O E2E `demo.spec.ts` não roda em nenhum workflow. Se ele passar a rodar no CI, precisará do mesmo espaçamento do `run_frontend.ps1` ou do limite por sessão.
 
 ### H-20 `Retry-After` do 429 não é legível pelo navegador
 - **Origem:** frontend de 429 do Dia 28 (runbook §5.17).
 - **Motivo:** o 429 envia `Retry-After`, mas `main.py` expõe só `X-Request-ID` em `expose_headers` do CORS; o navegador não lê o cabeçalho entre `localhost:3000` e `:8000`. O frontend já usa o valor se vier, e senão mostra "aguarde alguns segundos". Além disso o valor enviado é sempre a janela (60), não o tempo restante.
 - **Critério de pronto:** decisão sobre expor `Retry-After` no CORS (mudança de configuração de segurança, com teste) e sobre enviar o tempo restante real.
 - **Prova hoje:** **medida** por leitura de `main.py:35-41` e `middleware.py`; não testada no navegador.
+
+### H-21 Reduzir requisições do frontend ao balde standard
+- **Origem:** achado do E2E de 2026-10-01 (runbook §5.17).
+- **Motivo:** o fluxo principal do E2E usa **26 das 30** requisições do balde standard por janela de 60 s, um usuário real fica perto do limite. Causas lidas no código: cada mutação de watchlist faz `load()` e recarrega a lista inteira (2 requisições por ação); `/portfolios` faz 1 lista + 8 detalhes por carga (9); a home faz 2 (Morning Call).
+- **Critério de pronto:** sem refetch completo após cada mutação de watchlist; endpoint em lote para os detalhes de `/portfolios` (contrato OpenAPI e cliente gerado atualizados, sem editar o cliente à mão); contagem por fluxo medida de novo, sem relaxar o limite de 30.
+- **Prova hoje:** contagem por **leitura de código**, não medida em execução.
 
 ## F. Não transferidas: continuam abertas no Dia 28
 
