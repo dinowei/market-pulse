@@ -45,6 +45,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** todas as execuções do GitHub Actions medidas (135 em 2026-10-01; o número cresce com as agendadas) terminaram em `startup_failure` com 0 s, inclusive as agendadas na `main`, antes da existência da branch do Dia 28. Não há evidência automatizada de suíte verde. O usuário informa bloqueio de cobrança de Actions e Codespaces.
 - **Critério de pronto:** causa confirmada na fonte (configuração de cobrança do GitHub); uma execução do `ci.yml` concluída com sucesso, com saída vista; os workflows com `schedule` só habilitados depois disso.
 - **Prova hoje:** os `startup_failure` e a contagem foram **medidos** (`gh run list`). A causa (cobrança) é **informada pelo usuário**; confirmar exigiria escopo `user` no token, o que implicaria novo login e não foi feito.
+- **Atualização de 2026-10-01 (decisão do usuário):** o workflow agendado `market-pulse-refresh` (cron a cada 15 min) é desabilitado pelo usuário **pela interface do GitHub**, sem mudança de código. Só deve ser reativado depois de uma execução do `ci.yml` concluída com sucesso. A desabilitação é **informada pelo usuário**, não verificada por Claude Code.
 
 ### H-06 Custo do `EXISTS` por requisição autenticada na cota do Upstash
 - **Origem:** commit `7ec1792`. `RedisSessionStore.get` faz um `EXISTS` extra (marcador `auth:revoked_user:`) por requisição autenticada.
@@ -102,7 +103,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Origem:** análise estática do E2E contra o rate limit (`middleware.py`, balde `standard`: 30 requisições por 60 s por IP).
 - **Motivo:** contagem estática, sem telemetria: `demo.spec` teste 1 ≈ 26, teste 2 ≈ 20, `day27-a11y` ≈ 4 no mesmo balde, mais os POSTs de `web-vitals` (quantidade desconhecida). Pode haver 429 que derrube um fluxo legítimo.
 - **Critério de pronto:** preencher **depois da Rodada 2** com o resultado real (`resultado_frontend.log`: contagem de 429 por caminho). Se houver 429 em fluxo legítimo, decisão de produto e segurança sobre o limite ou sobre o cliente, **sem relaxar o limite às cegas**.
-- **Prova hoje:** **NÃO VERIFICADO**. É estimativa, não medição. Resultado real: _a preencher_.
+- **Prova hoje:** a estimativa acima era estática. **Resultado real:** a Rodada 2 (`run_frontend.ps1`, 2026-10-01 22:02) terminou com E2E 6 passed e **nenhuma resposta 403, 429 ou 5xx**, executada e informada pelo responsável, com log fora do repositório. A margem do balde `standard` continua apertada (H-19, H-21).
 
 ## E. Pendências menores de teste e CI
 

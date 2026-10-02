@@ -167,6 +167,30 @@ uma com origem, motivo e critério de pronto, em
 login externo, contratação nem provisionamento. Decisões e evidências do Dia 28
 estão em [PRODUCTION_RUNBOOK_DAY_28.md](operations/PRODUCTION_RUNBOOK_DAY_28.md).
 
+### Reconciliação autorizada do Dia 29 (2026-10-01)
+
+**Decidido pelo usuário em 2026-10-01**, registrando uma decisão anterior que não
+havia sido gravada no repositório. O Dia 29 passa a ser **preparação e deploy de um
+staging PRIVADO**, com acesso somente do usuário.
+
+Divergências com o texto anterior, que **não é apagado do histórico**:
+
+- a linha do Dia 29 da tabela ("Preparar GitHub Actions agendado para chamar
+  endpoint interno protegido") deixa de ser o escopo inteiro do dia. O workflow
+  agendado já existe (`.github/workflows/market-pulse-refresh.yml`) e fica
+  bloqueado até o CI voltar a executar (H-05 em [DAY29_HANDOFF.md](DAY29_HANDOFF.md));
+- o entregável semanal ("sem provisionamento ou publicação não autorizados") e a
+  reconciliação do Dia 28 ("não autoriza deploy, login externo, contratação nem
+  provisionamento") continuam valendo como regra: esta reconciliação **amplia o
+  escopo do dia, mas não concede autorização**. Cada criação de conta,
+  contratação, provisionamento e deploy real exige autorização explícita do
+  usuário, por conta e por serviço;
+- staging privado não é abertura do produto: os itens obrigatórios antes de abrir
+  o produto a outras pessoas (por exemplo, H-08) continuam obrigatórios.
+
+Segredos de produção e staging não são versionados: são variáveis de ambiente
+configuradas pelo usuário no painel de cada plataforma.
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento
