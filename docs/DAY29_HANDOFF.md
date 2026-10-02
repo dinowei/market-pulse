@@ -137,6 +137,12 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** decisão registrada (ADR se mudar a política); testes: um usuário não consome o balde de outro no mesmo IP, e o 31º pedido continua barrado; sem relaxar o limite.
 - **Prova hoje:** **não verificado**; é análise de código, sem medição.
 
+### H-20 `Retry-After` do 429 não é legível pelo navegador
+- **Origem:** frontend de 429 do Dia 28 (runbook §5.17).
+- **Motivo:** o 429 envia `Retry-After`, mas `main.py` expõe só `X-Request-ID` em `expose_headers` do CORS; o navegador não lê o cabeçalho entre `localhost:3000` e `:8000`. O frontend já usa o valor se vier, e senão mostra "aguarde alguns segundos". Além disso o valor enviado é sempre a janela (60), não o tempo restante.
+- **Critério de pronto:** decisão sobre expor `Retry-After` no CORS (mudança de configuração de segurança, com teste) e sobre enviar o tempo restante real.
+- **Prova hoje:** **medida** por leitura de `main.py:35-41` e `middleware.py`; não testada no navegador.
+
 ## F. Não transferidas: continuam abertas no Dia 28
 
 Estas não vão para o Dia 29; sem elas o Dia 28 não fecha.
