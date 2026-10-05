@@ -4,7 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.config import get_settings, validate_production_settings
+from app.core.config import (
+    get_settings,
+    is_protected_environment,
+    validate_production_settings,
+)
 from app.errors import (
     http_exception_handler,
     unhandled_exception_handler,
@@ -21,7 +25,16 @@ from app.routers import router
 
 settings = get_settings()
 validate_production_settings(settings)
-app = FastAPI(title="Market Pulse API", version=settings.api_version)
+# Interactive docs and the live schema stay off where the API is reachable from the
+# internet; the versioned contract remains docs/api/openapi.json, built from app.openapi().
+_public_docs = not is_protected_environment(settings)
+app = FastAPI(
+    title="Market Pulse API",
+    version=settings.api_version,
+    docs_url="/docs" if _public_docs else None,
+    redoc_url="/redoc" if _public_docs else None,
+    openapi_url="/openapi.json" if _public_docs else None,
+)
 if settings.demo_enabled:
     from app.demo.operations import demo_settings
 

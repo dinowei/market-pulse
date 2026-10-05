@@ -77,7 +77,7 @@ from app.contracts import (
     WebVitalsAcceptedResponse,
     WebVitalsRequest,
 )
-from app.core.config import get_settings
+from app.core.config import get_settings, registration_open
 from app.editorial.service import InMemoryEditorialService, PostgresEditorialService
 from app.editorial.validator import EditorialStatus, validate_editorial_blocks
 from app.errors import request_id as request_id_for
@@ -173,6 +173,8 @@ def _auth_error(request: Request, error: Exception) -> HTTPException:
     tags=["auth"],
 )
 def register(payload: RegisterRequest, request: Request) -> AuthUserResponse:
+    if not registration_open(get_settings()):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
     try:
         return get_auth_service().register(payload, _client_ip(request))
     except (AuthConflict, AuthRateLimited, AuthUnavailable) as exc:

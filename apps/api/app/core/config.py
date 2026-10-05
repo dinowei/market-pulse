@@ -1,7 +1,11 @@
 from functools import lru_cache
 from urllib.parse import urlsplit
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+PROTECTED_ENVIRONMENTS = frozenset({"production", "staging"})
+ALLOWED_PROTECTED_SAMESITE = frozenset({"lax", "strict"})
 
 
 class ProductionConfigurationError(RuntimeError):
@@ -37,6 +41,23 @@ class Settings(BaseSettings):
     auth_rate_limit_window_seconds: int = 60
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     retention_days: int = 90
+    registration_enabled: bool | None = None
+
+    @field_validator("registration_enabled", mode="before")
+    @classmethod
+    def _blank_registration_means_default(cls, value: object) -> object:
+        return None if isinstance(value, str) and not value.strip() else value
+
+
+def is_protected_environment(settings: Settings) -> bool:
+    return settings.environment.lower() in PROTECTED_ENVIRONMENTS
+
+
+def registration_open(settings: Settings) -> bool:
+    """Self-service registration fails closed in production/staging unless explicitly enabled."""
+    if settings.registration_enabled is not None:
+        return settings.registration_enabled
+    return not is_protected_environment(settings)
 
 
 def validate_production_settings(settings: Settings) -> None:
@@ -49,9 +70,9 @@ def validate_production_settings(settings: Settings) -> None:
       - MARKET_PULSE_INTERNAL_REFRESH_SECRET must be set and >= 16 characters.
       - MARKET_PULSE_CORS_ORIGINS must not contain wildcards, empty values, or localhost.
       - MARKET_PULSE_DEMO_ENABLED must be False.
+      - MARKET_PULSE_AUTH_COOKIE_SAMESITE must be lax or strict (ADR-008: same-origin proxy).
     """
-    env = settings.environment.lower()
-    if env not in {"production", "staging"}:
+    if not is_protected_environment(settings):
         return
 
     # 1. Demo mode must be disabled
@@ -117,6 +138,13 @@ def validate_production_settings(settings: Settings) -> None:
                 f"Insecure setting: MARKET_PULSE_CORS_ORIGINS cannot reference "
                 f"local host ({origin}) in production/staging"
             )
+
+    # 6. Session cookie must stay first-party
+    if settings.auth_cookie_samesite.lower() not in ALLOWED_PROTECTED_SAMESITE:
+        raise ProductionConfigurationError(
+            "Insecure setting: MARKET_PULSE_AUTH_COOKIE_SAMESITE must be lax or strict "
+            "in production/staging"
+        )
 
 
 @lru_cache
