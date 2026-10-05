@@ -111,6 +111,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Comparação multiativo, benchmarks e calendário do Dia 26: [DAY_26_MULTIATIVE_CALENDAR.md](market_data/DAY_26_MULTIATIVE_CALENDAR.md)
 - Proventos, marcadores e performance do Dia 27: [DAY_27_INCOME_MARKERS_PERFORMANCE.md](market_data/DAY_27_INCOME_MARKERS_PERFORMANCE.md)
 - Rollback seguro de eventos corporativos do Dia 27: [DAY_27_MIGRATION_ROLLBACK.md](engineering/DAY_27_MIGRATION_ROLLBACK.md)
+- Staging privado do Dia 29: [STAGING_RUNBOOK_DAY_29.md](operations/STAGING_RUNBOOK_DAY_29.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.

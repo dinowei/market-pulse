@@ -8,6 +8,26 @@
 - **Este documento não autoriza** deploy, login externo, contratação, provisionamento,
   push nem uso de dado ou provider real.
 
+## Estado em 2026-10-05: bloqueadores do staging privado
+
+Classes: **A** bloqueia o deploy do staging privado; **B** pode ser feito depois do
+deploy; **C** é obrigatório antes de abrir o produto a outras pessoas.
+
+| Item | Classe | Estado |
+|---|---|---|
+| H-01 imagem | A | Resolvido: imagem dispensada. Shutdown pendente do smoke. |
+| H-03 Redis | A | Decidido: Render Key Value grátis (R2). |
+| H-07 limites | A | Pesquisado com fonte oficial. |
+| H-11 cadastro | A | Resolvido em código: fechado por padrão. |
+| H-12 DEMO no staging | A | Decidido: sem DEMO, `UNAVAILABLE` explícito. |
+| Cookie entre sites | A | Resolvido: [ADR-008](adr/008-same-origin-api-proxy.md), proxy same-origin. |
+| `/docs` público | A | Resolvido: fechado em `production`/`staging`. |
+| H-08, H-09, H-13, H-19, H-21, H-23, Redis persistente | C | Abertos; obrigatórios antes de abrir o produto. |
+| Demais itens | B | Abertos. |
+
+O que falta para o deploy depende do usuário (push, contas e painéis) e segue o
+[runbook do staging](operations/STAGING_RUNBOOK_DAY_29.md).
+
 Cada pendência tem **origem**, **motivo**, **critério de pronto** e **prova hoje**.
 "Prova hoje" separa o que foi medido por Claude Code do que foi apenas informado, e
 marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
@@ -19,6 +39,9 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** não é validável sem ambiente com memória suficiente para construir imagens, e o plano de deploy ainda precisa confirmar se Vercel e Render exigem imagem. O repositório não tem nenhum Dockerfile.
 - **Critério de pronto:** (a) decisão documentada, com fonte oficial, de que cada plataforma exige ou dispensa imagem; (b) se exigir, Dockerfiles que rodam como usuário não root, com imagem base escolhida em fonte oficial e com versão e evidência registradas (`AGENTS.md`); (c) shutdown gracioso demonstrado (o processo termina limpo ao receber o sinal de parada, sem requisição cortada); (d) smoke local equivalente executado e registrado, sem login nem deploy externo.
 - **Prova hoje:** nenhuma. Nada foi criado nem testado.
+- **Atualização de 2026-10-05:**
+  - (a) Decidido, com fonte oficial: o staging **dispensa imagem**. O Render roda FastAPI no runtime Python nativo e a Vercel faz o build do Next.js nativamente (links no [runbook do staging](operations/STAGING_RUNBOOK_DAY_29.md)). Portanto (b) não se aplica ao staging; Dockerfile só volta a ser avaliado se uma plataforma passar a exigir imagem.
+  - (c) e (d): o Render envia SIGTERM com shutdown delay padrão de 30 s; a demonstração do encerramento limpo ficou como passo 7 do smoke do staging. **Pendente** até o primeiro deploy.
 
 ### H-02 CSP do frontend Next.js
 - **Origem:** runbook §5.15. Os cabeçalhos de segurança existem só na API.
@@ -108,12 +131,14 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** `POST /api/v1/auth/register` aceita cadastro **sem convite e sem verificação de e-mail** (`routers.py:169-179`; não há código de convite no backend). A verificação de e-mail está explicitamente fora do escopo no roadmap. O único freio é o rate limit de 5 tentativas por 60 s por IP.
 - **Critério de pronto:** decisão registrada, antes de qualquer exposição, entre cadastro fechado (convite ou allowlist), desligar o endpoint na produção, ou aceitar cadastro aberto com as mitigações escolhidas; teste cobrindo a decisão.
 - **Prova hoje:** a ausência de convite é **medida** por busca no código.
+- **Resolvido em 2026-10-05 (decisão técnica delegada pelo usuário):** cadastro **fechado por padrão** em `production`/`staging`. `registration_open` (`app/core/config.py`) devolve falso nesses ambientes, salvo `MARKET_PULSE_REGISTRATION_ENABLED=true` explícito, e o endpoint responde 404. Local e test continuam abertos. O fluxo da conta única do staging está no [runbook](operations/STAGING_RUNBOOK_DAY_29.md), §6. Testes: `tests/test_staging_day29.py`. Antes de abrir o produto ainda é preciso decidir convite ou allowlist.
 
 ### H-12 Validação de produção recusa DEMO ligado: o que o staging exibe
 - **Origem:** `validate_production_settings` (`app/core/config.py`), testada.
 - **Motivo:** em `production` e `staging` o app recusa `MARKET_PULSE_DEMO_ENABLED=true`. Sem provider aprovado (`PUBLIC_APPROVED`) o produto não tem dado público a exibir, e DEMO não concede licença.
 - **Critério de pronto:** decisão sobre o que o staging mostra sem provider aprovado (estado `UNAVAILABLE` explícito, ou aprovação de um provider conforme a matriz de licenças) e sobre se o staging deve aceitar DEMO; documentada e coberta por teste.
 - **Prova hoje:** a recusa é **medida** em teste. A decisão de produto não existe.
+- **Decisão de 2026-10-05 (técnica, delegada pelo usuário):** o staging roda **sem DEMO e sem provider**. Os dados de mercado devem aparecer como `UNAVAILABLE` explícito, sem cotação inventada. A recusa de DEMO em staging continua (a DEMO é só local, Dia 24). A conferência está no passo 6 do smoke do [runbook](operations/STAGING_RUNBOOK_DAY_29.md). Exibir dados reais exige provider `PUBLIC_APPROVED` na [matriz de licenças](DATA_PROVIDER_LICENSE_MATRIX.md).
 
 ### H-13 Morning Call e compliance
 - **Origem:** política de conteúdo financeiro.
@@ -181,6 +206,14 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Decisão em aberto:** o batch deve devolver resultado parcial (série marcada como indisponível) em vez de 404 total quando um id falha? Isso mexe em contrato OpenAPI e exige decisão.
 - **Critério de pronto:** `/compare` mostra a comparação por padrão no DEMO, e o E2E afirma o CONTEÚDO (não só a acessibilidade da tela de erro).
 - **Prova hoje:** causa **lida no código** (`multi-asset-comparison.tsx:11`, `instruments/catalog.py:152-157`, `routers.py:535-536`); o 404 foi **informado** pelo responsável a partir do log. Sem risco de segurança.
+- **Nota de 2026-10-05:** `GET /api/v1/instruments` é hoje um stub que devolve `items=[]` (`routers.py`, `list_instruments`), embora o contrato (`limit`, `offset`, `sort`, `order` e `InstrumentList`) já exista. Implementá-lo com o catálogo é o caminho natural para os ids padrão do `/compare`. Antes, comparar `docs/api/openapi.json` e rodar `npm run generate:api` se o contrato mudar. Classe B: não bloqueia o staging privado. Patches equivalentes preparados numa sessão na nuvem não chegaram a esta máquina e não foram usados.
+
+### H-23 IP real do cliente atrás de proxies (rate limit)
+- **Origem:** revisão do Dia 29 ([ADR-008](adr/008-same-origin-api-proxy.md)).
+- **Motivo:** o rate limit e o limitador de autenticação usam `request.client.host` (`middleware.py`, `routers.py:_client_ip`). Atrás do proxy do Render, e ainda mais com o proxy da Vercel, esse valor tende a ser o do intermediário. Isso faz todos os clientes dividirem o mesmo balde. **Suposição**: o comportamento real não foi medido.
+- **Critério de pronto:** medir no staging qual IP chega à API; decisão registrada (ADR se mudar a política) sobre quais cabeçalhos de proxy confiar e de quais origens, sem aceitar `X-Forwarded-For` arbitrário; testes provando que um cliente não forja o IP e que o 31º pedido continua barrado.
+- **Classe:** C. Aceitável num staging de um único usuário; **obrigatório antes de abrir o produto**. Relacionado a H-09 e H-19.
+- **Prova hoje:** leitura de código; nenhuma medição.
 
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 
