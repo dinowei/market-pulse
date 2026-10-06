@@ -178,6 +178,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** o teste fixa `redis://localhost:6379/15`; sem Redis local o rate limit devolve 503 antes do CSRF responder 403. Não há brecha. É a única falha na suíte na nuvem.
 - **Critério de pronto:** o teste declara essa dependência de forma explícita, ou deixa de depender dela, sem alterar o comportamento de segurança.
 - **Prova hoje:** **medida** na nuvem; passou com Redis local na validação informada.
+- **Resolvido em 2026-10-05 (Dia 30), como efeito da [ADR-009](adr/009-csrf-before-rate-limit.md):** o CSRF passou a responder 403 antes do rate limit, então o teste não depende mais do Redis local. **Medido**: o mesmo teste falha no código do Dia 29 e passa no do Dia 30, sem Redis local; a suíte completa do Dia 30 fecha com 361 passed, 10 skipped e 0 failed.
 
 ### H-18 Dívida de lint e formatação preexistente
 - **Origem:** `ruff` executado pelo ambiente do projeto em 2026-10-01, após o commit `3a3d940`.
