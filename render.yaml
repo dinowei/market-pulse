@@ -13,7 +13,9 @@ services:
     buildCommand: uv sync --frozen --no-dev
     # O pre-deploy command não existe na instância grátis: a migration roda no start,
     # é idempotente e sem efeito quando o schema já está em head.
-    startCommand: uv run --frozen --no-dev alembic upgrade head && uv run --frozen --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    # --no-proxy-headers (ADR-012): o proxy do Render não filtra X-Forwarded-For enviado
+    # pelo cliente, e confiar nele deixava o IP do rate limit forjável (medido no staging).
+    startCommand: uv run --frozen --no-dev alembic upgrade head && uv run --frozen --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT --no-proxy-headers
     healthCheckPath: /health/live
     autoDeployTrigger: commit
     envVars:
