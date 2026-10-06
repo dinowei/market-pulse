@@ -36,8 +36,7 @@ def test_forged_request_is_refused_by_csrf_even_when_rate_limiter_is_down() -> N
 
         # Same path with an allowed origin still fails closed on the auth bucket.
         assert (
-            client.post("/api/v1/auth/login", json=CREDENTIALS, headers=ALLOWED).status_code
-            == 503
+            client.post("/api/v1/auth/login", json=CREDENTIALS, headers=ALLOWED).status_code == 503
         )
     finally:
         app.state.rate_limiter = None
