@@ -115,12 +115,14 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** `note` é texto livre no ledger append-only e pode conter dado pessoal; hoje não pode ser anonimizado porque a trigger recusa qualquer `UPDATE`.
 - **Critério de pronto:** ADR aceita; migration que permita **apenas** anular `note`, com a trigger verificando que nenhuma outra coluna mudou; teste provando que qualquer outra alteração continua recusada e que a anonimização passa a anular as notas. **Obrigatória antes de qualquer abertura do produto a outros usuários.**
 - **Prova hoje:** o risco está documentado (runbook §4.2). Não há implementação.
+- **Resolvido em 2026-10-05 (Dia 30):** [ADR-010](adr/010-portfolio-event-note-erasure.md), migration `20261005_0012` e anonimização anulando as notas. **Medido**: migration aplicada, revertida e reaplicada no Postgres de teste, com a regra da trigger provada (anulação aceita; outras 5 alterações recusadas). **Pendente**: o teste opt-in de ponta a ponta roda na Rodada 1 (E12).
 
 ### H-09 Ordem entre CSRF e rate limit no `main.py`
 - **Origem:** runbook §5.10.
 - **Motivo:** o rate limit roda antes do CSRF, então a recusa por CSRF depende do Redis e uma requisição forjada consome cota. É decisão de segurança.
 - **Critério de pronto:** ADR com a decisão e o impacto; se a ordem mudar, testes cobrindo os dois lados (403 sem depender do Redis, e o rate limit continuando a proteger o login); sem relaxar o limite.
 - **Prova hoje:** comportamento atual medido. Nenhuma mudança proposta.
+- **Resolvido em 2026-10-05 (Dia 30):** [ADR-009](adr/009-csrf-before-rate-limit.md). O CSRF roda antes do rate limit, e os cabeçalhos de segurança passam a cobrir 403, 429 e 503. Limites inalterados. Testes: `tests/test_middleware_order_day30.py`.
 
 ### H-10 Tabela `sessions` sem uso pela autenticação
 - **Origem:** runbook §5.7.
