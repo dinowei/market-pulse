@@ -40,10 +40,12 @@ if settings.demo_enabled:
 
     demo_settings()  # fail startup closed if any dedicated-local barrier is missing
 
-# Wire middlewares in reverse order of wrapping (last added runs first on request)
-app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(CSRFMiddleware)
+# Wire middlewares in reverse order of wrapping (last added runs first on request).
+# Request order (ADR-009): RequestId -> SecurityHeaders -> CORS -> CSRF -> RateLimit.
+# CSRF runs before the rate limit so forged requests are refused without Redis and
+# without consuming quota; security headers wrap every response, errors included.
 app.add_middleware(RateLimitMiddleware)
+app.add_middleware(CSRFMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -52,6 +54,7 @@ app.add_middleware(
     allow_headers=["Content-Type", "Accept", "Idempotency-Key", "X-Request-ID", "Cookie"],
     expose_headers=["X-Request-ID"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIdMiddleware)
 
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
