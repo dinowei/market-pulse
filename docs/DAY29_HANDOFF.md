@@ -217,6 +217,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Classe:** C. Aceitável num staging de um único usuário; **obrigatório antes de abrir o produto**. Relacionado a H-09 e H-19.
 - **Prova hoje:** leitura de código; nenhuma medição.
 - **Medido em 2026-10-06 no staging (piora o diagnóstico):** o IP do cliente **era forjável**. Um `X-Forwarded-For: 203.0.113.77` enviado pelo cliente virou `request.client.host`, porque o Uvicorn confia nos cabeçalhos de proxy e o proxy do Render não filtra o valor do cliente. Isso permitia contornar o limite de login. **Mitigação aplicada:** [ADR-012](adr/012-untrusted-proxy-headers.md), Uvicorn com `--no-proxy-headers` (forja reproduzida localmente e eliminada com a flag). A solução definitiva, IP real por saltos confiáveis com testes de forja, continua no Dia 39.
+- **Medido após a mitigação (2026-10-06, deploy por sync do Blueprint):** o mesmo `X-Forwarded-For` forjado aparece como `127.0.0.1`, o proxy local da instância. O IP não é mais forjável, e **todos os clientes compartilham um único balde por IP**. Isso é aceitável só no staging de 1 usuário.
 
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 
