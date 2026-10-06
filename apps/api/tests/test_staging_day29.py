@@ -91,6 +91,32 @@ def test_protected_environments_accept_first_party_session_cookie(samesite: str)
     validate_production_settings(_staging_settings(auth_cookie_samesite=samesite))
 
 
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ('["https://web.example.test"]', ["https://web.example.test"]),
+        ("https://web.example.test", ["https://web.example.test"]),
+        ("https://web.example.test/", ["https://web.example.test"]),
+        (
+            " https://a.example.test , https://b.example.test/ ",
+            ["https://a.example.test", "https://b.example.test"],
+        ),
+        ('["https://a.example.test/", " "]', ["https://a.example.test"]),
+    ],
+)
+def test_cors_origins_accept_json_or_comma_separated_env(monkeypatch, raw, expected) -> None:
+    monkeypatch.setenv("MARKET_PULSE_CORS_ORIGINS", raw)
+    assert Settings().cors_origins == expected
+
+
+def test_blank_cors_origins_fail_with_a_clear_production_error(monkeypatch) -> None:
+    monkeypatch.setenv("MARKET_PULSE_CORS_ORIGINS", "")
+    settings = Settings()
+    assert settings.cors_origins == []
+    with pytest.raises(ProductionConfigurationError, match="CORS_ORIGINS"):
+        validate_production_settings(_staging_settings(cors_origins=settings.cors_origins))
+
+
 def test_local_environment_keeps_interactive_docs() -> None:
     paths = {route.path for route in app.routes if hasattr(route, "path")}
     assert {"/docs", "/redoc", "/openapi.json"} <= paths

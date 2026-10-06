@@ -1,8 +1,10 @@
+import json
 from functools import lru_cache
+from typing import Annotated
 from urllib.parse import urlsplit
 
 from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 PROTECTED_ENVIRONMENTS = frozenset({"production", "staging"})
 ALLOWED_PROTECTED_SAMESITE = frozenset({"lax", "strict"})
@@ -39,9 +41,25 @@ class Settings(BaseSettings):
     auth_cookie_samesite: str = "lax"
     auth_rate_limit_max_attempts: int = 5
     auth_rate_limit_window_seconds: int = 60
-    cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # NoDecode: the env value is parsed below, so both formats documented in .env.example
+    # (JSON array or comma-separated) work instead of failing the boot on non-JSON input.
+    cors_origins: Annotated[list[str], NoDecode] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
     retention_days: int = 90
     registration_enabled: bool | None = None
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, value: object) -> object:
+        if isinstance(value, str):
+            text = value.strip()
+            value = json.loads(text) if text.startswith("[") else text.split(",")
+        if isinstance(value, list):
+            # Browsers send Origin without a trailing slash; keep the allowlist comparable.
+            return [str(item).strip().rstrip("/") for item in value if str(item).strip()]
+        return value
 
     @field_validator("registration_enabled", mode="before")
     @classmethod
