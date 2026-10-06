@@ -24,7 +24,8 @@ Origem da evidência: **MEDIDO** = executado por Claude Code nesta data, com sa�
 
 | Verificação | Resultado | Origem |
 |---|---|---|
-| Suíte de backend (Neon `market_pulse_test` + Upstash de teste) | 361 passed, 10 skipped (opt-in), **0 failed** | MEDIDO |
+| Suíte de backend (Neon `market_pulse_test` + Upstash de teste), 2026-10-06 | 369 passed, 10 skipped (opt-in), **0 failed** | MEDIDO |
+| Smoke do staging privado (Dia 29) | health, docs fechados, cadastro fechado, proxy e CSRF pela mesma origem, shutdown gracioso e zero 5xx. Login e sessão pendentes | MEDIDO ([runbook](../operations/STAGING_RUNBOOK_DAY_29.md), §7) |
 | H-17 isolado, código do Dia 29 x Dia 30 | falha x passa, sem Redis local | MEDIDO |
 | Frontend: 37 testes unitários, lint, typecheck, build com proxy | OK no código do Dia 29; o Dia 30 não altera `apps/web` | MEDIDO |
 | Ruff no escopo do CI (`app`, `tests`) | OK | MEDIDO |
@@ -51,7 +52,7 @@ Origem da evidência: **MEDIDO** = executado por Claude Code nesta data, com sa�
 | Cadastro fechado por padrão em staging/produção | Dia 29; convite: ADR-011 |
 | Anonimização sem texto livre residual no ledger | ADR-010 |
 | Segredos fora do repositório; Blueprint sem valores sensíveis (`render.yaml`) | Revisão de diff a cada commit |
-| IP real atrás de proxy (H-23) | **Aberto**, obrigatório antes da abertura (Dia 39) |
+| IP real atrás de proxy (H-23) | Forja medida e **mitigada** no staging ([ADR-012](../adr/012-untrusted-proxy-headers.md)); a solução definitiva continua obrigatória antes da abertura (Dia 39) |
 
 ## 5. Licenças, dados e limitações
 
@@ -73,8 +74,9 @@ Origem da evidência: **MEDIDO** = executado por Claude Code nesta data, com sa�
 1. **Usuário:** Rodada 1 (`run_local.ps1`) e Rodada 2 (`run_frontend.ps1`) com o PC
    reiniciado, só o Docker aberto e a branch `feature/dia-30-rc`. Com 3,7 GB de RAM e o app
    do Claude aberto, a máquina tinha 151 MB livres, insuficiente para o Docker.
-2. **Usuário:** aplicar o Blueprint do Render, criar o projeto na Vercel e registrar o smoke
-   do staging ([runbook](../operations/STAGING_RUNBOOK_DAY_29.md), §7). O deploy foi
-   bloqueado para o agente pelo modo de permissões da sessão.
+2. **Usuário:** criar a conta única do staging (runbook, §6) para o smoke de login e
+   sessão. Depois, levar o código do Dia 30 ao staging. Ele inclui a migration `0012`,
+   que roda no boot. Deploys de produção ficam com o usuário, porque o modo de
+   permissões bloqueia o agente.
 3. **Usuário:** resolver a cobrança do GitHub Actions (H-05) e obter um `ci.yml` verde.
 4. Depois de 1 a 3: tag do RC, decisão de versionamento e fechamento deste dossiê.

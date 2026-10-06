@@ -33,8 +33,18 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
   para o Dia 29.
 - **Dívida conhecida:** lint/formatação preexistente (H-18) e demais pendências em
   [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
-- **Dia 29: EM ANDAMENTO** na branch `feature/dia-29-staging`, enviada ao `origin` em
-  2026-10-05 com autorização do usuário (sem PR, sem merge na `main`, sem deploy).
+- **Dia 29: STAGING NO AR desde 2026-10-06; gate ainda aberto.**
+  - **Endereços:** web `https://market-pulse-staging.vercel.app` (projeto Vercel
+    `market-pulse`, produção na branch `feature/dia-29-staging`) e API
+    `https://market-pulse-staging-api.onrender.com` (Blueprint `market-pulse-staging`).
+  - **Smoke medido**, registrado no runbook §7: health, docs fechados, cadastro fechado,
+    proxy e CSRF pela mesma origem, shutdown gracioso e zero 5xx.
+  - **Falta:** a conta única e o smoke de login e sessão (usuário, §6), além das rodadas
+    oficiais.
+  - O PR [dinowei/market-pulse#1](https://github.com/dinowei/market-pulse/pull/1) foi
+    aberto pelo usuário e **não deve receber merge** antes das rodadas e do CI verde.
+  - **Mudança de deploy:** um push em `feature/dia-29-staging` agora implanta a produção
+    da Vercel.
   - **Escopo:** reconciliado como preparação e deploy de staging **privado** (adendo no roadmap).
   - **Feito em 2026-10-05**, por decisões técnicas delegadas pelo usuário:
     - cadastro fechado por padrão em staging/produção;
@@ -43,7 +53,9 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     - proxy same-origin no Next.js ([ADR-008](docs/adr/008-same-origin-api-proxy.md));
     - [runbook do staging](docs/operations/STAGING_RUNBOOK_DAY_29.md).
   - **Medido** (Claude Code): backend com 356 passed, 1 failed (o mesmo H-17), 10 skipped; frontend com 37 testes unitários, lint, typecheck e build OK.
-  - **Falta:** rodadas oficiais no PowerShell, contas e painéis (usuário) e o smoke do staging.
+  - **Medido em 2026-10-06:** forja de IP pelo `X-Forwarded-For` no Render, mitigada
+    pela [ADR-012](docs/adr/012-untrusted-proxy-headers.md); CORS aceita JSON ou lista
+    separada por vírgula.
 - **Dia 30: GATE ABERTO** na branch `feature/dia-30-rc` ([dossiê do RC](docs/engineering/DAY_30_RELEASE_CANDIDATE.md)).
   - **Feito em 2026-10-05:**
     - H-08 ([ADR-010](docs/adr/010-portfolio-event-note-erasure.md), migration `20261005_0012`);
@@ -51,10 +63,15 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     - decisão de convite ([ADR-011](docs/adr/011-registration-by-invite.md));
     - H-17 resolvido como efeito da ADR-009;
     - `render.yaml` (Blueprint do staging).
-  - **Medido:** backend com 361 passed, 10 skipped, 0 failed; migration 0012
-    aplicada, revertida e reaplicada no Postgres de teste.
-  - **Falta:** rodadas oficiais, Blueprint e Vercel aplicados pelo usuário (o deploy foi
-    bloqueado para o agente pelo modo de permissões), smoke do staging e CI verde.
+  - **Medido:**
+    - backend em 2026-10-06 com 369 passed, 10 skipped, 0 failed;
+    - migration 0012 aplicada, revertida e reaplicada no Postgres de teste;
+    - a limitação do provider DEMO deixou de dizer "local".
+  - **Falta:**
+    - rodadas oficiais;
+    - smoke de login e sessão no staging;
+    - CI verde (H-05);
+    - levar o código do Dia 30 ao staging (H-08, H-09 e migration 0012 ainda não estão lá).
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia

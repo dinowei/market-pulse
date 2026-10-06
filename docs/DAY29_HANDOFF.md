@@ -15,11 +15,12 @@ deploy; **C** é obrigatório antes de abrir o produto a outras pessoas.
 
 | Item | Classe | Estado |
 |---|---|---|
-| H-01 imagem | A | Resolvido: imagem dispensada. Shutdown pendente do smoke. |
-| H-03 Redis | A | Decidido: Render Key Value grátis (R2). |
+| H-01 imagem | A | Resolvido: imagem dispensada; shutdown gracioso medido no Render (2026-10-06). |
+| H-03 Redis | A | Implantado: Render Key Value grátis (R2), `noeviction`, só rede interna. |
 | H-07 limites | A | Pesquisado com fonte oficial. |
-| H-11 cadastro | A | Resolvido em código: fechado por padrão. |
-| H-12 DEMO no staging | A | Decidido: sem DEMO, `UNAVAILABLE` explícito. |
+| H-11 cadastro | A | Resolvido e medido no staging (404). |
+| H-12 DEMO no staging | A | Medido: só dados sintéticos rotulados `DEMO`/`STALE`; banco DEMO recusado. Ver a correção no item. |
+| Staging no ar | A | **Implantado em 2026-10-06** e smoke registrado no [runbook](operations/STAGING_RUNBOOK_DAY_29.md), §7. Login e sessão pelo proxy pendentes da conta única (usuário). |
 | Cookie entre sites | A | Resolvido: [ADR-008](adr/008-same-origin-api-proxy.md), proxy same-origin. |
 | `/docs` público | A | Resolvido: fechado em `production`/`staging`. |
 | H-08, H-09, convite no cadastro (H-11) | C | Agendados para o Dia 30 (decisão do usuário, 2026-10-05). |
@@ -44,6 +45,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Atualização de 2026-10-05:**
   - (a) Decidido, com fonte oficial: o staging **dispensa imagem**. O Render roda FastAPI no runtime Python nativo e a Vercel faz o build do Next.js nativamente (links no [runbook do staging](operations/STAGING_RUNBOOK_DAY_29.md)). Portanto (b) não se aplica ao staging; Dockerfile só volta a ser avaliado se uma plataforma passar a exigir imagem.
   - (c) e (d): o Render envia SIGTERM com shutdown delay padrão de 30 s; a demonstração do encerramento limpo ficou como passo 7 do smoke do staging. **Pendente** até o primeiro deploy.
+  - **Medido em 2026-10-06:** três trocas de instância no Render terminaram com `Shutting down` → `Application shutdown complete` → `Finished server process` em cerca de 100 ms, sem nenhum 5xx. **H-01 resolvido.**
 
 ### H-02 CSP do frontend Next.js
 - **Origem:** runbook §5.15. Os cabeçalhos de segurança existem só na API.
@@ -144,6 +146,11 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** decisão sobre o que o staging mostra sem provider aprovado (estado `UNAVAILABLE` explícito, ou aprovação de um provider conforme a matriz de licenças) e sobre se o staging deve aceitar DEMO; documentada e coberta por teste.
 - **Prova hoje:** a recusa é **medida** em teste. A decisão de produto não existe.
 - **Decisão de 2026-10-05 (técnica, delegada pelo usuário):** o staging roda **sem DEMO e sem provider**. Os dados de mercado devem aparecer como `UNAVAILABLE` explícito, sem cotação inventada. A recusa de DEMO em staging continua (a DEMO é só local, Dia 24). A conferência está no passo 6 do smoke do [runbook](operations/STAGING_RUNBOOK_DAY_29.md). Exibir dados reais exige provider `PUBLIC_APPROVED` na [matriz de licenças](DATA_PROVIDER_LICENSE_MATRIX.md).
+- **Correção de 2026-10-06, após o smoke:**
+  - A decisão acima confundiu duas coisas. "Sem DEMO" vale para o **banco DEMO local do Dia 24** (`MARKET_PULSE_DEMO_ENABLED`), que continua recusado no staging.
+  - Os endpoints públicos de mercado servem, por contrato do Dia 15, dados **sintéticos** do provider `demo`, rotulados `DEMO`/`STALE`, com limitação explícita. Não são dado de provider, não exigem licença e não se apresentam como reais.
+  - **Medido:** a página inicial do staging mostra PETR4 sintético com esses rótulos. O texto "Demonstração local" foi corrigido para "Demonstração sintética" na branch do Dia 30.
+  - Decidir se o staging deve esconder também o sintético é decisão de produto, não exigida por política.
 
 ### H-13 Morning Call e compliance
 - **Origem:** política de conteúdo financeiro.

@@ -97,7 +97,7 @@ variáveis `MARKET_PULSE_*` têm padrão no código.
 |---|---|
 | Root Directory | `apps/web` |
 | Framework | Next.js (detecção automática) |
-| Deployment Protection | Vercel Authentication ligada (disponível no Hobby, [hobby](https://vercel.com/docs/plans/hobby)) |
+| Deployment Protection | Recomendado: Vercel Authentication também em produção (disponível no Hobby, [hobby](https://vercel.com/docs/plans/hobby)). **Medido em 2026-10-06:** só os previews estão protegidos; o domínio de produção responde sem login. O cadastro fechado impede contas novas, mas a interface fica visível a quem tiver a URL. Ligar a proteção é decisão do usuário |
 
 ### Variáveis de ambiente do web
 
@@ -127,9 +127,28 @@ O cadastro é **fechado por padrão** em `staging`/`production` (`registration_o
 4. Login em `<web>/login`; depois `/watchlists` carrega autenticado, sem 401. Isso
    prova o cookie first-party pelo proxy (**[A VALIDAR]** da ADR-008).
 5. Logout; depois `/watchlists` mostra o estado sem sessão.
-6. Sem provider `PUBLIC_APPROVED` e sem DEMO, os dados de mercado aparecem como
-   `UNAVAILABLE` explícito, nunca como cotação inventada (decisão do H-12).
+6. Sem provider `PUBLIC_APPROVED`, nenhum dado de mercado aparece como real: só dados
+   sintéticos rotulados `DEMO`/`STALE` (contrato do Dia 15) ou `UNAVAILABLE` (H-12).
 7. Redeploy da API sem erro 5xx no log durante a troca de instância (shutdown pelo SIGTERM).
+
+### Resultado do smoke em 2026-10-06 (MEDIDO por Claude Code)
+
+Ambiente: web `https://market-pulse-staging.vercel.app` (projeto Vercel `market-pulse`,
+produção na branch `feature/dia-29-staging`, build `b7b3433`); API
+`https://market-pulse-staging-api.onrender.com` (Blueprint `market-pulse-staging`).
+
+| Item | Resultado |
+|---|---|
+| 1 | `/health/live` 200; `/health` 200 com `environment: staging`; `/health/ready` 200 com banco e cache `ok` |
+| 2 | `/docs`, `/redoc` e `/openapi.json` → 404 |
+| 3 | `GET <web>/api/v1/instruments` → 200 pelo proxy, com `X-Request-Id` e os cabeçalhos de segurança da API |
+| CSRF pelo proxy | login com o `Origin` do web → 401 (credencial fictícia, sem `Set-Cookie`); `Origin` forjado → 403. O proxy repassa o `Origin` (parte do **[A VALIDAR]** da ADR-008) |
+| Cadastro | `POST /api/v1/auth/register` → 404, direto e pelo proxy |
+| 4 e 5 | **PENDENTE:** exigem a conta única (§6), criada pelo usuário. O repasse do cookie de sessão pelo proxy segue **[A VALIDAR]** |
+| 6 | A página inicial mostra PETR4 com dados **sintéticos rotulados** `DEMO`/`STALE` e o aviso de que não representam cotação real. Nenhum dado se apresenta como real. A limitação dizia "Demonstração local", texto corrigido na branch do Dia 30 |
+| 7 | Três trocas de instância (deploys e o sono do plano grátis) com `Shutting down` → `Application shutdown complete` em cerca de 100 ms e **zero** respostas 5xx desde o primeiro deploy bem-sucedido |
+| Migrations | `alembic upgrade head` no boot aplicou 0001 → 0011 no banco do staging |
+| Forja de IP | `X-Forwarded-For` forjado virava o IP do cliente; com `--no-proxy-headers` passou a `127.0.0.1` (ADR-012) |
 
 ## 8. Rollback
 
