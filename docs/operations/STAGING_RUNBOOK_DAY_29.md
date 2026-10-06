@@ -56,8 +56,8 @@ runbook.
 |---|---|
 | Runtime | Python 3 nativo |
 | Root Directory | `apps/api` ([monorepo-support](https://render.com/docs/monorepo-support)) |
-| Build command | `uv sync --frozen --no-dev` **[A VALIDAR]** |
-| Start command | `uv run --frozen --no-dev alembic upgrade head && uv run --frozen --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT` **[A VALIDAR]** |
+| Build command | `uv sync --frozen --no-dev` (validado em 2026-10-06) |
+| Start command | `uv run --frozen --no-dev alembic upgrade head && uv run --frozen --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT --no-proxy-headers` (validado em 2026-10-06; `--no-proxy-headers` pela ADR-012) |
 | Health check path | `/health/live` |
 | Key Value | `noeviction`: memória cheia gera erro (503, falha fechada) em vez de apagar sessões, revogações ou contadores |
 

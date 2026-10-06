@@ -220,6 +220,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** medir no staging qual IP chega à API; decisão registrada (ADR se mudar a política) sobre quais cabeçalhos de proxy confiar e de quais origens, sem aceitar `X-Forwarded-For` arbitrário; testes provando que um cliente não forja o IP e que o 31º pedido continua barrado.
 - **Classe:** C. Aceitável num staging de um único usuário; **obrigatório antes de abrir o produto**. Relacionado a H-09 e H-19.
 - **Prova hoje:** leitura de código; nenhuma medição.
+- **Medido em 2026-10-06 no staging (piora o diagnóstico):** o IP do cliente **era forjável**. Um `X-Forwarded-For: 203.0.113.77` enviado pelo cliente virou `request.client.host`, porque o Uvicorn confia nos cabeçalhos de proxy e o proxy do Render não filtra o valor do cliente. Isso permitia contornar o limite de login. **Mitigação aplicada:** [ADR-012](adr/012-untrusted-proxy-headers.md), Uvicorn com `--no-proxy-headers` (forja reproduzida localmente e eliminada com a flag). A solução definitiva, IP real por saltos confiáveis com testes de forja, continua no Dia 39.
 
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 

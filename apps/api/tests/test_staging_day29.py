@@ -117,6 +117,16 @@ def test_blank_cors_origins_fail_with_a_clear_production_error(monkeypatch) -> N
         validate_production_settings(_staging_settings(cors_origins=settings.cors_origins))
 
 
+def test_render_start_command_does_not_trust_client_proxy_headers() -> None:
+    # ADR-012: Render's proxy forwards a client-supplied X-Forwarded-For, so trusting it
+    # made the rate-limit IP forgeable (measured on staging on 2026-10-06).
+    blueprint = (API_ROOT.parents[1] / "render.yaml").read_text(encoding="utf-8")
+    start = next(line for line in blueprint.splitlines() if "startCommand:" in line)
+    assert "uvicorn app.main:app" in start
+    assert "--no-proxy-headers" in start
+    assert "--forwarded-allow-ips" not in blueprint
+
+
 def test_local_environment_keeps_interactive_docs() -> None:
     paths = {route.path for route in app.routes if hasattr(route, "path")}
     assert {"/docs", "/redoc", "/openapi.json"} <= paths
