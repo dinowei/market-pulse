@@ -48,9 +48,12 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia
     exige autorização.
-  - **Lacunas verificadas:** o Global Atlas tabular e o heatmap básico (ambos P0)
-    nunca foram entregues, e os itens obrigatórios antes de abrir o produto não
-    estão em nenhum dia. Decisões pendentes do usuário.
+  - **Lacunas verificadas e decididas pelo usuário:**
+    - o Global Atlas tabular e o heatmap básico (ambos P0, nunca entregues) vão
+      para o Dia 37, e o RC do Dia 30 é "RC do staging privado com P0 incompleto";
+    - os itens antes de abrir o produto ficam distribuídos: Dia 30 (H-08, H-09,
+      convite), Dia 35 (H-13, H-19, H-21) e Dia 39 (H-23, Redis persistente, plano
+      Vercel).
 
 ## Ferramentas (decisão do usuário, a partir do Dia 29)
 

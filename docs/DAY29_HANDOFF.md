@@ -22,7 +22,9 @@ deploy; **C** é obrigatório antes de abrir o produto a outras pessoas.
 | H-12 DEMO no staging | A | Decidido: sem DEMO, `UNAVAILABLE` explícito. |
 | Cookie entre sites | A | Resolvido: [ADR-008](adr/008-same-origin-api-proxy.md), proxy same-origin. |
 | `/docs` público | A | Resolvido: fechado em `production`/`staging`. |
-| H-08, H-09, H-13, H-19, H-21, H-23, Redis persistente | C | Abertos; obrigatórios antes de abrir o produto. |
+| H-08, H-09, convite no cadastro (H-11) | C | Agendados para o Dia 30 (decisão do usuário, 2026-10-05). |
+| H-13, H-19, H-21 | C | Agendados para o Dia 35. |
+| H-23, Redis persistente, plano Vercel | C | Agendados para o Dia 39. |
 | Demais itens | B | Abertos. |
 
 O que falta para o deploy depende do usuário (push, contas e painéis) e segue o

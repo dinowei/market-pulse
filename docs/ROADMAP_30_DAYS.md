@@ -213,7 +213,7 @@ documentação. Regras desta fase:
 | 34 | Revisão do tema claro | O tema claro **já existe** desde o Dia 16 (`[data-theme="light"]` em `apps/web/app/globals.css`). O dia é revisão e derivação dos tokens do Dia 33, com WCAG 2.2 AA nos dois temas. |
 | 35 | Neutro final e azul para benchmarks (CDI, IBOV, IPCA) | Compatível com ADR-006, que define azul como `FLAT`/referência. Quando benchmark e `FLAT` aparecem juntos, a distinção vem de padrão de linha, rótulo e tabela, nunca só da cor. |
 | 36 | WCAG 2.2 AA e daltonismo | Axe em todas as rotas, mais revisão manual (diretriz, §20). Daltonismo é validado por simulação da paleta existente e pelos sinais não cromáticos obrigatórios. **Paleta alternativa azul/laranja conflita** com a diretriz (laranja só para `STALE`) e com ADR-006 (azul = `FLAT`): só entra com nova ADR. |
-| 37 | Heatmap setorial | **Heatmap básico é P0** (linha "Prioridades do beta" e diretriz, §24) e nunca foi entregue: o Dia 17 o deixou como etapa posterior. Sem suavização; dado real somente com dataset `PUBLIC_APPROVED`; caso contrário, `DEMO` local ou `UNAVAILABLE`. Tabela equivalente obrigatória. |
+| 37 | Global Atlas tabular e heatmap setorial (P0 visual) | **Global Atlas tabular**: tabela acessível, sem recomendação, com disclaimer e metadados visíveis (gate original do Dia 21). **Heatmap básico é P0** (linha "Prioridades do beta" e diretriz, §24) e nunca foi entregue: o Dia 17 o deixou como etapa posterior. Sem suavização; dado real somente com dataset `PUBLIC_APPROVED`; caso contrário, `DEMO` local ou `UNAVAILABLE`. Tabela equivalente obrigatória. |
 | 38 | Core Web Vitals no ambiente real | Os budgets já existem desde o Dia 27 (P95 LCP 2.500 ms, INP 200 ms, CLS 0,10, `scripts/day27_performance_gate.mjs`). O dia mede o staging real e audita o bundle, sem relaxar budgets. |
 | 39 | Regressão QA completa | Backend, frontend, E2E, testes financeiros, temas, tokens, gráficos e heatmap, nas rodadas oficiais e no CI. |
 | 40 | Documentação e fechamento | README, design system e handoff final atualizados; registro de alternativas descartadas (por exemplo Rust, gRPC e FDC3). |
@@ -233,12 +233,23 @@ documentação. Regras desta fase:
 4. **Versionamento** (branch `develop` e tags por dia) não foi adotado; decidir no
    Dia 30, junto da tag do release candidate.
 
-**Decisões pendentes do usuário:**
+**Decidido pelo usuário em 2026-10-05:**
 
-- **Lacunas 1 e 2:** onde entram o Global Atlas tabular e o heatmap básico. Sem
-  eles, o release candidate do Dia 30 deve ser registrado como RC do staging
-  privado com P0 incompleto, não como P0 congelado.
-- **Lacuna 3:** em que dias entram os itens obrigatórios antes de abrir o produto.
+- **Lacunas 1 e 2:** o Global Atlas tabular e o heatmap básico vão juntos para o
+  **Dia 37**, depois do release candidate. Por isso o RC do Dia 30 é registrado
+  como **RC do staging privado com P0 incompleto**, não como P0 congelado.
+- **Lacuna 3:** os itens obrigatórios antes de abrir o produto ficam distribuídos
+  assim, somados ao escopo de cada dia:
+
+| Dia | Itens acrescentados | Observação |
+| --- | --- | --- |
+| 30 | H-08 (ADR da opção B do `note`), H-09 (ordem CSRF x rate limit), decisão sobre convite/allowlist no cadastro (H-11) | H-08 exige ADR e migration com teste; H-09 exige ADR. |
+| 35 | H-13 (compliance do Morning Call), H-19 (limite por sessão), H-21 (menos requisições ao balde standard) | H-13 é revisão humana registrada. H-21 prevê endpoint em lote: contrato OpenAPI e cliente gerado. |
+| 39 | H-23 (IP real atrás de proxy), Redis persistente (R1 ou R3), plano Vercel adequado ao uso | A medição do IP é feita no staging assim que ele existir. Redis persistente e plano Vercel dependem de contratação pelo usuário. |
+
+Ponto de atenção registrado: o H-19 (Dia 35) inclui decidir o IP como segunda
+chave, e o IP correto só fica confiável com o H-23 (Dia 39). O Dia 35 deve usar a
+medição de IP já feita no staging, ou deixar essa parte explícita para o Dia 39.
 
 ### Adendo operacional do Dia 23
 
