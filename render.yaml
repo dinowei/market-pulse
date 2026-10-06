@@ -1,0 +1,63 @@
+# Staging PRIVADO do Dia 29 (docs/operations/STAGING_RUNBOOK_DAY_29.md, ADR-008).
+# Nenhum segredo neste arquivo: o Render gera o segredo interno e liga as URLs do banco
+# e do Key Value por referência. MARKET_PULSE_CORS_ORIGINS (não secreta) é definida
+# depois, quando a URL do projeto Vercel for conhecida.
+services:
+  - name: market-pulse-staging-api
+    type: web
+    runtime: python
+    plan: free
+    region: oregon
+    branch: feature/dia-29-staging
+    rootDir: apps/api
+    buildCommand: uv sync --frozen --no-dev
+    # O pre-deploy command não existe na instância grátis: a migration roda no start,
+    # é idempotente e sem efeito quando o schema já está em head.
+    startCommand: uv run --frozen --no-dev alembic upgrade head && uv run --frozen --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health/live
+    autoDeployTrigger: commit
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: MARKET_PULSE_ENVIRONMENT
+        value: staging
+      - key: MARKET_PULSE_DATABASE_URL
+        fromDatabase:
+          name: market-pulse-staging-db
+          property: connectionString
+      - key: MARKET_PULSE_REDIS_URL
+        fromService:
+          name: market-pulse-staging-kv
+          type: keyvalue
+          property: connectionString
+      - key: MARKET_PULSE_INTERNAL_REFRESH_SECRET
+        generateValue: true
+      - key: MARKET_PULSE_CORS_ORIGINS
+        sync: false
+      - key: MARKET_PULSE_DEMO_ENABLED
+        value: "false"
+      - key: MARKET_PULSE_AUTH_COOKIE_SECURE
+        value: "true"
+      - key: MARKET_PULSE_AUTH_COOKIE_SAMESITE
+        value: lax
+      - key: MARKET_PULSE_REGISTRATION_ENABLED
+        value: "false"
+
+  # Sem persistência no plano grátis (decisão R2, H-03). Só a rede interna do Render.
+  # noeviction falha fechado: com a memória cheia, gravações dão erro (503) em vez de
+  # apagar em silêncio sessões, marcadores de revogação ou contadores de rate limit.
+  - name: market-pulse-staging-kv
+    type: keyvalue
+    plan: free
+    region: oregon
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
+
+databases:
+  # Grátis: expira 30 dias após a criação, 1 GB, sem backup (https://render.com/docs/free).
+  - name: market-pulse-staging-db
+    plan: free
+    region: oregon
+    postgresMajorVersion: "16"
+    databaseName: market_pulse_staging
+    ipAllowList: []
