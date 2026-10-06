@@ -1626,11 +1626,20 @@ def delete_user_account(
                 )
 
                 # 4. Archive the portfolios and neutralize their free-text name. The ledger
-                # (portfolio_events) is untouched and stays bound to user_id; id, user_id,
-                # base_currency and dates do not change.
+                # (portfolio_events) stays bound to user_id; id, user_id, base_currency and
+                # dates do not change.
                 cur.execute(
                     "UPDATE portfolios SET archived_at = now(), "
                     "name = 'Carteira removida ' || id::text WHERE user_id = %s",
+                    (current_user.id,),
+                )
+
+                # 4b. Erase the ledger's free-text notes (ADR-010). The append-only trigger
+                # accepts exactly this change - note to NULL, nothing else - and refuses any
+                # other UPDATE or DELETE, so amounts, dates and ids stay intact.
+                cur.execute(
+                    "UPDATE portfolio_events SET note = NULL WHERE note IS NOT NULL "
+                    "AND portfolio_id IN (SELECT id FROM portfolios WHERE user_id = %s)",
                     (current_user.id,),
                 )
 

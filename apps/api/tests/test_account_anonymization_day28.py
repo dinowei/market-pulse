@@ -171,15 +171,25 @@ def test_successful_anonymization_writes_audit_in_the_same_transaction(monkeypat
             "DELETE FROM watchlist_items",
             "DELETE FROM watchlists",
             "UPDATE portfolios",
+            "UPDATE portfolio_events",
             "INSERT INTO audit_logs",
         )
     ]
     assert order == sorted(order), "audit row must be the last write before the commit"
     assert not any("sessions" in sql for sql in statements), "sessions live only in Redis"
-    assert not any(
-        sql.startswith(("DELETE FROM portfolio_events", "UPDATE portfolio_events"))
-        for sql in statements
-    ), "the ledger must never be touched"
+    assert not any(sql.startswith("DELETE FROM portfolio_events") for sql in statements)
+    ledger_writes = [
+        (sql, params)
+        for sql, params in main.statements
+        if sql.startswith("UPDATE portfolio_events")
+    ]
+    assert ledger_writes == [
+        (
+            "UPDATE portfolio_events SET note = NULL WHERE note IS NOT NULL "
+            "AND portfolio_id IN (SELECT id FROM portfolios WHERE user_id = %s)",
+            (user.id,),
+        )
+    ], "the only ledger write is erasing the user's notes (ADR-010)"
 
     update_users = next(p for sql, p in main.statements if sql.startswith("UPDATE users"))
     assert update_users[0] == f"deleted-{user.id}@market-pulse.invalid"
@@ -515,12 +525,33 @@ def test_anonymization_end_to_end_on_a_real_database(monkeypatch) -> None:
             assert portfolio[1] == "BRL" and portfolio[2] is not None
             assert str(portfolio[3]) == user_id
 
-            ledger = conn.execute(
-                "SELECT note FROM portfolio_events WHERE id = %s", (event_id,)
-            ).fetchone()
-            # Known residual risk (decision D3-A, 2026-10-01): free text in the append-only
-            # ledger cannot be anonymized without an ADR. This pins the current behavior.
-            assert ledger == (original_note,)
+            ledger_columns = (
+                "SELECT note, portfolio_id, event_type, event_date, currency, cash_amount, "
+                "created_by, idempotency_key, request_id FROM portfolio_events WHERE id = %s"
+            )
+            ledger = conn.execute(ledger_columns, (event_id,)).fetchone()
+            # ADR-010 (H-08): the free-text note is erased; the financial record is intact.
+            assert ledger[0] is None
+            assert (str(ledger[1]), ledger[2], str(ledger[3]), ledger[4]) == (
+                portfolio_id,
+                "CASH_DEPOSIT",
+                "2026-09-01",
+                "BRL",
+            )
+            assert ledger[5] == Decimal("100.00") and str(ledger[6]) == user_id
+            assert ledger[7].startswith("anon-") and ledger[8] == "anon"
+
+            # The trigger still refuses every other change, including re-filling the note.
+            for forbidden in (
+                "UPDATE portfolio_events SET cash_amount = '1.00' WHERE id = %s",
+                "UPDATE portfolio_events SET note = 'reescrita' WHERE id = %s",
+                "UPDATE portfolio_events SET note = NULL, currency = 'USD' WHERE id = %s",
+                "DELETE FROM portfolio_events WHERE id = %s",
+            ):
+                with pytest.raises(psycopg.errors.RaiseException, match="append-only"):
+                    with conn.transaction():
+                        conn.execute(forbidden, (event_id,))
+            assert conn.execute(ledger_columns, (event_id,)).fetchone() == ledger
 
             rows = conn.execute(
                 "SELECT entity_type, entity_id, actor_user_id, resource, result, request_id, "
