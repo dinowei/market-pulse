@@ -29,7 +29,7 @@ class DemoProvider:
                 freshness=Freshness.STALE,
                 currency="BRL",
                 limitations=(
-                    "Demonstração local; não representa cotação real.",
+                    "Demonstração sintética; não representa cotação real.",
                     f"Instrumento demonstrativo: {instrument_id}.",
                 ),
             ),
