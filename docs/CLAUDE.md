@@ -112,6 +112,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Proventos, marcadores e performance do Dia 27: [DAY_27_INCOME_MARKERS_PERFORMANCE.md](market_data/DAY_27_INCOME_MARKERS_PERFORMANCE.md)
 - Rollback seguro de eventos corporativos do Dia 27: [DAY_27_MIGRATION_ROLLBACK.md](engineering/DAY_27_MIGRATION_ROLLBACK.md)
 - Staging privado do Dia 29: [STAGING_RUNBOOK_DAY_29.md](operations/STAGING_RUNBOOK_DAY_29.md)
+- Release candidate do Dia 30: [DAY_30_RELEASE_CANDIDATE.md](engineering/DAY_30_RELEASE_CANDIDATE.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.

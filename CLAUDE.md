@@ -44,6 +44,17 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     - [runbook do staging](docs/operations/STAGING_RUNBOOK_DAY_29.md).
   - **Medido** (Claude Code): backend com 356 passed, 1 failed (o mesmo H-17), 10 skipped; frontend com 37 testes unitários, lint, typecheck e build OK.
   - **Falta:** rodadas oficiais no PowerShell, contas e painéis (usuário) e o smoke do staging.
+- **Dia 30: GATE ABERTO** na branch `feature/dia-30-rc` ([dossiê do RC](docs/engineering/DAY_30_RELEASE_CANDIDATE.md)).
+  - **Feito em 2026-10-05:**
+    - H-08 ([ADR-010](docs/adr/010-portfolio-event-note-erasure.md), migration `20261005_0012`);
+    - H-09 ([ADR-009](docs/adr/009-csrf-before-rate-limit.md));
+    - decisão de convite ([ADR-011](docs/adr/011-registration-by-invite.md));
+    - H-17 resolvido como efeito da ADR-009;
+    - `render.yaml` (Blueprint do staging).
+  - **Medido:** backend com 361 passed, 10 skipped, 0 failed; migration 0012
+    aplicada, revertida e reaplicada no Postgres de teste.
+  - **Falta:** rodadas oficiais, Blueprint e Vercel aplicados pelo usuário (o deploy foi
+    bloqueado para o agente pelo modo de permissões), smoke do staging e CI verde.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia
