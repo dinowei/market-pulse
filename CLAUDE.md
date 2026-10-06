@@ -44,6 +44,13 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     - [runbook do staging](docs/operations/STAGING_RUNBOOK_DAY_29.md).
   - **Medido** (Claude Code): backend com 356 passed, 1 failed (o mesmo H-17), 10 skipped; frontend com 37 testes unitários, lint, typecheck e build OK.
   - **Falta:** rodadas oficiais no PowerShell, contas e painéis (usuário) e o smoke do staging.
+- **Plano de 40 dias (decisão do usuário, 2026-10-05):**
+  - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
+    [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia
+    exige autorização.
+  - **Lacunas verificadas:** o Global Atlas tabular e o heatmap básico (ambos P0)
+    nunca foram entregues, e os itens obrigatórios antes de abrir o produto não
+    estão em nenhum dia. Decisões pendentes do usuário.
 
 ## Ferramentas (decisão do usuário, a partir do Dia 29)
 

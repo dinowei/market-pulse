@@ -191,6 +191,55 @@ Divergências com o texto anterior, que **não é apagado do histórico**:
 Segredos de produção e staging não são versionados: são variáveis de ambiente
 configuradas pelo usuário no painel de cada plataforma.
 
+## Fase 2 — Dias 31 a 40 (planejada em 2026-10-05)
+
+**Decidido pelo usuário em 2026-10-05:** o plano passa de 30 para 40 dias. O nome
+deste arquivo é mantido, porque é referência canônica em `AGENTS.md` e em toda a
+documentação. Regras desta fase:
+
+- **Pré-requisito:** Dia 30 fechado com evidência. Nenhum dia desta fase começa
+  antes disso.
+- **Autorização:** cada dia continua exigindo autorização explícita. Este adendo
+  registra intenção, não autoriza execução, dependência nova, provider, deploy nem
+  publicação.
+- **Hierarquia:** os gates abaixo já incorporam a diretriz Particle Atlas, as
+  políticas e as ADRs, que prevalecem sobre a descrição resumida de cada dia.
+
+| Dia | Objetivo | Gate objetivo (ajustado às fontes canônicas) |
+| --- | --- | --- |
+| 31 | Downsampling de séries históricas (janelas 5A e MAX) | Preserva primeiro, último, mínimos, máximos e eventos relevantes, sem interpolação nem forward-fill; gaps continuam gaps (diretriz, §14). `Decimal` exato na API. Algoritmo escolhido em ADR: LTTB puro não garante extremos, M4 ou LTTB com extremos forçados garantem. Contrato via OpenAPI e cliente gerado, sem endpoint inventado. Metas de latência medidas, não presumidas. |
+| 32 | Motor gráfico | **Avaliação com medição**, não troca: os gráficos SVG P0 não são reescritos enquanto atenderem desempenho, acessibilidade e fidelidade (diretriz, §18). Lightweight Charts pode ser avaliado, nunca é fonte de verdade; qualquer biblioteca nova exige ADR e verificação em fonte oficial. Valores, rótulos e tabela preservam o valor exato; coordenadas de desenho são só apresentação. `INDEX_100` e TWR nunca compartilham rótulo (ADR-006, ADR-007). |
+| 33 | Tokens de cor em Oklch | Mesma semântica: preto, branco e cinza predominam; verde `UP`, vermelho `DOWN`, azul `FLAT`/referência; âmbar só para `STALE` (diretriz, §8). Testes de contraste existentes continuam verdes. O suporte de navegador a Oklch deve ser verificado em fonte oficial antes de adotar. |
+| 34 | Revisão do tema claro | O tema claro **já existe** desde o Dia 16 (`[data-theme="light"]` em `apps/web/app/globals.css`). O dia é revisão e derivação dos tokens do Dia 33, com WCAG 2.2 AA nos dois temas. |
+| 35 | Neutro final e azul para benchmarks (CDI, IBOV, IPCA) | Compatível com ADR-006, que define azul como `FLAT`/referência. Quando benchmark e `FLAT` aparecem juntos, a distinção vem de padrão de linha, rótulo e tabela, nunca só da cor. |
+| 36 | WCAG 2.2 AA e daltonismo | Axe em todas as rotas, mais revisão manual (diretriz, §20). Daltonismo é validado por simulação da paleta existente e pelos sinais não cromáticos obrigatórios. **Paleta alternativa azul/laranja conflita** com a diretriz (laranja só para `STALE`) e com ADR-006 (azul = `FLAT`): só entra com nova ADR. |
+| 37 | Heatmap setorial | **Heatmap básico é P0** (linha "Prioridades do beta" e diretriz, §24) e nunca foi entregue: o Dia 17 o deixou como etapa posterior. Sem suavização; dado real somente com dataset `PUBLIC_APPROVED`; caso contrário, `DEMO` local ou `UNAVAILABLE`. Tabela equivalente obrigatória. |
+| 38 | Core Web Vitals no ambiente real | Os budgets já existem desde o Dia 27 (P95 LCP 2.500 ms, INP 200 ms, CLS 0,10, `scripts/day27_performance_gate.mjs`). O dia mede o staging real e audita o bundle, sem relaxar budgets. |
+| 39 | Regressão QA completa | Backend, frontend, E2E, testes financeiros, temas, tokens, gráficos e heatmap, nas rodadas oficiais e no CI. |
+| 40 | Documentação e fechamento | README, design system e handoff final atualizados; registro de alternativas descartadas (por exemplo Rust, gRPC e FDC3). |
+
+### Lacunas encontradas ao registrar a Fase 2 (2026-10-05)
+
+1. **Global Atlas tabular (P0) nunca foi entregue.** O Dia 21 desta tabela foi
+   executado como performance factual de carteiras. A reconciliação do Dia 20 diz
+   que o Morning Call viria "antes do Global Atlas", mas nenhum dia posterior o
+   recebeu, e não há código dele em `apps/web`. A Fase 2 não o inclui.
+2. **Heatmap básico (P0)** aparece só no Dia 37, depois do release candidate do
+   Dia 30.
+3. **Os itens obrigatórios antes de abrir o produto não estão na Fase 2:** H-08,
+   H-09, convite ou allowlist no cadastro (H-11), H-13, H-19, H-21, H-23, Redis
+   persistente e plano Vercel adequado a uso não pessoal ([DAY29_HANDOFF.md](DAY29_HANDOFF.md)).
+   Sem eles, o Dia 40 não pode declarar o produto pronto para outras pessoas.
+4. **Versionamento** (branch `develop` e tags por dia) não foi adotado; decidir no
+   Dia 30, junto da tag do release candidate.
+
+**Decisões pendentes do usuário:**
+
+- **Lacunas 1 e 2:** onde entram o Global Atlas tabular e o heatmap básico. Sem
+  eles, o release candidate do Dia 30 deve ser registrado como RC do staging
+  privado com P0 incompleto, não como P0 congelado.
+- **Lacuna 3:** em que dias entram os itens obrigatórios antes de abrir o produto.
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento
