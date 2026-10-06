@@ -18,32 +18,37 @@ comportamento de plataforma não confirmado na documentação oficial consultada
 | Web (Next.js 16) | Vercel Hobby, Root Directory `apps/web` | Build nativo, sem Dockerfile ([nextjs](https://vercel.com/docs/frameworks/full-stack/nextjs), [monorepos](https://vercel.com/docs/monorepos)). Uso pessoal e não comercial ([hobby](https://vercel.com/docs/plans/hobby)). |
 | API (FastAPI) | Render web service grátis, runtime Python nativo, Root Directory `apps/api` | Sem Dockerfile ([deploy-fastapi](https://render.com/docs/deploy-fastapi)). Dorme após 15 min sem tráfego e volta em cerca de 1 min ([free](https://render.com/docs/free)). |
 | Redis | Render Key Value grátis, **mesma região** da API | Sem persistência ([key-value](https://render.com/docs/key-value)); decisão R2 no H-03. |
-| PostgreSQL | Neon, **banco próprio do staging** | Nunca o banco `market_pulse_test` nem o branch usado pela suíte (`conftest` faz `TRUNCATE`). |
+| PostgreSQL | Render Postgres grátis 16, banco `market_pulse_staging`, sem acesso externo | Expira **30 dias após a criação**, 1 GB, sem backup, um por workspace ([free](https://render.com/docs/free)). Nunca o banco `market_pulse_test` da suíte (`conftest` faz `TRUNCATE`). |
 | Cron | Nenhum | Decisão C4 no H-05; refresh manual. |
 
 O navegador fala só com a origem do web; `/api/v1/*` é repassado para a API (ADR-008).
 
+**Atualização de 2026-10-05:** a infraestrutura do Render é declarada em
+[`render.yaml`](../../render.yaml) (Blueprint). O Render cria banco, Key Value e API, liga
+`MARKET_PULSE_DATABASE_URL` e `MARKET_PULSE_REDIS_URL` por referência e gera
+`MARKET_PULSE_INTERNAL_REFRESH_SECRET`. Nenhuma credencial passa por arquivo, chat ou
+terminal. Isso substitui o Neon e a migration manual previstos na primeira versão deste
+runbook.
+
 ## 2. Pré-requisitos
 
-1. **[VOCÊ]** Autorizar o push da branch que será implantada. Vercel e Render implantam a
-   partir do GitHub; sem push não há deploy.
-2. **[VOCÊ]** Criar as contas e os recursos (Vercel, Render, banco Neon do staging). Não
-   informe credenciais no chat: elas vão direto nos painéis.
+1. Branch `feature/dia-29-staging` no GitHub (feito em 2026-10-05).
+2. **[VOCÊ]** Contas no Render e na Vercel. Não informe credenciais no chat.
 3. Rodadas oficiais (PowerShell, `C:\Projetos\mp-local-check`) verdes no commit a implantar.
 
-## 3. Banco do staging e migrations
+## 3. Aplicar o Blueprint e migrations
 
-O pre-deploy command do Render não existe na instância grátis
-([deploys](https://render.com/docs/deploys)). **Decisão:** migrations são um passo manual,
-explícito e anterior a cada deploy que mude o schema. Não vão no comando de start, para não
-rodar a cada wake-up nem em paralelo.
-
-1. **[VOCÊ]** Criar no Neon um banco dedicado (sugestão: `market_pulse_staging`).
-2. **[VOCÊ]** No PowerShell, em `apps/api`, definir `MARKET_PULSE_DATABASE_URL` **só na
-   sessão do terminal** (nunca em arquivo versionado) e rodar
-   `.\.venv\Scripts\python.exe -m alembic upgrade head`.
-   O `migrations/env.py` lê exatamente essa variável.
-3. Fechar o terminal ao terminar, para descartar a variável.
+1. **[VOCÊ]** Render → New → Blueprint → Public Git Repository
+   `https://github.com/dinowei/market-pulse`, branch `feature/dia-29-staging`.
+   Conectar pelo repositório público dispensa dar acesso ao app do Render no GitHub, mas
+   desliga o auto-deploy: cada deploy é disparado manualmente.
+2. **[VOCÊ]** Preencher `MARKET_PULSE_CORS_ORIGINS` com a origem de produção do projeto
+   Vercel em JSON (exemplo de formato: `["https://<projeto>.vercel.app"]`) e aplicar.
+3. **Migrations:** rodam no comando de start (`alembic upgrade head` antes do uvicorn),
+   porque o pre-deploy command não existe na instância grátis
+   ([deploys](https://render.com/docs/deploys)). Com uma única instância não há corrida;
+   quando o schema já está em head, o comando não faz nada e só acrescenta alguns
+   segundos ao cold start.
 
 ## 4. Render — API
 
@@ -52,8 +57,9 @@ rodar a cada wake-up nem em paralelo.
 | Runtime | Python 3 nativo |
 | Root Directory | `apps/api` ([monorepo-support](https://render.com/docs/monorepo-support)) |
 | Build command | `uv sync --frozen --no-dev` **[A VALIDAR]** |
-| Start command | `uv run --frozen --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT` **[A VALIDAR]** |
+| Start command | `uv run --frozen --no-dev alembic upgrade head && uv run --frozen --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT` **[A VALIDAR]** |
 | Health check path | `/health/live` |
+| Key Value | `noeviction`: memória cheia gera erro (503, falha fechada) em vez de apagar sessões, revogações ou contadores |
 
 - O Render inclui o `uv` quando há `uv.lock` na raiz do projeto
   ([uv-version](https://render.com/docs/uv-version)); o `uv.lock` está em `apps/api`.
@@ -72,9 +78,9 @@ rodar a cada wake-up nem em paralelo.
 |---|---|
 | `PYTHON_VERSION` | `3.11.9`, a versão local testada. Sem ela, um serviço novo usa 3.14.x ([python-version](https://render.com/docs/python-version)). |
 | `MARKET_PULSE_ENVIRONMENT` | `staging` (ativa a validação estrita). |
-| `MARKET_PULSE_DATABASE_URL` | URL do banco do staging. |
-| `MARKET_PULSE_REDIS_URL` | **URL interna** do Key Value. A externa vem desabilitada por padrão. |
-| `MARKET_PULSE_INTERNAL_REFRESH_SECRET` | Aleatório, com 16 caracteres ou mais. |
+| `MARKET_PULSE_DATABASE_URL` | Ligada pelo Blueprint (`fromDatabase`). |
+| `MARKET_PULSE_REDIS_URL` | Ligada pelo Blueprint (`fromService`, URL **interna**; a externa fica desabilitada). |
+| `MARKET_PULSE_INTERNAL_REFRESH_SECRET` | Gerada pelo Render (`generateValue`). |
 | `MARKET_PULSE_CORS_ORIGINS` | JSON com **só** a origem de produção do projeto Vercel. |
 | `MARKET_PULSE_DEMO_ENABLED` | `false`; `true` é recusado no boot. |
 | `MARKET_PULSE_AUTH_COOKIE_SECURE` | `true`. O login já força `Secure` fora de `local`/`test`; deixar explícito. |
