@@ -270,6 +270,22 @@ Ponto de atenção registrado: o H-19 (Dia 35) inclui decidir o IP como segunda
 chave, e o IP correto só fica confiável com o H-23 (Dia 39). O Dia 35 deve usar a
 medição de IP já feita no staging, ou deixar essa parte explícita para o Dia 39.
 
+**Estado do Dia 35 em 2026-10-07** (branch `feature/dia-31-34`, sem deploy; autorização
+do usuário para seguir até o Dia 40):
+
+| Item | Entrega | Evidência medida | Pendente |
+| --- | --- | --- | --- |
+| H-19 | Limite do balde `standard` por usuário com sessão válida; IP para o resto ([ADR-017](adr/017-per-user-rate-limit.md)) | 5 testes (usuários no mesmo IP, cookie forjado, sessão revogada, anônimo, leitura única da sessão) | IP real por saltos confiáveis (H-23, Dia 39) |
+| H-21 | `GET /portfolios/{id}/overview` e watchlists sem recarga total ([ADR-018](adr/018-portfolio-overview-and-aligned-downsampling.md)) | Overview igual aos 8 endpoints separados; isolamento por dono; testes de frontend | Contagem de requisições medida na rodada de frontend |
+| Comparação | Downsampling M4 alinhado e opt-in no lote; benchmark tracejado com legenda em texto; ponto principal neutro ([ADR-018](adr/018-portfolio-overview-and-aligned-downsampling.md)) | Mesmas datas em todas as séries, extremos de cada uma preservados; contraste do acento neutro ≥ 3:1 nos dois temas | — |
+| H-13 | Avisos canônicos do §11 em todas as áreas financeiras; [pacote de revisão](editorial/MORNING_CALL_COMPLIANCE_REVIEW.md) | Teste compara o texto do código com a política | **Assinatura humana**; divergências do fluxo editorial (H-25) |
+
+Verificações do Dia 35: backend com 391 passed, 10 skipped e 0 failed; frontend com 67
+testes unitários, lint, typecheck e build OK; OpenAPI e cliente gerado sincronizados.
+Resolve as pendências "redução na comparação multissérie" (Dia 31) e as decisões de
+design do Dia 34 ([ADR-016](adr/016-global-persisted-theme.md)). Novos achados: H-24 e
+H-25 no [handoff](DAY29_HANDOFF.md). O gate segue sem CI (H-05) e sem deploy no staging.
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento

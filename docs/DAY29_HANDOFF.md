@@ -24,7 +24,8 @@ deploy; **C** é obrigatório antes de abrir o produto a outras pessoas.
 | Cookie entre sites | A | Resolvido: [ADR-008](adr/008-same-origin-api-proxy.md), proxy same-origin. |
 | `/docs` público | A | Resolvido: fechado em `production`/`staging`. |
 | H-08, H-09, convite no cadastro (H-11) | C | Agendados para o Dia 30 (decisão do usuário, 2026-10-05). |
-| H-13, H-19, H-21 | C | Agendados para o Dia 35. |
+| H-19, H-21 | C | Implementados no Dia 35 (2026-10-07), branch `feature/dia-31-34`, ainda sem deploy. |
+| H-13 | C | Pacote de revisão pronto no Dia 35; **aguarda a assinatura humana**. |
 | H-23, Redis persistente, plano Vercel | C | Agendados para o Dia 39. |
 | Demais itens | B | Abertos. |
 
@@ -157,6 +158,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** o Morning Call é conteúdo editorial; qualquer uso fora do uso pessoal precisa passar pelo compliance.
 - **Critério de pronto:** revisão de compliance registrada antes de qualquer uso fora do uso pessoal; texto sem recomendação, sinal ou preço-alvo (`FINANCIAL_CONTENT_POLICY.md`).
 - **Prova hoje:** o validador editorial automático existe e é testado. A revisão humana de compliance **não ocorreu**.
+- **Dia 35 (2026-10-07):** avisos do §11 aplicados com o texto canônico (Morning Call e todas as áreas financeiras), com teste que compara o código à política. O [pacote de revisão](editorial/MORNING_CALL_COMPLIANCE_REVIEW.md) mapeia a cobertura do validador, lista as divergências entre política e código (D-1 a D-5) e traz o roteiro e o campo de assinatura. **H-13 continua aberto** até a assinatura.
 
 ## D. Resultados que dependem da Rodada 2
 
@@ -199,6 +201,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** o balde `standard` é por IP; usuários atrás do mesmo NAT dividem 30 requisições por 60 s. Limite por sessão exige a chave de sessão no middleware (que roda antes da autenticação) e decisão sobre o IP como segunda chave.
 - **Critério de pronto:** decisão registrada (ADR se mudar a política); testes: um usuário não consome o balde de outro no mesmo IP, e o 31º pedido continua barrado; sem relaxar o limite.
 - **Prova hoje:** **não verificado**; é análise de código, sem medição.
+- **Dia 35 (2026-10-07):** implementado conforme a [ADR-017](adr/017-per-user-rate-limit.md). Com sessão válida, a chave é o id do usuário; sem sessão, ou com cookie forjado ou revogado, é o IP. Limite mantido em 30 por 60 s. Testes em `test_rate_limit_per_user_day35.py`. No staging, onde todos os clientes chegam como `127.0.0.1` (H-23), isso separa os usuários autenticados; os anônimos continuam no balde único. **Sem deploy ainda.**
 - **CI:** apenas `day27-compliance.yml` roda Playwright, e só `e2e/day27-a11y.spec.ts` (cerca de 4 requisições no balde standard, abaixo de 30). O E2E `demo.spec.ts` não roda em nenhum workflow. Se ele passar a rodar no CI, precisará do mesmo espaçamento do `run_frontend.ps1` ou do limite por sessão.
 
 ### H-20 `Retry-After` do 429 não é legível pelo navegador
@@ -212,6 +215,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Motivo:** o fluxo principal do E2E usa **26 das 30** requisições do balde standard por janela de 60 s, um usuário real fica perto do limite. Causas lidas no código: cada mutação de watchlist faz `load()` e recarrega a lista inteira (2 requisições por ação); `/portfolios` faz 1 lista + 8 detalhes por carga (9); a home faz 2 (Morning Call).
 - **Critério de pronto:** sem refetch completo após cada mutação de watchlist; endpoint em lote para os detalhes de `/portfolios` (contrato OpenAPI e cliente gerado atualizados, sem editar o cliente à mão); contagem por fluxo medida de novo, sem relaxar o limite de 30.
 - **Prova hoje:** contagem por **leitura de código**, não medida em execução.
+- **Dia 35 (2026-10-07):** implementado conforme a [ADR-018](adr/018-portfolio-overview-and-aligned-downsampling.md): `GET /portfolios/{id}/overview` (contrato e cliente gerado atualizados) e mutações de watchlist com o estado vindo da resposta. Por leitura de código, `/portfolios` cai de 9 para 2 requisições por carga e cada mutação de watchlist de 2 para 1. **Falta medir** na rodada de frontend.
 
 ### H-22 `/compare` abre em estado de erro com DEMO ligado
 - **Origem:** defeito do Dia 26 encontrado pelo E2E do Dia 28 em 2026-10-01 (execução das 22:59, informada pelo responsável). O `/compare` usa ids padrão fixos (`equity.br.b3.petr4`) que não existem no catálogo DEMO, e com DEMO ligado a página abre em estado de erro (`404 POST /api/v1/market-data/history/batch`).
@@ -229,6 +233,20 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Prova hoje:** leitura de código; nenhuma medição.
 - **Medido em 2026-10-06 no staging (piora o diagnóstico):** o IP do cliente **era forjável**. Um `X-Forwarded-For: 203.0.113.77` enviado pelo cliente virou `request.client.host`, porque o Uvicorn confia nos cabeçalhos de proxy e o proxy do Render não filtra o valor do cliente. Isso permitia contornar o limite de login. **Mitigação aplicada:** [ADR-012](adr/012-untrusted-proxy-headers.md), Uvicorn com `--no-proxy-headers` (forja reproduzida localmente e eliminada com a flag). A solução definitiva, IP real por saltos confiáveis com testes de forja, continua no Dia 39.
 - **Medido após a mitigação (2026-10-06, deploy por sync do Blueprint):** o mesmo `X-Forwarded-For` forjado aparece como `127.0.0.1`, o proxy local da instância. O IP não é mais forjável, e **todos os clientes compartilham um único balde por IP**. Isso é aceitável só no staging de 1 usuário.
+
+### H-24 Cliente Redis novo a cada requisição
+- **Origem:** leitura de código no Dia 35 ([ADR-017](adr/017-per-user-rate-limit.md)).
+- **Motivo:** `get_auth_service()` cria um `AuthService` novo a cada chamada, e o construtor cria clientes Redis próprios para sessões e para o limitador. O middleware e as rotas chamam essa função mais de uma vez por requisição. Isso já acontecia antes do Dia 35.
+- **Critério de pronto:** clientes Redis compartilhados por processo, com teste que prove a reutilização, e latência medida antes e depois.
+- **Classe:** C, agendado para o Dia 39 (regressão e desempenho).
+- **Prova hoje:** leitura de código; nada medido.
+
+### H-25 Fluxo editorial diverge da política
+- **Origem:** [pacote de revisão do Morning Call](editorial/MORNING_CALL_COMPLIANCE_REVIEW.md), seção 3.
+- **Motivo:** o código usa `DRAFT → UNDER_REVIEW → APPROVED → PUBLISHED → ARCHIVED`, e a validação só bloqueia na publicação (D-1); o papel `ADMIN` pode criar, aprovar e publicar o mesmo post sozinho (D-3); `archived_at` recebe o horário da publicação (D-5).
+- **Critério de pronto:** D-1 e D-3 decididos em ADR antes de mudar o fluxo; D-5 corrigido com teste.
+- **Classe:** C. Obrigatório antes de qualquer Morning Call sair do uso pessoal.
+- **Prova hoje:** leitura de código (`editorial/service.py`, `routers.py:_admin_transition`).
 
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 

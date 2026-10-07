@@ -82,6 +82,14 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
   - tokens OKLCH e contraste AA nos dois temas (ADR-015).
 
   Faltam a validação em CI (H-05) e a revisão visual humana.
+- **Dia 35: entregue em 2026-10-07** na mesma branch (sem deploy):
+  - H-19, limite por usuário (ADR-017);
+  - H-21, overview da carteira e downsampling alinhado da comparação (ADR-018);
+  - avisos canônicos do §11 e [pacote de revisão do Morning Call](docs/editorial/MORNING_CALL_COMPLIANCE_REVIEW.md).
+
+  **Medido:** backend com 391 passed, 10 skipped e 0 failed; frontend com 67 testes,
+  lint, typecheck e build OK. **H-13 continua aberto** até a assinatura humana. Novos
+  achados: H-24 e H-25 no handoff.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia
