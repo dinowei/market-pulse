@@ -44,6 +44,7 @@ from app.contracts import (
     EditorialValidationResponse,
     EditorialVersionCreateRequest,
     EquityCurveResponse,
+    HeatmapResponse,
     HistoryPeriod,
     InstrumentList,
     InstrumentSummary,
@@ -87,6 +88,8 @@ from app.instruments.catalog import (
     CatalogStatus,
     CoverageTier,
     DataSupportStatus,
+    InstrumentCatalogEntry,
+    get_catalog,
     search_catalog,
 )
 from app.market_data.benchmarks import benchmark_items, benchmark_series
@@ -102,6 +105,7 @@ from app.market_data.economic_calendar import (
     filter_events,
     valid_timezone,
 )
+from app.market_data.heatmap import market_heatmap
 from app.market_data.normalization import AdjustmentType
 from app.market_data.public_market_data import public_history, public_quote
 from app.market_data.refresh_application import (
@@ -400,6 +404,43 @@ def internal_refresh_quotes(
     )
 
 
+def _instrument_summary(entry: InstrumentCatalogEntry) -> InstrumentSummary:
+    return InstrumentSummary(
+        id=entry.canonical_id,
+        canonical_id=entry.canonical_id,
+        symbol=entry.symbol,
+        display_symbol=entry.display_symbol,
+        name=entry.name,
+        instrument_type=entry.instrument_type,
+        currency=entry.currency,
+        aliases=entry.aliases,
+        catalog_status=entry.catalog_status.value,
+        coverage_tier=entry.coverage_tier.value,
+        data_support_status=entry.data_support_status.value,
+        support_state=(
+            "BLOCKED_SCOPE"
+            if entry.catalog_status is CatalogStatus.OUT_OF_SCOPE
+            else "UNSUPPORTED"
+            if entry.data_support_status is DataSupportStatus.UNAVAILABLE
+            else "CANDIDATE_FUTURE"
+            if entry.coverage_tier is not CoverageTier.P0_OPERATIONAL
+            else "P0_OPERATIONAL"
+        ),
+        exchange=entry.exchange,
+        country=entry.country,
+        region=entry.region,
+        timezone=entry.timezone,
+    )
+
+
+def _page(entries: list[InstrumentCatalogEntry], limit: int, offset: int) -> InstrumentList:
+    next_offset = offset + limit if offset + limit < len(entries) else None
+    return InstrumentList(
+        items=[_instrument_summary(entry) for entry in entries[offset : offset + limit]],
+        meta=PageMeta(limit=limit, offset=offset, next_offset=next_offset),
+    )
+
+
 @router.get("/instruments", response_model=InstrumentList, tags=["instruments"])
 def list_instruments(
     limit: int = Query(20, ge=1, le=100),
@@ -407,9 +448,15 @@ def list_instruments(
     sort: str = Query("created_at"),
     order: str = Query("desc", pattern="^(asc|desc)$"),
 ) -> InstrumentList:
+    # The catalog has no creation timestamp: "created_at" keeps the catalog order.
     if sort not in {"created_at", "symbol", "name"}:
         raise HTTPException(status_code=422, detail="Unsupported sort field")
-    return InstrumentList(items=[], meta=PageMeta(limit=limit, offset=offset, next_offset=None))
+    entries = list(get_catalog())
+    if sort != "created_at":
+        entries.sort(key=lambda entry: getattr(entry, sort).casefold())
+    if order == "desc":
+        entries.reverse()
+    return _page(entries, limit, offset)
 
 
 @router.get("/instruments/search", response_model=InstrumentList, tags=["instruments"])
@@ -418,38 +465,7 @@ def search_instruments(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ) -> InstrumentList:
-    entries = search_catalog(q)
-    page = entries[offset : offset + limit]
-    items = [
-        InstrumentSummary(
-            id=entry.canonical_id,
-            canonical_id=entry.canonical_id,
-            symbol=entry.symbol,
-            display_symbol=entry.display_symbol,
-            name=entry.name,
-            instrument_type=entry.instrument_type,
-            currency=entry.currency,
-            aliases=entry.aliases,
-            catalog_status=entry.catalog_status.value,
-            coverage_tier=entry.coverage_tier.value,
-            data_support_status=entry.data_support_status.value,
-            support_state=(
-                "BLOCKED_SCOPE"
-                if entry.catalog_status is CatalogStatus.OUT_OF_SCOPE
-                else "UNSUPPORTED"
-                if entry.data_support_status is DataSupportStatus.UNAVAILABLE
-                else "CANDIDATE_FUTURE"
-                if entry.coverage_tier is not CoverageTier.P0_OPERATIONAL
-                else "P0_OPERATIONAL"
-            ),
-        )
-        for entry in page
-    ]
-    next_offset = offset + limit if offset + limit < len(entries) else None
-    return InstrumentList(
-        items=items,
-        meta=PageMeta(limit=limit, offset=offset, next_offset=next_offset),
-    )
+    return _page(search_catalog(q), limit, offset)
 
 
 @router.get("/market-data/quotes/latest", tags=["market-data"])
@@ -491,6 +507,15 @@ def public_quotes_batch(payload: BatchQuoteRequest, request: Request) -> BatchQu
 )
 def public_benchmarks() -> BenchmarkListResponse:
     return BenchmarkListResponse(items=benchmark_items())
+
+
+@router.get(
+    "/market-data/heatmap",
+    response_model=HeatmapResponse,
+    tags=["market-data"],
+)
+def public_heatmap(request: Request) -> HeatmapResponse:
+    return market_heatmap(request_id_for(request))
 
 
 @router.get(

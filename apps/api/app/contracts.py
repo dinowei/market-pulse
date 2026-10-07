@@ -226,6 +226,11 @@ class InstrumentSummary(StrictModel):
     coverage_tier: str
     data_support_status: str
     support_state: str
+    # Day 37 (ADR-019): catalog metadata used by the tabular Global Atlas.
+    exchange: str | None = None
+    country: str | None = None
+    region: str | None = None
+    timezone: str | None = None
 
 
 class InstrumentList(StrictModel):
@@ -335,6 +340,26 @@ class PublicQuote(StrictModel):
         ):
             raise ValueError("public quote requires complete provenance")
         return self
+
+
+class HeatmapGroup(StrictModel):
+    group: str
+    tiles: list[PublicQuote]
+
+
+class HeatmapResponse(StrictModel):
+    """Basic P0 heatmap (ADR-019). Each tile is a full PublicQuote with its own provenance.
+
+    The response declares what the data allows: no approved dataset carries sector or
+    market cap, so tiles are grouped by instrument type and share the same area.
+    """
+
+    grouping: Literal["INSTRUMENT_TYPE"] = "INSTRUMENT_TYPE"
+    sizing: Literal["EQUAL_AREA"] = "EQUAL_AREA"
+    color_basis: Literal["DIRECTION_VS_PREVIOUS_CLOSE"] = "DIRECTION_VS_PREVIOUS_CLOSE"
+    groups: list[HeatmapGroup]
+    limitations: tuple[str, ...]
+    request_id: str
 
 
 class PublicHistoryPoint(StrictModel):

@@ -208,6 +208,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market-data/heatmap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Heatmap */
+        get: operations["public_heatmap_api_v1_market_data_heatmap_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market-data/history/{canonical_id}": {
         parameters: {
             query?: never;
@@ -1521,6 +1538,46 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HeatmapGroup */
+        HeatmapGroup: {
+            /** Group */
+            group: string;
+            /** Tiles */
+            tiles: components["schemas"]["PublicQuote"][];
+        };
+        /**
+         * HeatmapResponse
+         * @description Basic P0 heatmap (ADR-019). Each tile is a full PublicQuote with its own provenance.
+         *
+         *     The response declares what the data allows: no approved dataset carries sector or
+         *     market cap, so tiles are grouped by instrument type and share the same area.
+         */
+        HeatmapResponse: {
+            /**
+             * Grouping
+             * @default INSTRUMENT_TYPE
+             * @constant
+             */
+            grouping: "INSTRUMENT_TYPE";
+            /**
+             * Sizing
+             * @default EQUAL_AREA
+             * @constant
+             */
+            sizing: "EQUAL_AREA";
+            /**
+             * Color Basis
+             * @default DIRECTION_VS_PREVIOUS_CLOSE
+             * @constant
+             */
+            color_basis: "DIRECTION_VS_PREVIOUS_CLOSE";
+            /** Groups */
+            groups: components["schemas"]["HeatmapGroup"][];
+            /** Limitations */
+            limitations: string[];
+            /** Request Id */
+            request_id: string;
+        };
         /**
          * HistoryPeriod
          * @enum {string}
@@ -1561,6 +1618,14 @@ export interface components {
             data_support_status: string;
             /** Support State */
             support_state: string;
+            /** Exchange */
+            exchange?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Region */
+            region?: string | null;
+            /** Timezone */
+            timezone?: string | null;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -2687,6 +2752,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BenchmarkListResponse"];
+                };
+            };
+        };
+    };
+    public_heatmap_api_v1_market_data_heatmap_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeatmapResponse"];
                 };
             };
         };
