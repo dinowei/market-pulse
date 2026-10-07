@@ -161,7 +161,7 @@ export function WatchlistsPanel() {
     }
   }
 
-  if (loading) return <main className="watchlists-page terminal-root"><p className="loading-state">Carregando watchlists…</p></main>;
+  if (loading) return <main className="watchlists-page terminal-root"><h1 className="sr-only">Watchlists e favoritos</h1><p className="loading-state">Carregando watchlists…</p></main>;
   if (signedOut) {
     return (
       <main className="watchlists-page terminal-root">

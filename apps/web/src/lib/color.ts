@@ -54,6 +54,32 @@ export function parseOklch(css: string): Oklch {
   return { l: Number(match[1]) / 100, c: Number(match[2]), h: Number(match[3]) };
 }
 
+/** Euclidean distance in OKLab (deltaEOK of CSS Color 4); about 0.02 is just noticeable. */
+export function deltaEOk(a: string, b: string): number {
+  const [x, y] = [hexToOklch(a), hexToOklch(b)];
+  const lab = ({ l, c, h }: Oklch) => [l, c * Math.cos((h * Math.PI) / 180), c * Math.sin((h * Math.PI) / 180)];
+  const [p, q] = [lab(x), lab(y)];
+  return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+}
+
+// Machado, Oliveira and Fernandes (2009) dichromacy matrices at severity 1.0, applied to
+// linear RGB; achromatopsia keeps only the relative luminance.
+const CVD_MATRICES = {
+  protanopia: [[0.152286, 1.052583, -0.204868], [0.114503, 0.786281, 0.099216], [-0.003882, -0.048116, 1.051998]],
+  deuteranopia: [[0.367322, 0.860646, -0.227968], [0.280085, 0.672501, 0.047413], [-0.01182, 0.04294, 0.968881]],
+  tritanopia: [[1.255528, -0.076749, -0.178779], [-0.078411, 0.930809, 0.147602], [0.004733, 0.691367, 0.3039]],
+} as const;
+
+export type ColorVision = keyof typeof CVD_MATRICES | "achromatopsia";
+export const COLOR_VISIONS: readonly ColorVision[] = ["protanopia", "deuteranopia", "tritanopia", "achromatopsia"];
+
+export function simulateColorVision(hex: string, vision: ColorVision): string {
+  const rgb = hexToRgb(hex).map(toLinear);
+  const clamp = (value: number) => Math.min(1, Math.max(0, value));
+  const rows = vision === "achromatopsia" ? [[0.2126, 0.7152, 0.0722], [0.2126, 0.7152, 0.0722], [0.2126, 0.7152, 0.0722]] : CVD_MATRICES[vision];
+  return rgbToHex(rows.map((row) => toGamma(clamp(row[0] * rgb[0] + row[1] * rgb[1] + row[2] * rgb[2]))) as [number, number, number]);
+}
+
 function luminance(hex: string): number {
   const [r, g, b] = hexToRgb(hex).map(toLinear);
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;

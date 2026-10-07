@@ -9,6 +9,7 @@ import { MorningCallPanel } from "./morning-call";
 import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-note";
 import { ThemeToggle } from "./theme-toggle";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
+import { DIRECTION_CUE, priceDirection, signedDecimal } from "../lib/price-direction";
 
 type PublicQuote = components["schemas"]["PublicQuote"];
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
@@ -62,6 +63,18 @@ export function MarketStatusBar({ data }: { data?: PublicQuote | PublicHistorySe
   );
 }
 
+function PriceChange({ quote }: { quote: PublicQuote }) {
+  const direction = priceDirection(quote.change ?? quote.change_percent);
+  if (!direction || quote.change_percent == null) return <p className="asset-change">Variação indisponível</p>;
+  const cue = DIRECTION_CUE[direction];
+  const absolute = quote.change == null ? "" : `${signedDecimal(quote.change, direction)} ${quote.currency} | `;
+  return (
+    <p className={`asset-change direction-${direction.toLowerCase()}`}>
+      <span aria-hidden="true">{cue.glyph}</span> {absolute}{signedDecimal(quote.change_percent, direction)}% · {cue.word} · base: fechamento anterior
+    </p>
+  );
+}
+
 export function AssetContextPanel({ quote, loading, error, selectedId }: { quote?: PublicQuote; loading: boolean; error?: string; selectedId: string }) {
   return (
     <aside className="asset-context" aria-labelledby="asset-context-title">
@@ -72,7 +85,7 @@ export function AssetContextPanel({ quote, loading, error, selectedId }: { quote
         <>
           <p className="asset-name">{quote.name}</p>
           <p className="asset-price">{quote.price == null ? "Indisponível" : `${quote.currency} ${quote.price}`}</p>
-          <p className="asset-change">{quote.change_percent == null ? "Variação indisponível" : `${quote.change_percent}%`}</p>
+          <PriceChange quote={quote} />
           <dl className="meta-grid compact">
             <div><dt>Moeda</dt><dd>{quote.currency}</dd></div>
             <div><dt>Bolsa</dt><dd>{quote.exchange ?? "Indisponível"}</dd></div>
