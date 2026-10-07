@@ -90,6 +90,11 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
   **Medido:** backend com 391 passed, 10 skipped e 0 failed; frontend com 67 testes,
   lint, typecheck e build OK. **H-13 continua aberto** até a assinatura humana. Novos
   achados: H-24 e H-25 no handoff.
+- **Dia 36: entregue em 2026-10-07** na mesma branch (sem deploy):
+  [relatório de acessibilidade](docs/design/ACCESSIBILITY_DAY_36.md) com 6 achados
+  corrigidos. **Medido:** axe WCAG 2.2 AA em 9 rotas × 2 temas, reflow, teclado e
+  movimento reduzido (21 de 21, local, sem sessão); backend com 392 passed; frontend com
+  73 testes. Falta a revisão humana (leitor de tela, zoom) e a varredura com sessão.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia

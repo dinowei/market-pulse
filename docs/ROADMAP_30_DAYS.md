@@ -286,6 +286,21 @@ Resolve as pendências "redução na comparação multissérie" (Dia 31) e as de
 design do Dia 34 ([ADR-016](adr/016-global-persisted-theme.md)). Novos achados: H-24 e
 H-25 no [handoff](DAY29_HANDOFF.md). O gate segue sem CI (H-05) e sem deploy no staging.
 
+**Estado do Dia 36 em 2026-10-07** (mesma branch, sem deploy): relatório em
+[ACCESSIBILITY_DAY_36.md](design/ACCESSIBILITY_DAY_36.md).
+
+- **Corrigido:** variação do ativo com direção, sinal, seta e palavra (era sempre azul);
+  `FRESH` neutro; cotação sem base sem variação inventada; foco em todos os controles;
+  link sublinhado no login e no cadastro; `h1` no carregamento das watchlists.
+- **Medido:** axe WCAG 2.2 AA nas 9 rotas e nos dois temas, reflow em 320 px, foco por
+  teclado e movimento reduzido: 21 de 21 no Playwright local. Simulação de daltonismo da
+  paleta existente: a cor sozinha não separa as direções em todas as visões, e os sinais
+  não cromáticos cobrem isso. Backend com 392 passed, 10 skipped e 0 failed; frontend com
+  73 testes, lint, typecheck e build OK.
+- **Pendente:** estados com sessão e com DEMO na varredura (exige CI ou Docker), leitor de
+  tela, zoom de 200% e espaçamento de texto (revisão humana). Paleta alternativa não foi
+  proposta.
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento
