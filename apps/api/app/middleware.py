@@ -106,8 +106,29 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+def _standard_subject(request: Request, cookie_name: str, ip_subject: str) -> str:
+    """H-19 (ADR-017): a VALID session is limited per user, anything else per IP.
+
+    Users behind the same NAT or proxy (Render's local proxy collapses every client to one
+    address, ADR-012) no longer share one bucket. A missing, forged, expired or revoked
+    cookie keeps the IP subject, so inventing cookies never buys a fresh quota. The
+    validated user is cached on request.state so the route does not read the session twice.
+    """
+    token = request.cookies.get(cookie_name)
+    if not token:
+        return ip_subject
+    try:
+        from app.routers import get_auth_service
+
+        user = get_auth_service().me(token)
+    except Exception:
+        return ip_subject
+    request.state.authenticated_user = user
+    return f"user:{user.id}"
+
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Enforces per-IP rate limits.
+    """Enforces rate limits per IP, or per authenticated user on the standard bucket (ADR-017).
 
     Limiter resolution order (first non-None wins):
       1. request.app.state.rate_limiter - injected by startup hooks or test fixtures
@@ -150,7 +171,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             fail_closed = False
 
         ip = request.client.host if request.client else "unknown"
-        key = f"{key_prefix}:{ip}"
+        subject = f"ip:{ip}"
+        if key_prefix == "rate_limit:standard":
+            subject = _standard_subject(request, settings.auth_cookie_name, subject)
+        key = f"{key_prefix}:{subject}"
 
         limiter = getattr(getattr(request, "app", None), "state", None)
         limiter = getattr(limiter, "rate_limiter", None) if limiter is not None else None

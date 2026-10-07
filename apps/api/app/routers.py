@@ -206,6 +206,10 @@ def login(payload: LoginRequest, request: Request, response: Response) -> AuthUs
 def get_current_user(
     request: Request, session_token: str | None = Cookie(default=None, alias="market_pulse_session")
 ) -> AuthUserResponse:
+    # Already validated in this request by the rate-limit middleware (H-19, ADR-017).
+    cached = getattr(request.state, "authenticated_user", None)
+    if isinstance(cached, AuthUserResponse):
+        return cached
     service = get_auth_service()
     cookie_name = get_settings().auth_cookie_name
     if cookie_name != "market_pulse_session":

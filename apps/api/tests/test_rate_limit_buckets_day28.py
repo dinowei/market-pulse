@@ -46,9 +46,10 @@ def test_telemetry_exhausting_its_bucket_does_not_touch_the_standard_bucket() ->
         # The whole standard bucket is still available (401: unauthenticated, not 429).
         for _ in range(STANDARD_LIMIT):
             assert client.get("/api/v1/portfolios").status_code == 401
+        # The standard bucket is keyed by subject since H-19 (ADR-017): ip:<addr> or user:<id>.
         assert set(limiter.counts) == {
-            "rate_limit:telemetry:testclient",
-            "rate_limit:standard:testclient",
+            "rate_limit:telemetry:ip:testclient",
+            "rate_limit:standard:ip:testclient",
         }
     finally:
         app.state.rate_limiter = None
