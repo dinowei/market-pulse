@@ -1,0 +1,143 @@
+{
+  "description": "Day 38 lab measurement of the real staging (Vercel + Render) with apps/web/performance/measure-vitals.mjs. P95 by nearest rank; with 5 runs it equals the maximum. INP is a lab proxy (one synthetic interaction).",
+  "deployment": {
+    "web": "https://market-pulse-staging.vercel.app",
+    "branch": "feature/dia-29-staging",
+    "commit": "60df9ca"
+  },
+  "machine": "maintainer laptop, 3.7 GB RAM, under memory pressure; numbers are pessimistic for CPU",
+  "apiColdStart": {
+    "measuredAt": "2026-10-07T04:16:05Z",
+    "firstHealthMs": 52836,
+    "warmHealthMs": [
+      297,
+      638
+    ],
+    "note": "Render free plan spins down when idle; the first request after idle waits for the instance."
+  },
+  "profiles": {
+    "desktop": {
+      "baseUrl": "https://market-pulse-staging.vercel.app",
+      "measuredAt": "2026-10-07T04:17:45.746Z",
+      "results": {
+        "/": {
+          "runs": 5,
+          "LCP_p95": 568,
+          "LCP_p50": 176,
+          "CLS_p95": 0.024,
+          "INP_lab_p95": 32,
+          "TTFB_p50": 54,
+          "dataReady_p95_ms": 1957,
+          "longTasks_total_ms_p95": 132,
+          "frame_p95_ms": 16.8
+        },
+        "/portfolios": {
+          "runs": 5,
+          "LCP_p95": 808,
+          "LCP_p50": 524,
+          "CLS_p95": 0,
+          "INP_lab_p95": 24,
+          "TTFB_p50": 57,
+          "dataReady_p95_ms": 799,
+          "longTasks_total_ms_p95": 0,
+          "frame_p95_ms": 16.8
+        },
+        "/compare": {
+          "runs": 5,
+          "LCP_p95": 764,
+          "LCP_p50": 476,
+          "CLS_p95": 0,
+          "INP_lab_p95": 24,
+          "TTFB_p50": 59,
+          "dataReady_p95_ms": 755,
+          "longTasks_total_ms_p95": 0,
+          "frame_p95_ms": 16.8
+        },
+        "/calendar": {
+          "runs": 5,
+          "LCP_p95": 776,
+          "LCP_p50": 472,
+          "CLS_p95": 0,
+          "INP_lab_p95": 16,
+          "TTFB_p50": 48,
+          "dataReady_p95_ms": 771,
+          "longTasks_total_ms_p95": 0,
+          "frame_p95_ms": 16.8
+        },
+        "/login": {
+          "runs": 5,
+          "LCP_p95": 448,
+          "LCP_p50": 140,
+          "CLS_p95": 0,
+          "INP_lab_p95": 32,
+          "TTFB_p50": 45,
+          "dataReady_p95_ms": 523,
+          "longTasks_total_ms_p95": 0,
+          "frame_p95_ms": 16.8
+        }
+      }
+    },
+    "mobile": {
+      "baseUrl": "https://market-pulse-staging.vercel.app",
+      "profile": "mobile",
+      "measuredAt": "2026-10-07T04:20:08.393Z",
+      "results": {
+        "/": {
+          "runs": 5,
+          "LCP_p95": 964,
+          "LCP_p50": 724,
+          "CLS_p95": 0.002,
+          "INP_lab_p95": 40,
+          "TTFB_p50": 55,
+          "dataReady_p95_ms": 2578,
+          "longTasks_total_ms_p95": 220,
+          "frame_p95_ms": 16.8
+        },
+        "/portfolios": {
+          "runs": 5,
+          "LCP_p95": 2252,
+          "LCP_p50": 1856,
+          "CLS_p95": 0,
+          "INP_lab_p95": 32,
+          "TTFB_p50": 54,
+          "dataReady_p95_ms": 2327,
+          "longTasks_total_ms_p95": 241,
+          "frame_p95_ms": 16.8
+        },
+        "/compare": {
+          "runs": 5,
+          "LCP_p95": 1916,
+          "LCP_p50": 1796,
+          "CLS_p95": 0,
+          "INP_lab_p95": 88,
+          "TTFB_p50": 50,
+          "dataReady_p95_ms": 2022,
+          "longTasks_total_ms_p95": 268,
+          "frame_p95_ms": 16.8
+        },
+        "/calendar": {
+          "runs": 5,
+          "LCP_p95": 2168,
+          "LCP_p50": 1820,
+          "CLS_p95": 0,
+          "INP_lab_p95": 32,
+          "TTFB_p50": 52,
+          "dataReady_p95_ms": 2233,
+          "longTasks_total_ms_p95": 199,
+          "frame_p95_ms": 16.8
+        },
+        "/login": {
+          "runs": 5,
+          "LCP_p95": 688,
+          "LCP_p50": 672,
+          "CLS_p95": 0,
+          "INP_lab_p95": 64,
+          "TTFB_p50": 51,
+          "dataReady_p95_ms": 1503,
+          "longTasks_total_ms_p95": 278,
+          "frame_p95_ms": 16.8
+        }
+      }
+    }
+  }
+}
