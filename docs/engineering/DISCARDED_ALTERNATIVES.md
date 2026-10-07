@@ -18,3 +18,22 @@
 | **Área por valor de mercado e grupos por setor no heatmap** | Nenhum dataset aprovado traz esses campos; inventá-los violaria a política de integridade | [ADR-019](../adr/019-global-atlas-table-and-basic-heatmap.md) | Dataset `PUBLIC_APPROVED` com setor e valor de mercado |
 | **Abrir a rede do Postgres do staging** para ler a telemetria | Aumentaria a superfície de ataque para uma leitura que o painel interno já oferece | [Dia 38](PERFORMANCE_DAY_38.md), P-4 | Nunca para leitura ad hoc; só com acesso controlado e registrado |
 | **Reescrever a autenticação** (JWT, TOTP, e-mail) durante a Fase 2 | O usuário manteve a Fase 2 aprovada; a sessão opaca em cookie `HttpOnly` é o desenho da especificação | Decisão do usuário; [PROJECT_SPEC.md](../PROJECT_SPEC.md) | Requisito novo de segundo fator ou de integração entre domínios |
+
+## Opções preteridas por decisão do usuário
+
+Estas não foram descartadas por análise técnica, mas escolhidas pelo responsável entre
+opções apresentadas. O motivo registrado é o da fonte; nenhum foi inferido depois.
+
+| Escolha | Opção preterida | Fonte |
+| --- | --- | --- |
+| Tema global, persistido no navegador (chave `market-pulse.theme`) | Tema fixo por página | [ADR-016](../adr/016-global-persisted-theme.md), decisão 1 |
+| Âmbar da importância média no calendário mantido, com a importância também em texto | Trocar a cor para cumprir "âmbar só para `STALE`" (diretriz §8) | [ADR-016](../adr/016-global-persisted-theme.md), decisão 2 (desvio aceito e registrado) |
+| Downsampling da comparação multissérie no Dia 35 | Entregá-lo ainda nos Dias 31 a 34 | [ADR-016](../adr/016-global-persisted-theme.md), decisão 3; entregue pela [ADR-018](../adr/018-portfolio-overview-and-aligned-downsampling.md) |
+| Manter a Fase 2 aprovada | Reescrever a autenticação e criar endpoint de carteira de demonstração | Decisão do usuário durante o Dia 29 (tabela acima) |
+
+## Fora de cogitação por regra do repositório
+
+| Opção | Regra |
+| --- | --- |
+| Copiar autenticação ou código de outro projeto (por exemplo, o FraudShield) | `AGENTS.md`: "Não acesse, copie ou altere o FraudShield nem outro projeto" |
+| Alegar tempo real ou streaming (WebSocket) no beta | `AGENTS.md` e a política de conteúdo: dados `DEMO`, `DELAYED`, `EOD` ou `STALE` nunca são apresentados como tempo real; streaming exige provider licenciado e nova arquitetura |
