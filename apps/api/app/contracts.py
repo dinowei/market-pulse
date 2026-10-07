@@ -1,6 +1,7 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -349,6 +350,23 @@ class PublicHistoryPoint(StrictModel):
     is_gap: bool = False
 
 
+class SeriesDownsampling(StrictModel):
+    """Disclosure that ``points`` is an exact subset of the full series (ADR-013)."""
+
+    method: Literal["M4"] = "M4"
+    max_points: int = Field(ge=1)
+    original_points: int = Field(ge=0)
+    returned_points: int = Field(ge=0)
+    preserved: tuple[Literal["FIRST", "LAST", "MIN", "MAX", "GAPS"], ...] = (
+        "FIRST",
+        "LAST",
+        "MIN",
+        "MAX",
+        "GAPS",
+    )
+    basis: Literal["value"] = "value"
+
+
 class PublicHistorySeries(StrictModel):
     canonical_id: str
     symbol: str
@@ -365,6 +383,7 @@ class PublicHistorySeries(StrictModel):
     latency_ms: int | None = Field(default=None, ge=0)
     limitations: tuple[str, ...] = ()
     points: list[PublicHistoryPoint]
+    downsampling: SeriesDownsampling | None = None
     tabular_fallback: bool = True
     accessibility: dict[str, bool]
     unavailable_reason: str | None = None

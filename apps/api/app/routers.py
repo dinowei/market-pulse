@@ -66,6 +66,7 @@ from app.contracts import (
     PublicHistorySeries,
     PublicQuote,
     RegisterRequest,
+    SeriesDownsampling,
     SeriesMode,
     WatchlistCreateRequest,
     WatchlistItemCreateRequest,
@@ -88,6 +89,7 @@ from app.instruments.catalog import (
     search_catalog,
 )
 from app.market_data.benchmarks import benchmark_items, benchmark_series
+from app.market_data.downsampling import MAX_MAX_POINTS, MIN_MAX_POINTS, downsample_m4
 from app.market_data.economic_calendar import (
     CALENDAR_LIMIT,
     CALENDAR_MAX_DAYS,
@@ -492,20 +494,49 @@ def public_history_by_id(
     period: HistoryPeriod = Query(...),
     mode: SeriesMode = Query(SeriesMode.PRICE),
     adjustment_type: AdjustmentType = Query(AdjustmentType.UNADJUSTED),
+    max_points: int | None = Query(
+        None,
+        ge=MIN_MAX_POINTS,
+        le=MAX_MAX_POINTS,
+        description=(
+            "Opt-in display reduction (M4): keeps first, last, min, max per bucket and every "
+            "gap; points stay an exact subset. Omit for the full series."
+        ),
+    ),
 ) -> PublicHistorySeries:
-    benchmark = benchmark_series(canonical_id, period, mode, request_id_for(request))
-    if benchmark is not None:
-        return benchmark
-    try:
-        return public_history(
-            canonical_id,
-            period,
-            mode,
-            request_id_for(request),
-            adjustment_type.value,
-        )
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="Instrument not found") from exc
+    series = benchmark_series(canonical_id, period, mode, request_id_for(request))
+    if series is None:
+        try:
+            series = public_history(
+                canonical_id,
+                period,
+                mode,
+                request_id_for(request),
+                adjustment_type.value,
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Instrument not found") from exc
+    return _with_display_downsampling(series, max_points)
+
+
+def _with_display_downsampling(
+    series: PublicHistorySeries, max_points: int | None
+) -> PublicHistorySeries:
+    if max_points is None:
+        return series
+    reduced = downsample_m4(series.points, max_points)
+    if not reduced.applied:
+        return series
+    return series.model_copy(
+        update={
+            "points": reduced.points,
+            "downsampling": SeriesDownsampling(
+                max_points=max_points,
+                original_points=reduced.original_points,
+                returned_points=len(reduced.points),
+            ),
+        }
+    )
 
 
 @router.post(

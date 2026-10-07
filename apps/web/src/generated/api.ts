@@ -2002,6 +2002,7 @@ export interface components {
             limitations: string[];
             /** Points */
             points: components["schemas"]["PublicHistoryPoint"][];
+            downsampling?: components["schemas"]["SeriesDownsampling"] | null;
             /**
              * Tabular Fallback
              * @default true
@@ -2117,6 +2118,41 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /**
+         * SeriesDownsampling
+         * @description Disclosure that ``points`` is an exact subset of the full series (ADR-013).
+         */
+        SeriesDownsampling: {
+            /**
+             * Method
+             * @default M4
+             * @constant
+             */
+            method: "M4";
+            /** Max Points */
+            max_points: number;
+            /** Original Points */
+            original_points: number;
+            /** Returned Points */
+            returned_points: number;
+            /**
+             * Preserved
+             * @default [
+             *       "FIRST",
+             *       "LAST",
+             *       "MIN",
+             *       "MAX",
+             *       "GAPS"
+             *     ]
+             */
+            preserved: ("FIRST" | "LAST" | "MIN" | "MAX" | "GAPS")[];
+            /**
+             * Basis
+             * @default value
+             * @constant
+             */
+            basis: "value";
         };
         /**
          * SeriesMode
@@ -2620,6 +2656,8 @@ export interface operations {
                 period: components["schemas"]["HistoryPeriod"];
                 mode?: components["schemas"]["SeriesMode"];
                 adjustment_type?: components["schemas"]["AdjustmentType"];
+                /** @description Opt-in display reduction (M4): keeps first, last, min, max per bucket and every gap; points stay an exact subset. Omit for the full series. */
+                max_points?: number | null;
             };
             header?: never;
             path: {
