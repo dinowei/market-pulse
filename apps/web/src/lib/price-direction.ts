@@ -28,3 +28,11 @@ export function signedDecimal(value: string, direction: PriceDirection): string 
   if (direction === "DOWN") return `-${digits}`;
   return digits;
 }
+
+/** Signed absolute and percent change with its cue, or null when the change is unknown. */
+export function describeChange(change: string | null | undefined, percent: string | null | undefined, currency: string) {
+  const direction = priceDirection(change ?? percent);
+  if (!direction || percent == null) return null;
+  const absolute = change == null ? "" : `${signedDecimal(change, direction)} ${currency} | `;
+  return { direction, cue: DIRECTION_CUE[direction], text: `${absolute}${signedDecimal(percent, direction)}%` };
+}

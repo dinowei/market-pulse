@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 // Day 36: automated WCAG 2.2 AA gate on every route and both themes. Axe does not replace
 // the manual review (directive section 20); the report lists what was checked by hand.
-const ROUTES = ["/", "/login", "/register", "/watchlists", "/portfolios", "/compare", "/calendar", "/editorial/admin", "/admin/system"];
+const ROUTES = ["/", "/login", "/register", "/watchlists", "/portfolios", "/compare", "/calendar", "/heatmap", "/atlas", "/editorial/admin", "/admin/system"];
 const THEMES = ["dark", "light"] as const;
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 

@@ -9,7 +9,7 @@ import { MorningCallPanel } from "./morning-call";
 import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-note";
 import { ThemeToggle } from "./theme-toggle";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
-import { DIRECTION_CUE, priceDirection, signedDecimal } from "../lib/price-direction";
+import { describeChange } from "../lib/price-direction";
 
 type PublicQuote = components["schemas"]["PublicQuote"];
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
@@ -64,13 +64,12 @@ export function MarketStatusBar({ data }: { data?: PublicQuote | PublicHistorySe
 }
 
 function PriceChange({ quote }: { quote: PublicQuote }) {
-  const direction = priceDirection(quote.change ?? quote.change_percent);
-  if (!direction || quote.change_percent == null) return <p className="asset-change">Variação indisponível</p>;
-  const cue = DIRECTION_CUE[direction];
-  const absolute = quote.change == null ? "" : `${signedDecimal(quote.change, direction)} ${quote.currency} | `;
+  const change = describeChange(quote.change, quote.change_percent, quote.currency);
+  if (!change) return <p className="asset-change">Variação indisponível</p>;
+  const { cue } = change;
   return (
-    <p className={`asset-change direction-${direction.toLowerCase()}`}>
-      <span aria-hidden="true">{cue.glyph}</span> {absolute}{signedDecimal(quote.change_percent, direction)}% · {cue.word} · base: fechamento anterior
+    <p className={`asset-change direction-${change.direction.toLowerCase()}`}>
+      <span aria-hidden="true">{cue.glyph}</span> {change.text} · {cue.word} · base: fechamento anterior
     </p>
   );
 }
@@ -186,7 +185,7 @@ export function TerminalShell() {
   }, [historyKey, apiBase, mode, period, selectedCanonicalId]);
 
   return <div className="terminal-root">
-    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/compare">Comparar</Link><Link href="/calendar">Calendário</Link><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><ThemeToggle /></header>
+    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/compare">Comparar</Link><Link href="/calendar">Calendário</Link><Link href="/heatmap">Heatmap</Link><Link href="/atlas">Global Atlas</Link><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><ThemeToggle /></header>
     {sessionError && <p role="alert">{sessionError}</p>}
     <div className="terminal-grid">
       <aside className="left-rail" aria-label="Contexto operacional"><MorningCallPanel /><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE · DEMO</span></section></aside>

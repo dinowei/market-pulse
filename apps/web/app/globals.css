@@ -269,6 +269,18 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .calendar-panel { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); padding: 1rem; }
 .calendar-panel td, .calendar-panel th { vertical-align: top; }
 .calendar-panel small { color: var(--pa-text-secondary); font-size: .68rem; }
+.atlas-panel, .heatmap-panel { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); margin: 0 auto; max-width: 74rem; padding: 1rem; }
+.atlas-panel td, .atlas-panel th, .heatmap-panel td, .heatmap-panel th { vertical-align: top; }
+.atlas-panel small, .heatmap-panel small { color: var(--pa-text-secondary); font-size: .68rem; }
+.atlas-region th { font-size: .74rem; letter-spacing: .06em; padding-top: 1rem; text-align: left; }
+.heatmap-group h3 { font-size: .85rem; margin: 1.2rem 0 .5rem; }
+.heatmap-grid { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); list-style: none; margin: 0; padding: 0; }
+.heatmap-tile { background: var(--pa-bg-elevated); border: 1px solid var(--pa-border-hairline); border-top-width: 3px; display: grid; font-size: .78rem; font-variant-numeric: tabular-nums; gap: .25rem; min-height: 5.5rem; overflow-wrap: anywhere; padding: .6rem; }
+.heatmap-tile-up { border-top-color: var(--pa-market-up); }
+.heatmap-tile-down { border-top-color: var(--pa-market-down); }
+.heatmap-tile-flat { border-top-color: var(--pa-market-flat); }
+.heatmap-tile-unknown, .heatmap-tile-unavailable { border-style: dashed; color: var(--pa-text-secondary); }
+.heatmap-limitations { color: var(--pa-text-secondary); font-size: .74rem; line-height: 1.5; margin: 1rem 0; padding-left: 1rem; }
 .importance { border: 1px solid var(--pa-border-hairline); display: inline-block; font-size: .68rem; padding: .2rem .35rem; }
 .importance-high { border-left: 3px solid var(--pa-market-down); }
 .importance-medium { border-left: 3px solid var(--pa-state-stale); }
