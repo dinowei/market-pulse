@@ -385,10 +385,10 @@ class PostgresEditorialService(InMemoryEditorialService):
         report = validate_editorial_blocks(current.blocks)
         if target is EditorialStatus.PUBLISHED and not report.valid:
             raise ValueError("editorial validation failed")
-        now = (
-            datetime.now(timezone.utc)
-            if target is EditorialStatus.PUBLISHED
-            else current.published_at
+        # H-25 D-5: archived_at records the archive instant, not the publication instant.
+        transitioned_at = datetime.now(timezone.utc)
+        published_at = (
+            transitioned_at if target is EditorialStatus.PUBLISHED else current.published_at
         )
         with self._connect() as conn:
             version_row = conn.execute(
@@ -401,8 +401,8 @@ class PostgresEditorialService(InMemoryEditorialService):
                 "updated_at=now() WHERE id=%s",
                 (
                     target.value,
-                    now,
-                    now if target is EditorialStatus.ARCHIVED else None,
+                    published_at,
+                    transitioned_at if target is EditorialStatus.ARCHIVED else None,
                     target.value,
                     post_id,
                 ),
@@ -424,7 +424,7 @@ class PostgresEditorialService(InMemoryEditorialService):
             )
             conn.commit()
         return current.model_copy(
-            update={"status": target, "published_at": now, "validation_report": report}
+            update={"status": target, "published_at": published_at, "validation_report": report}
         )
 
     def list_admin(self) -> list[EditorialPost]:
