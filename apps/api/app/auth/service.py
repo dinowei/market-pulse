@@ -8,11 +8,11 @@ from typing import Protocol
 from uuid import uuid4
 
 import psycopg
-from redis import Redis
 
 from app.auth.passwords import hash_password, verify_dummy, verify_password
 from app.contracts import AuthUserResponse, LoginRequest, RegisterRequest
 from app.core.config import Settings, get_settings
+from app.core.redis_client import shared_redis
 
 
 class AuthUnavailable(RuntimeError):
@@ -87,12 +87,7 @@ class PostgresAuthStore:
 class RedisSessionStore:
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.client = Redis.from_url(
-            settings.redis_url,
-            socket_connect_timeout=settings.cache_timeout_seconds,
-            socket_timeout=settings.cache_timeout_seconds,
-            decode_responses=True,
-        )
+        self.client = shared_redis(settings.redis_url, settings.cache_timeout_seconds)
 
     def available(self) -> bool:
         try:
@@ -180,12 +175,7 @@ class RedisSessionStore:
 
 class RedisRateLimiter:
     def __init__(self, settings: Settings):
-        self.client = Redis.from_url(
-            settings.redis_url,
-            socket_connect_timeout=settings.cache_timeout_seconds,
-            socket_timeout=settings.cache_timeout_seconds,
-            decode_responses=True,
-        )
+        self.client = shared_redis(settings.redis_url, settings.cache_timeout_seconds)
         self.settings = settings
 
     def allow(
