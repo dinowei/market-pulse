@@ -39,8 +39,10 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     `https://market-pulse-staging-api.onrender.com` (Blueprint `market-pulse-staging`).
   - **Smoke medido**, registrado no runbook §7: health, docs fechados, cadastro fechado,
     proxy e CSRF pela mesma origem, shutdown gracioso e zero 5xx.
-  - **Falta:** a conta única e o smoke de login e sessão (usuário, §6), além das rodadas
-    oficiais.
+  - **Smoke completo em 2026-10-07:** conta única criada pelo usuário; login, sessão pelo
+    proxy (watchlist 200/201) e logout 204 medidos nos logs; cadastro fechado de novo
+    (404). O 422 do cadastro foi corrigido no formulário (`60df9ca`).
+  - **Falta para fechar o gate:** as rodadas oficiais, as mesmas do Dia 30.
   - O PR [dinowei/market-pulse#1](https://github.com/dinowei/market-pulse/pull/1) foi
     aberto pelo usuário e **não deve receber merge** antes das rodadas e do CI verde.
   - **Mudança de deploy:** um push em `feature/dia-29-staging` agora implanta a produção

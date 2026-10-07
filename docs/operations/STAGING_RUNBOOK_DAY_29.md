@@ -144,7 +144,8 @@ produção na branch `feature/dia-29-staging`, build `b7b3433`); API
 | 3 | `GET <web>/api/v1/instruments` → 200 pelo proxy, com `X-Request-Id` e os cabeçalhos de segurança da API |
 | CSRF pelo proxy | login com o `Origin` do web → 401 (credencial fictícia, sem `Set-Cookie`); `Origin` forjado → 403. O proxy repassa o `Origin` (parte do **[A VALIDAR]** da ADR-008) |
 | Cadastro | `POST /api/v1/auth/register` → 404, direto e pelo proxy |
-| 4 e 5 | **PENDENTE:** exigem a conta única (§6), criada pelo usuário. O repasse do cookie de sessão pelo proxy segue **[A VALIDAR]** |
+| 4 e 5 (2026-10-07) | **Feito pelo usuário e medido nos logs:** login → `GET /watchlists` 200 → `POST /watchlists` 201 (sessão e CSRF aceitos pelo proxy) → `POST /auth/logout` 204. Isso **valida o repasse do cookie de sessão pelo proxy** (último **[A VALIDAR]** da ADR-008). A sessão sobreviveu a um redeploy da API, porque fica no Key Value. Não houve chamada autenticada depois do logout, então o 401 pós-logout não foi observado no staging (está coberto pelos testes) |
+| Item de watchlist | `POST /watchlists/{id}/items` com `msft` → 422, comportamento esperado: o campo exige `canonical_id` do catálogo. **Achado de UX:** o usuário tentou 10 vezes; o campo não oferece busca nem exemplo de `canonical_id` |
 | 6 | A página inicial mostra PETR4 com dados **sintéticos rotulados** `DEMO`/`STALE` e o aviso de que não representam cotação real. Nenhum dado se apresenta como real. A limitação dizia "Demonstração local", texto corrigido na branch do Dia 30 |
 | 7 | Três trocas de instância (deploys e o sono do plano grátis) com `Shutting down` → `Application shutdown complete` em cerca de 100 ms e **zero** respostas 5xx desde o primeiro deploy bem-sucedido |
 | Migrations | `alembic upgrade head` no boot aplicou 0001 → 0011 no banco do staging |

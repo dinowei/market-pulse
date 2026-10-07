@@ -20,7 +20,7 @@ deploy; **C** é obrigatório antes de abrir o produto a outras pessoas.
 | H-07 limites | A | Pesquisado com fonte oficial. |
 | H-11 cadastro | A | Resolvido e medido no staging (404). |
 | H-12 DEMO no staging | A | Medido: só dados sintéticos rotulados `DEMO`/`STALE`; banco DEMO recusado. Ver a correção no item. |
-| Staging no ar | A | **Implantado em 2026-10-06** e smoke registrado no [runbook](operations/STAGING_RUNBOOK_DAY_29.md), §7. Login e sessão pelo proxy pendentes da conta única (usuário). |
+| Staging no ar | A | **Implantado em 2026-10-06; smoke completo em 2026-10-07** ([runbook](operations/STAGING_RUNBOOK_DAY_29.md), §7): login, sessão pelo proxy, criação de watchlist e logout medidos nos logs; cadastro fechado de novo (404). |
 | Cookie entre sites | A | Resolvido: [ADR-008](adr/008-same-origin-api-proxy.md), proxy same-origin. |
 | `/docs` público | A | Resolvido: fechado em `production`/`staging`. |
 | H-08, H-09, convite no cadastro (H-11) | C | Agendados para o Dia 30 (decisão do usuário, 2026-10-05). |
