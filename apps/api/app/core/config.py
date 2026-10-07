@@ -3,7 +3,7 @@ from functools import lru_cache
 from typing import Annotated
 from urllib.parse import urlsplit
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 PROTECTED_ENVIRONMENTS = frozenset({"production", "staging"})
@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     ]
     retention_days: int = 90
     registration_enabled: bool | None = None
+    # H-23 (ADR-020): proxies in front of the API that append to X-Forwarded-For. 0 ignores
+    # the header (the socket peer is the client); only set it for a measured, exclusive chain.
+    trusted_proxy_hops: Annotated[int, Field(ge=0, le=5)] = 0
 
     @field_validator("cors_origins", mode="before")
     @classmethod

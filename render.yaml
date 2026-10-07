@@ -44,6 +44,10 @@ services:
         value: lax
       - key: MARKET_PULSE_REGISTRATION_ENABLED
         value: "false"
+      # ADR-020: 0 até medir a cadeia de proxies; com --no-proxy-headers, o par do
+      # socket é o proxy local do Render (127.0.0.1).
+      - key: MARKET_PULSE_TRUSTED_PROXY_HOPS
+        value: "0"
 
   # Sem persistência no plano grátis (decisão R2, H-03). Só a rede interna do Render.
   # noeviction falha fechado: com a memória cheia, gravações dão erro (503) em vez de

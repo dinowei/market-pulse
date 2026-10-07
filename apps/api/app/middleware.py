@@ -18,6 +18,7 @@ from uuid import UUID, uuid4
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
+from app.core.client_ip import client_ip
 from app.core.config import get_settings
 
 TELEMETRY_PATH = "/api/v1/telemetry/web-vitals"
@@ -170,7 +171,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             key_prefix = "rate_limit:standard"
             fail_closed = False
 
-        ip = request.client.host if request.client else "unknown"
+        ip = client_ip(request)
         subject = f"ip:{ip}"
         if key_prefix == "rate_limit:standard":
             subject = _standard_subject(request, settings.auth_cookie_name, subject)
