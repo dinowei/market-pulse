@@ -149,6 +149,8 @@ produção na branch `feature/dia-29-staging`, build `b7b3433`); API
 | 7 | Três trocas de instância (deploys e o sono do plano grátis) com `Shutting down` → `Application shutdown complete` em cerca de 100 ms e **zero** respostas 5xx desde o primeiro deploy bem-sucedido |
 | Migrations | `alembic upgrade head` no boot aplicou 0001 → 0011 no banco do staging |
 | Forja de IP | `X-Forwarded-For` forjado virava o IP do cliente; com `--no-proxy-headers` passou a `127.0.0.1` (ADR-012) |
+| Conta única (2026-10-07) | Criada pelo usuário com o cadastro temporariamente aberto: `POST /auth/register` 201 e `POST /auth/login` 200, ambos pelo proxy. Em seguida, `MARKET_PULSE_REGISTRATION_ENABLED=false` aplicado por Claude Code via conector do Render, com deploy automático |
+| Telemetria 403 intermitente | Alguns `POST /telemetry/web-vitals` recusados pelo CSRF. **Hipótese não comprovada:** páginas abertas pelo domínio secundário `market-pulse-nine-iota.vercel.app`, já que a telemetria sempre envia ao domínio de staging (`NEXT_PUBLIC_API_BASE_URL`) e a origem diferente é recusada corretamente. Recomendado redirecionar o domínio secundário para o principal na Vercel |
 | Cadastro com 422 (2026-10-06) | Tentativas reais do usuário recusadas com 422: a senha exige 12+ caracteres com letras e números, e o formulário não dizia isso. **Corrigido** no commit `60df9ca`: a regra aparece no campo, há validação antes do envio e uma mensagem por status. Medido no ar em `/register` |
 
 ## 8. Rollback
