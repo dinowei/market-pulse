@@ -71,9 +71,14 @@ Origem da evidência: **MEDIDO** = executado por Claude Code nesta data, com sa�
 
 ## 6. Pendências para fechar o gate do Dia 30
 
-1. **Usuário:** Rodada 1 (`run_local.ps1`) e Rodada 2 (`run_frontend.ps1`) com o PC
-   reiniciado, só o Docker aberto e a branch `feature/dia-30-rc`. Com 3,7 GB de RAM e o app
-   do Claude aberto, a máquina tinha 151 MB livres, insuficiente para o Docker.
+1. **Rodadas oficiais na nuvem (decisão do usuário, 2026-10-07):** as etapas de
+   `run_local.ps1` (E2–E13) e `run_frontend.ps1` (F1–F9) foram convertidas no workflow
+   `.github/workflows/release-gate.yml`. Ele roda a cada push e PR. As regras são as das
+   rodadas: etapa opt-in com skip reprova; o E2E roda em 3 execuções espaçadas; qualquer
+   403, 429 ou 5xx reprova. A sintaxe dos 16 scripts e a lógica de análise dos logs foram
+   validadas localmente. **Bloqueio:** a conta GitHub está travada por cobrança (H-05), e só
+   o usuário resolve isso em `github.com/settings/billing`. Depois disso, o workflow vira a
+   evidência oficial e substitui as rodadas manuais. Os scripts locais ficam como reserva.
 2. **Usuário:** criar a conta única do staging (runbook, §6) para o smoke de login e
    sessão. Depois, levar o código do Dia 30 ao staging. Ele inclui a migration `0012`,
    que roda no boot. Deploys de produção ficam com o usuário, porque o modo de

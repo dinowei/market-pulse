@@ -88,8 +88,13 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
 ## Ferramentas (decisão do usuário, a partir do Dia 29)
 
 Claude Desktop (aba Code) é a ferramenta principal e o VS Code é a reserva; **nunca
-os dois abertos juntos** (a máquina tem 3,7 GB de RAM). Rodadas oficiais de validação
-só no PowerShell, com os scripts de `C:\Projetos\mp-local-check`.
+os dois abertos juntos** (a máquina tem 3,7 GB de RAM).
+
+**Rodadas oficiais (decisão do usuário, 2026-10-07):** passam a ser o workflow
+`.github/workflows/release-gate.yml` no GitHub Actions, equivalente a `run_local.ps1` +
+`run_frontend.ps1`. Ele depende de desbloquear a cobrança da conta GitHub (H-05). Os
+scripts de `C:\Projetos\mp-local-check` (PowerShell, PC reiniciado, só o Docker aberto)
+ficam como reserva.
 
 ## Próximo passo
 
