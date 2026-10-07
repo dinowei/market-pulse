@@ -314,6 +314,19 @@ H-25 no [handoff](DAY29_HANDOFF.md). O gate segue sem CI (H-05) e sem deploy no 
 - **Pendente:** dado real exige dataset `PUBLIC_APPROVED`; setor e valor de mercado
   exigem fonte aprovada e nova ADR; revisão visual de Cláudio.
 
+**Estado do Dia 38 em 2026-10-07** ([relatório](engineering/PERFORMANCE_DAY_38.md)):
+
+- **Medido no staging real** (código do Dia 29, 5 execuções por rota, desktop e móvel
+  limitado): todas as rotas dentro dos budgets. Maior LCP P95 de 2.252 ms em
+  `/portfolios` no perfil móvel; CLS P95 máximo de 0,024; INP de laboratório máximo de
+  88 ms. Cold start da API de 52,8 s (H-27).
+- **Bundle:** de 172,5 a 185,2 KB gzip de JS por rota, dos quais 171,2 KB são comuns;
+  orçamento de regressão de 200 KB.
+- **Gate:** passa a verificar as medições reais registradas e o bundle, além das
+  fixtures; o caminho de falha foi testado.
+- **Pendente:** medir os Dias 30 a 37 depois do deploy (autorização do usuário);
+  percentil de campo (H-26); margem de LCP móvel em `/portfolios` e `/calendar`.
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento

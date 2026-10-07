@@ -99,6 +99,10 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
   tabela (`/atlas`) e heatmap básico (`/heatmap`), conforme a ADR-019. Setor e valor de
   mercado não existem em nenhum dataset aprovado; o contrato declara isso. **Medido:**
   backend com 397 passed; frontend com 77 testes; gate WCAG com 11 rotas, 25 de 25.
+- **Dia 38: entregue em 2026-10-07** ([relatório](docs/engineering/PERFORMANCE_DAY_38.md)):
+  Web Vitals medidos no staging real (código do Dia 29), todos dentro dos budgets nos
+  perfis desktop e móvel; cold start da API de 52,8 s (H-27); bundle com orçamento de
+  200 KB gzip por rota; o gate de desempenho passou a usar medição real.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia

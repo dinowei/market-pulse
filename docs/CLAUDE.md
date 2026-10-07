@@ -115,6 +115,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Release candidate do Dia 30: [DAY_30_RELEASE_CANDIDATE.md](engineering/DAY_30_RELEASE_CANDIDATE.md)
 - Revisão de compliance do Morning Call (Dia 35): [MORNING_CALL_COMPLIANCE_REVIEW.md](editorial/MORNING_CALL_COMPLIANCE_REVIEW.md)
 - Acessibilidade e daltonismo do Dia 36: [ACCESSIBILITY_DAY_36.md](design/ACCESSIBILITY_DAY_36.md)
+- Web Vitals e bundle do Dia 38: [PERFORMANCE_DAY_38.md](engineering/PERFORMANCE_DAY_38.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.

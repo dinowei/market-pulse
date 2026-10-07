@@ -249,6 +249,19 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Classe:** C. Obrigatório antes de qualquer Morning Call sair do uso pessoal.
 - **Prova hoje:** leitura de código (`editorial/service.py`, `routers.py:_admin_transition`).
 
+### H-26 Telemetria de campo sem percentil
+- **Origem:** medição do Dia 38 ([relatório](engineering/PERFORMANCE_DAY_38.md), P-3).
+- **Motivo:** `web_vital_metrics` guarda só soma e contagem por dia, rota e métrica. Isso dá a média, mas os budgets são P95.
+- **Critério de pronto:** contagem por faixas (histograma) ou outra forma que permita P75/P95 sem guardar dado individual; ADR antes de mudar o contrato e a migration.
+- **Classe:** B. Não bloqueia o staging privado.
+- **Prova hoje:** leitura de código (`app/telemetry.py`).
+
+### H-27 Cold start da API no plano grátis do Render
+- **Origem:** medição do Dia 38 (P-1): 52,8 s na primeira chamada após ociosidade, contra 0,3 a 0,6 s depois.
+- **Critério de pronto:** decisão do usuário sobre o plano da API, junto com Redis persistente e plano Vercel (Dia 39).
+- **Classe:** C para abrir o produto; aceitável no staging de um usuário.
+- **Prova hoje:** medido com `curl` em 2026-10-07 04:16 UTC.
+
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 
 - **Rodada 1** (`run_local.ps1`) e **Rodada 2** (`run_frontend.ps1`): executadas e informadas pelo responsável, ambas OK (ver runbook §5.19).
