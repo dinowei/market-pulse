@@ -8,8 +8,10 @@ test("portfolio UI consumes Day 27 generated contracts and preserves Decimal str
   const generated = await readFile(new URL("../src/generated/api.ts", import.meta.url), "utf8");
   assert.match(generated, /PortfolioIncomeResponse/);
   assert.match(generated, /PortfolioEventMarkersResponse/);
-  assert.match(source, /\/income/);
-  assert.match(source, /\/event-markers/);
+  // Since H-21 income and markers arrive in the single /overview response.
+  assert.match(source, /\/overview/);
+  assert.match(source, /setIncome\(overview\.income\)/);
+  assert.match(source, /setMarkers\(overview\.event_markers\)/);
   assert.match(source, /Proventos e eventos corporativos/);
   assert.match(source, /Fallback tabular dos marcadores/);
   assert.match(source, /markers=\{markers\?\.items \?\? \[\]\}/);

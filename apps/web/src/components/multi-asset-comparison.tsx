@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type { components } from "../generated/api";
+import { DISPLAY_MAX_POINTS } from "../lib/downsampling-note";
+import { seriesRole, seriesRoleLabel } from "../lib/series-role";
 
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
 type BatchHistoryResponse = components["schemas"]["BatchHistoryResponse"];
@@ -47,7 +49,7 @@ export function MultiAssetComparison({ initialIds = DEFAULT_IDS }: { initialIds?
     fetch(`${apiBase}/api/v1/market-data/history/batch`, {
       method: "POST",
       headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify({ canonical_ids: initialIds.slice(0, 10), period: "1M", mode }),
+      body: JSON.stringify({ canonical_ids: initialIds.slice(0, 10), period: "1M", mode, max_points: DISPLAY_MAX_POINTS }),
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -91,10 +93,17 @@ export function MultiAssetComparison({ initialIds = DEFAULT_IDS }: { initialIds?
         <figure className="particle-chart comparison-chart">
           <svg viewBox="0 0 100 48" role="img" aria-label={`Comparação ${mode} com ${series.length} séries`} preserveAspectRatio="none">
             <line x1="0" y1="46" x2="100" y2="46" className="chart-axis" />
-            {series.map((item) => <path key={item.canonical_id} d={linePath(item, mode, geometry.minTime, geometry.timeRange, geometry.minValue, geometry.valueRange)} className={item.canonical_id.startsWith("index.") || item.canonical_id.startsWith("rate.") || item.canonical_id.startsWith("fx.") ? "chart-line chart-benchmark" : "chart-line"} fill="none" />)}
+            {series.map((item) => <path key={item.canonical_id} d={linePath(item, mode, geometry.minTime, geometry.timeRange, geometry.minValue, geometry.valueRange)} className={seriesRole(item.canonical_id) === "benchmark" ? "chart-line chart-benchmark" : "chart-line"} fill="none" />)}
           </svg>
           <figcaption>{mode === "INDEX_100" ? "Todas as séries rebaseadas para 100 no início do período." : "Valores nominais; moeda e unidade preservadas na tabela."}</figcaption>
         </figure>
+        <ul className="series-legend" aria-label="Legenda das séries">
+          {series.map((item) => {
+            const role = seriesRole(item.canonical_id);
+            return <li key={item.canonical_id}><svg viewBox="0 0 24 6" aria-hidden="true" className="legend-swatch"><line x1="1" y1="3" x2="23" y2="3" className={role === "benchmark" ? "chart-line chart-benchmark" : "chart-line"} /></svg><span>{item.symbol} · {item.currency} · {seriesRoleLabel(role)}{role === "benchmark" ? " — linha tracejada" : " — linha contínua"}</span></li>;
+          })}
+        </ul>
+        {series.some((item) => item.downsampling) && <p className="muted" role="note">Séries reduzidas para exibição pelo método M4 alinhado: as mesmas datas em todas as séries; primeiro, último, mínimo, máximo e gaps de cada uma preservados.</p>}
         <div className="table-wrap"><table><caption>Fallback tabular sincronizado com as séries exibidas</caption><thead><tr><th scope="col">Data</th>{series.map((item) => <th scope="col" key={item.canonical_id}>{item.symbol} · {item.currency}</th>)}</tr></thead><tbody>{series[0].points.map((point, index) => <tr key={point.timestamp}><th scope="row">{point.session_date}</th>{series.map((item) => { const current = item.points[index]; const value = current ? pointValue(current, mode) : null; return <td key={item.canonical_id}>{value == null ? "—" : value}</td>; })}</tr>)}</tbody></table></div>
         <p className="comparison-provenance">Fonte sintética DEMO; cada série mantém `DataLevel`, `Freshness`, timestamps e limitações no contrato.</p>
       </>}

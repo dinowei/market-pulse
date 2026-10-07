@@ -19,6 +19,10 @@ type EquityCurve = components["schemas"]["EquityCurveResponse"];
 type PerformanceDecomposition = components["schemas"]["PerformanceDecompositionResponse"];
 type PortfolioIncome = components["schemas"]["PortfolioIncomeResponse"];
 type PortfolioEventMarkers = components["schemas"]["PortfolioEventMarkersResponse"];
+type PortfolioOverview = components["schemas"]["PortfolioOverviewResponse"];
+
+/** H-21: the eight read models of one portfolio in a single request. */
+const overviewPath = (portfolioId: string) => `/api/v1/portfolios/${encodeURIComponent(portfolioId)}/overview`;
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 const eventTypes = ["CASH_DEPOSIT", "CASH_WITHDRAWAL", "BUY", "SELL", "FEE"] as const satisfies readonly PortfolioEventType[];
@@ -67,33 +71,27 @@ export function PortfoliosPanel() {
   const [rateLimit, setRateLimit] = useState<{ retryAfter?: number }>();
   const [attempt, setAttempt] = useState(0);
 
+  const applyOverview = useCallback((overview: PortfolioOverview) => {
+    setSummary(overview.summary);
+    setEvents(overview.events);
+    setValuation(overview.valuation);
+    setPerformance(overview.performance);
+    setEquityCurve(overview.equity_curve);
+    setDecomposition(overview.decomposition);
+    setIncome(overview.income);
+    setMarkers(overview.event_markers);
+  }, []);
+
   const loadDetails = useCallback(async (portfolioId: string) => {
     if (!portfolioId) return;
     try {
-      const [nextSummary, nextEvents, nextValuation, nextPerformance, nextCurve, nextDecomposition, nextIncome, nextMarkers] = await Promise.all([
-        requestJson<PortfolioSummary>(`/api/v1/portfolios/${portfolioId}/summary`),
-        requestJson<PortfolioEvent[]>(`/api/v1/portfolios/${portfolioId}/events`),
-        requestJson<PortfolioValuation>(`/api/v1/portfolios/${portfolioId}/valuation`),
-        requestJson<PortfolioPerformance>(`/api/v1/portfolios/${portfolioId}/performance`),
-        requestJson<EquityCurve>(`/api/v1/portfolios/${portfolioId}/equity-curve`),
-        requestJson<PerformanceDecomposition>(`/api/v1/portfolios/${portfolioId}/performance/decomposition`),
-        requestJson<PortfolioIncome[]>(`/api/v1/portfolios/${portfolioId}/income`),
-        requestJson<PortfolioEventMarkers>(`/api/v1/portfolios/${portfolioId}/event-markers`),
-      ]);
-      setSummary(nextSummary);
-      setEvents(nextEvents);
-      setValuation(nextValuation);
-      setPerformance(nextPerformance);
-      setEquityCurve(nextCurve);
-      setDecomposition(nextDecomposition);
-      setIncome(nextIncome);
-      setMarkers(nextMarkers);
+      applyOverview(await requestJson<PortfolioOverview>(overviewPath(portfolioId)));
     } catch (reason) {
       if (isSignedOut(reason)) setSignedOut(true);
       else if (isRateLimited(reason)) setRateLimit({ retryAfter: retryAfterSeconds(reason) });
       else setError("Não foi possível carregar os detalhes da carteira.");
     }
-  }, []);
+  }, [applyOverview]);
 
   useEffect(() => {
     let active = true;
@@ -117,25 +115,9 @@ export function PortfoliosPanel() {
   useEffect(() => {
     if (!selectedId) return;
     let active = true;
-    Promise.all([
-      requestJson<PortfolioSummary>(`/api/v1/portfolios/${selectedId}/summary`),
-      requestJson<PortfolioEvent[]>(`/api/v1/portfolios/${selectedId}/events`),
-      requestJson<PortfolioValuation>(`/api/v1/portfolios/${selectedId}/valuation`),
-      requestJson<PortfolioPerformance>(`/api/v1/portfolios/${selectedId}/performance`),
-      requestJson<EquityCurve>(`/api/v1/portfolios/${selectedId}/equity-curve`),
-      requestJson<PerformanceDecomposition>(`/api/v1/portfolios/${selectedId}/performance/decomposition`),
-      requestJson<PortfolioIncome[]>(`/api/v1/portfolios/${selectedId}/income`),
-      requestJson<PortfolioEventMarkers>(`/api/v1/portfolios/${selectedId}/event-markers`),
-    ]).then(([nextSummary, nextEvents, nextValuation, nextPerformance, nextCurve, nextDecomposition, nextIncome, nextMarkers]) => {
+    requestJson<PortfolioOverview>(overviewPath(selectedId)).then((overview) => {
       if (!active) return;
-      setSummary(nextSummary);
-      setEvents(nextEvents);
-      setValuation(nextValuation);
-      setPerformance(nextPerformance);
-      setEquityCurve(nextCurve);
-      setDecomposition(nextDecomposition);
-      setIncome(nextIncome);
-      setMarkers(nextMarkers);
+      applyOverview(overview);
     }).catch((reason) => {
       if (!active) return;
       if (isSignedOut(reason)) setSignedOut(true);
@@ -143,7 +125,7 @@ export function PortfoliosPanel() {
       else setError("Não foi possível carregar os detalhes da carteira.");
     });
     return () => { active = false; };
-  }, [selectedId, attempt]);
+  }, [selectedId, attempt, applyOverview]);
 
   async function createPortfolio(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

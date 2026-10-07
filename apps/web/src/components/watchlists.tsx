@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { components } from "../generated/api";
 import { isRateLimited, parseRetryAfter, RateLimitNotice, retryAfterSeconds } from "./rate-limit-notice";
+import { ADD_ITEM_ERROR, withAddedItem, withoutItem, withoutList, withReplacedList } from "../lib/watchlist-state";
 
 type Watchlist = components["schemas"]["WatchlistResponse"];
 type WatchlistList = components["schemas"]["WatchlistListResponse"];
@@ -107,14 +108,15 @@ export function WatchlistsPanel() {
     if (!selectedId || !canonicalId.trim()) return;
     const payload: WatchlistItemCreate = { canonical_id: canonicalId.trim().toLowerCase() };
     try {
-      await requestJson(`/api/v1/watchlists/${selectedId}/items`, {
+      const added = await requestJson<WatchlistItem>(`/api/v1/watchlists/${selectedId}/items`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
       setCanonicalId("");
-      await load();
+      setError(undefined);
+      setWatchlists((current) => withAddedItem(current, selectedId, added));
     } catch {
-      setError("Instrumento indisponível ou fora do universo suportado.");
+      setError(ADD_ITEM_ERROR);
     }
   }
 
@@ -123,7 +125,7 @@ export function WatchlistsPanel() {
       await requestJson(`/api/v1/watchlists/${listId}/items/${encodeURIComponent(item.canonical_id)}`, {
         method: "DELETE",
       });
-      await load();
+      setWatchlists((current) => withoutItem(current, listId, item.canonical_id));
     } catch {
       setError("Não foi possível remover o instrumento.");
     }
@@ -136,11 +138,11 @@ export function WatchlistsPanel() {
     [canonicalIds[index], canonicalIds[target]] = [canonicalIds[target], canonicalIds[index]];
     const payload: WatchlistReorder = { canonical_ids: canonicalIds };
     try {
-      await requestJson(`/api/v1/watchlists/${list.id}/items/reorder`, {
+      const updated = await requestJson<Watchlist>(`/api/v1/watchlists/${list.id}/items/reorder`, {
         method: "PATCH",
         body: JSON.stringify(payload),
       });
-      await load();
+      setWatchlists((current) => withReplacedList(current, updated));
     } catch {
       setError("Não foi possível reordenar a lista.");
     }
@@ -150,7 +152,9 @@ export function WatchlistsPanel() {
     if (list.is_system) return;
     try {
       await requestJson(`/api/v1/watchlists/${list.id}`, { method: "DELETE" });
-      await load();
+      const remaining = withoutList(watchlists, list.id);
+      setWatchlists(remaining);
+      if (selectedId === list.id) setSelectedId(remaining[0]?.id ?? "");
     } catch {
       setError("Não foi possível remover a lista.");
     }
