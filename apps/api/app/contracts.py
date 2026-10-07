@@ -490,6 +490,8 @@ class BatchHistoryRequest(StrictModel):
     period: HistoryPeriod = HistoryPeriod.ONE_M
     mode: SeriesMode = SeriesMode.INDEX_100
     adjustment_type: str = "UNADJUSTED"
+    # Same bounds as app.market_data.downsampling (asserted by tests); opt-in, aligned M4.
+    max_points: int | None = Field(default=None, ge=64, le=5000)
 
     @model_validator(mode="after")
     def require_unique_ids(self) -> "BatchHistoryRequest":
@@ -791,6 +793,23 @@ class PortfolioPerformanceResponse(StrictModel):
     methodology: str
     missing_inputs: tuple[str, ...] = ()
     provenance: tuple[PerformanceProvenance, ...] = ()
+
+
+class PortfolioOverviewResponse(StrictModel):
+    """H-21: the eight read models the portfolio page shows, in one round trip.
+
+    Each part is exactly the payload of its own endpoint (same function, same ownership
+    check), so methodology, status, DataLevel and provenance travel unchanged.
+    """
+
+    summary: PortfolioSummaryResponse
+    events: list[PortfolioEventResponse]
+    valuation: PortfolioValuationResponse
+    performance: PortfolioPerformanceResponse
+    equity_curve: EquityCurveResponse
+    decomposition: PerformanceDecompositionResponse
+    income: list[PortfolioIncomeResponse]
+    event_markers: PortfolioEventMarkersResponse
 
 
 class ErrorProblem(StrictModel):

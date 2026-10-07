@@ -623,6 +623,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/portfolios/{portfolio_id}/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Portfolio Overview
+         * @description H-21: one request instead of eight; delegates to the same endpoint functions.
+         */
+        get: operations["portfolio_overview_api_v1_portfolios__portfolio_id__overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/telemetry/web-vitals": {
         parameters: {
             query?: never;
@@ -1160,6 +1180,8 @@ export interface components {
              * @default UNADJUSTED
              */
             adjustment_type: string;
+            /** Max Points */
+            max_points?: number | null;
         };
         /** BatchHistoryResponse */
         BatchHistoryResponse: {
@@ -1784,6 +1806,25 @@ export interface components {
         PortfolioListResponse: {
             /** Items */
             items: components["schemas"]["PortfolioResponse"][];
+        };
+        /**
+         * PortfolioOverviewResponse
+         * @description H-21: the eight read models the portfolio page shows, in one round trip.
+         *
+         *     Each part is exactly the payload of its own endpoint (same function, same ownership
+         *     check), so methodology, status, DataLevel and provenance travel unchanged.
+         */
+        PortfolioOverviewResponse: {
+            summary: components["schemas"]["PortfolioSummaryResponse"];
+            /** Events */
+            events: components["schemas"]["PortfolioEventResponse"][];
+            valuation: components["schemas"]["PortfolioValuationResponse"];
+            performance: components["schemas"]["PortfolioPerformanceResponse"];
+            equity_curve: components["schemas"]["EquityCurveResponse"];
+            decomposition: components["schemas"]["PerformanceDecompositionResponse"];
+            /** Income */
+            income: components["schemas"]["PortfolioIncomeResponse"][];
+            event_markers: components["schemas"]["PortfolioEventMarkersResponse"];
         };
         /** PortfolioPatchRequest */
         PortfolioPatchRequest: {
@@ -3674,6 +3715,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PortfolioEventMarkersResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_overview_api_v1_portfolios__portfolio_id__overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioOverviewResponse"];
                 };
             };
             /** @description Validation Error */

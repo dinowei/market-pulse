@@ -57,6 +57,7 @@ from app.contracts import (
     PortfolioEventResponse,
     PortfolioIncomeResponse,
     PortfolioListResponse,
+    PortfolioOverviewResponse,
     PortfolioPatchRequest,
     PortfolioPerformanceResponse,
     PortfolioPositionResponse,
@@ -89,7 +90,12 @@ from app.instruments.catalog import (
     search_catalog,
 )
 from app.market_data.benchmarks import benchmark_items, benchmark_series
-from app.market_data.downsampling import MAX_MAX_POINTS, MIN_MAX_POINTS, downsample_m4
+from app.market_data.downsampling import (
+    MAX_MAX_POINTS,
+    MIN_MAX_POINTS,
+    downsample_aligned,
+    downsample_m4,
+)
 from app.market_data.economic_calendar import (
     CALENDAR_LIMIT,
     CALENDAR_MAX_DAYS,
@@ -571,6 +577,23 @@ def public_history_batch(
             )
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="Instrument not found") from exc
+    if payload.max_points is not None:
+        reduced = downsample_aligned([item.points for item in items], payload.max_points)
+        items = [
+            item.model_copy(
+                update={
+                    "points": result.points,
+                    "downsampling": SeriesDownsampling(
+                        max_points=payload.max_points,
+                        original_points=result.original_points,
+                        returned_points=len(result.points),
+                    ),
+                }
+            )
+            if result.applied
+            else item
+            for item, result in zip(items, reduced, strict=True)
+        ]
     return BatchHistoryResponse(items=items)
 
 
@@ -1064,6 +1087,31 @@ def portfolio_event_markers(
         return service.markers(current_user.id, portfolio_id)
     except PortfolioReadModelNotFound as exc:
         raise _portfolio_error(PortfolioNotFound()) from exc
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/overview",
+    response_model=PortfolioOverviewResponse,
+    tags=["portfolios"],
+)
+def portfolio_overview(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    portfolios: PortfolioService = Depends(get_portfolio_service),
+    performance: PortfolioPerformanceService = Depends(get_portfolio_performance_service),
+    read_models: PostgresPortfolioDay27Service = Depends(get_portfolio_day27_service),
+) -> PortfolioOverviewResponse:
+    """H-21: one request instead of eight; delegates to the same endpoint functions."""
+    return PortfolioOverviewResponse(
+        summary=portfolio_summary(portfolio_id, current_user, portfolios),
+        events=list_portfolio_events(portfolio_id, current_user, portfolios),
+        valuation=portfolio_valuation(portfolio_id, current_user, performance),
+        performance=portfolio_performance(portfolio_id, current_user, performance),
+        equity_curve=portfolio_equity_curve(portfolio_id, current_user, performance),
+        decomposition=portfolio_performance_decomposition(portfolio_id, current_user, performance),
+        income=portfolio_income(portfolio_id, current_user, read_models),
+        event_markers=portfolio_event_markers(portfolio_id, current_user, read_models),
+    )
 
 
 @router.post(
