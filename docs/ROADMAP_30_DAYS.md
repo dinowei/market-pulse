@@ -339,6 +339,14 @@ H-25 no [handoff](DAY29_HANDOFF.md). O gate segue sem CI (H-05) e sem deploy no 
 - **Gate aberto:** faltam as rodadas oficiais em CI (H-05), o E2E com DEMO e as
   contratações (Redis persistente, planos da Vercel e do Render).
 
+**Estado do Dia 40 em 2026-10-07: fechado.** README atualizado,
+[design system](design/DESIGN_SYSTEM.md) a partir do código,
+[alternativas descartadas](engineering/DISCARDED_ALTERNATIVES.md) (Rust, gRPC, FDC3 e
+outras, cada uma com fonte e condição para reabrir) e
+[handoff final](FINAL_HANDOFF_DAY_40.md). A Fase 2 termina com os gates dos Dias 29 a 39
+abertos pelos motivos registrados em cada dia; nenhum foi declarado aprovado sem
+evidência.
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento

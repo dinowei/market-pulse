@@ -108,6 +108,12 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
   com 80 testes; E2E de acessibilidade com 29 de 29. Corrigidos Q-1 (tabela da comparação
   pareando por posição), Q-2, H-22, H-24 e D-5. H-23 com mecanismo pronto (ADR-020) e
   ativação pendente. Faltam CI (H-05), E2E com DEMO e contratações do usuário.
+- **Dia 40: fechado em 2026-10-07.** README atualizado,
+  [design system](docs/design/DESIGN_SYSTEM.md),
+  [alternativas descartadas](docs/engineering/DISCARDED_ALTERNATIVES.md) e
+  [handoff final](docs/FINAL_HANDOFF_DAY_40.md). O convite da ADR-011 **não foi
+  implementado** (exige verificação em Postgres) e segue obrigatório antes de abrir o
+  produto.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia
@@ -132,12 +138,16 @@ ficam como reserva.
 
 ## Próximo passo
 
-Concluir o Dia 29:
+A Fase 2 terminou no Dia 40 com gates abertos. A ordem das próximas ações está na seção 3
+do [handoff final](docs/FINAL_HANDOFF_DAY_40.md):
 
-1. O usuário roda as rodadas oficiais na branch `feature/dia-29-staging`.
-2. O usuário cria contas e recursos e segue o
-   [runbook do staging](docs/operations/STAGING_RUNBOOK_DAY_29.md).
-3. O smoke do staging é registrado.
+1. O usuário desbloqueia a cobrança do GitHub (H-05), o que libera o CI e as rodadas
+   oficiais (`release-gate.yml`).
+2. O usuário autoriza o deploy dos Dias 30 a 40 no staging; depois, repetir a medição do
+   Dia 38 e medir a cadeia de proxies (H-23).
+3. Assinatura de compliance do Morning Call (H-13) e ADR do fluxo editorial (H-25).
+4. Decisão dos planos: Redis persistente, Vercel e API sem hibernação (H-27).
+5. Antes de abrir o produto: implementar o convite (ADR-011) com verificação em Postgres.
 
 O GitHub Actions agendado continua bloqueado (H-05, decisão C4). Pendências em
 [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md). Push, deploy, login externo e merge na `main`

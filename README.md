@@ -6,58 +6,25 @@ O Market Pulse é um terminal web autenticado para acompanhamento **informativo 
 
 ## Status atual
 
-Os **Dias 24 a 27** estão fechados: autenticação, watchlists, carteiras,
-Morning Call, demonstração local persistida e isolada, painel operacional
-interno, comparação multiativo, calendário econômico, proventos, marcadores e
-telemetria Web Vitals. Nenhum provider real, Stripe ou deploy foi ativado.
+**Fase 2 (Dias 31 a 40) entregue em 2026-10-07, com gates abertos.** O estado
+consolidado, a ordem das próximas ações e o que falta antes de abrir o produto estão no
+[handoff final](docs/FINAL_HANDOFF_DAY_40.md).
 
-O **Dia 28** (hardening enterprise) está **FECHADO em 2026-10-01**, por decisão do
-usuário. Entregas: remoção de endpoint sem autenticação, CSRF unificado para todo
-método mutante, cabeçalhos de segurança, validação estrita de configuração de
-produção, exclusão de conta por anonimização com revogação de todas as sessões e
-auditoria atômica, export de dados com valores decimais, backup/restore com
-verificação de integridade (`REDIS_SNAPSHOT=OK|NAO_SUPORTADO|INDISPONIVEL`) e
-expurgo de registros operacionais.
+- **Staging privado no ar** desde 2026-10-06: web `https://market-pulse-staging.vercel.app`
+  e API `https://market-pulse-staging-api.onrender.com`, com o código do Dia 29. Cadastro
+  fechado; acesso de uma única conta.
+- **Dias 30 a 40** estão nas branches `feature/dia-30-rc` e `feature/dia-31-34`, **sem
+  deploy**: downsampling M4, tokens OKLCH, tema global, limite por usuário, overview da
+  carteira, avisos canônicos, WCAG 2.2 AA, Global Atlas tabular, heatmap básico, Web
+  Vitals medidos no staging e regressão completa.
+- **Última medição local:** backend com 407 passed, 10 skipped e 0 failed; frontend com
+  80 testes, lint, typecheck e build OK; E2E de acessibilidade com 29 de 29.
+- **Bloqueios:** o GitHub Actions está parado pela cobrança da conta (H-05); o deploy dos
+  Dias 30 a 40, os planos pagos e as revisões humanas dependem do responsável.
 
-Evidência de fechamento, por origem (2026-10-01):
-
-**Medida por Claude Code** (Neon `dev` + Upstash):
-
-- Suíte de backend: **341 passed, 1 failed, 10 skipped** em 111 s. A falha é
-  `test_demo_browser_day24`, que depende de Redis local não declarado (503 no lugar
-  de 403); o login forjado é recusado de qualquer forma. Os 10 skips são testes
-  opt-in que exigem banco local descartável. Números observados, não meta.
-- Testes unitários do frontend: 33 passed; `tsc` e `eslint` limpos.
-- Expurgo (`python -m app.cli.retention`, dry-run por padrão) executado de verdade
-  em Postgres descartável: 14 de 14 verificações. Restore com paridade de tabelas.
-
-**Executada e informada pelo responsável** (logs fora do repositório, não conferidos
-por Claude Code):
-
-- **Rodada 1** (`run_local.ps1`, 21:11): E1–E13 OK, teste negativo com 10 skipped,
-  11 testes opt-in passed (inclui a anonimização ponta a ponta em banco real),
-  retenção em dry-run OK.
-- **Rodada 2** (`run_frontend.ps1`, 22:02): 33 testes unitários passed, build OK, E2E
-  6 passed (a11y 4, principal 1, isolation 1) em 3 execuções espaçadas por 65 s;
-  status HTTP 200:61, 201:2, 202:40, 204:5, 401:2, 404:12, nenhum 403/429/5xx. Os 2
-  × 401 e 11 dos 404 são esperados (deslogado e isolamento entre usuários). Uma
-  repetição às 22:59 identificou o 12º 404 (`POST /market-data/history/batch` em
-  `/compare`; defeito do Dia 26, handoff H-22); nela o Docker caiu por falta de RAM
-  (evento de ambiente, não regressão) e F9.2 e F9.3 não completaram.
-
-**Achados corrigidos pelo E2E:** contraste do link "Ir para login" em `/portfolios`
-(1,97:1 para 18,58:1) e balde de rate limit próprio para a telemetria (30/60 s por
-IP; o limite de 30 do balde `standard` permanece), com aviso acessível para 429.
-
-**Sem prova automatizada:** o CI do GitHub Actions está em `startup_failure` (135 de
-135 execuções), anterior a esta branch. Pendências, inclusive as transferidas ao
-Dia 29, em [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
-
-Decisões de 2026-10-01 (decididas pelo usuário): exclusão de conta = anonimização
-com D1–D5 (risco residual em `portfolio_events.note`; ADR da opção B obrigatória
-antes de abrir o produto a outros usuários); artefatos de deploy saem do Dia 28 e
-passam ao Dia 29. Decisões e pendências em
-[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md).
+O histórico do Dia 28 está em
+[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md) e as
+pendências em [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
 
 ## Demonstração local — Dia 24
 
@@ -83,7 +50,7 @@ efemeros. Ele roda em PRs que tocam o fluxo DEMO, nightly e por
 - Providers substituíveis, license gate e fallback para último snapshot validado.
 - `source`, timestamps, `DataLevel`, `Freshness` e limitações em dados financeiros.
 - Cadastro por e-mail/senha com sessão opaca em cookie `HttpOnly`.
-- Watchlist por usuário e heatmap por setor.
+- Watchlist por usuário e heatmap básico. Sem dataset aprovado com setor e valor de mercado, o heatmap agrupa por tipo de instrumento, com área igual ([ADR-019](docs/adr/019-global-atlas-table-and-basic-heatmap.md)).
 - Múltiplas carteiras próprias, ledger manual e cálculos factuais de posição, custo, patrimônio, P&L, rentabilidade, proventos e performance.
 - Morning Call sem IA, inserido por comando interno e publicado após revisão humana.
 - Testes essenciais, documentação, observabilidade e artefatos de deploy, sem publicação automática.
@@ -96,13 +63,17 @@ Stripe pode ser considerado no beta **somente em modo de teste**, isolado e opci
 
 ## Arquitetura resumida
 
-- `apps/web`: Next.js App Router, React, TypeScript strict e Tailwind, a partir do Dia 2.
-- `apps/api`: FastAPI, SQLAlchemy 2 e Alembic, a partir do Dia 2.
+- `apps/web`: Next.js App Router, React e TypeScript strict; gráficos em SVG
+  ([ADR-014](docs/adr/014-chart-engine-keep-svg.md)) e tokens em
+  [design system](docs/design/DESIGN_SYSTEM.md).
+- `apps/api`: FastAPI e Alembic, monólito modular sob `/api/v1`.
 - Carteiras: ledger factual, append-only e isolado por usuário, com cálculos no domínio/backend.
-- PostgreSQL/Neon compatível: fonte persistente.
-- Redis/Upstash REST compatível: cache não autoritativo e locks.
-- Refresh: processo curto/idempotente acionado futuramente por GitHub Actions cron contra endpoint interno protegido.
-- Destinos pretendidos: Vercel para web e Render para API; nenhum serviço foi criado.
+- PostgreSQL: fonte persistente. Redis: sessões, rate limit e cache não autoritativo.
+- Staging: web na Vercel com proxy same-origin para a API
+  ([ADR-008](docs/adr/008-same-origin-api-proxy.md)); API, Postgres e Key Value no Render
+  pelo Blueprint `render.yaml`.
+- Refresh: processo curto e idempotente para um endpoint interno protegido; o agendamento
+  pelo GitHub Actions está bloqueado (H-05).
 
 Leia a [arquitetura canônica](docs/ARCHITECTURE.md) e as [ADRs](docs/adr/).
 A [baseline enterprise de engenharia](docs/engineering/ENTERPRISE_ENGINEERING_BASELINE.md) é a constituição técnica para qualquer alteração futura.
@@ -123,7 +94,9 @@ O gate operacional da Semana 1 está documentado em [WEEK_1_GATE.md](docs/engine
 | [Versionamento da API](docs/API_VERSIONING.md) | Política de `/api/v1` e compatibilidade |
 | [SLO inicial](docs/SLO.md) | Objetivos mensuráveis, ainda não SLA |
 | [Instruções operacionais](AGENTS.md) | Hierarquia, segurança, execução e Definition of Done |
-| [ADRs](docs/adr/) | Decisões arquiteturais aceitas |
+| [ADRs](docs/adr/) | Decisões arquiteturais aceitas (001 a 020) |
+| [Design system](docs/design/DESIGN_SYSTEM.md) | Tokens, semântica e componentes implementados |
+| [Handoff final](docs/FINAL_HANDOFF_DAY_40.md) | Estado da Fase 2 e próximas ações |
 
 `roadmap-30-days.md`, `architecture-overview.md`, `financial-content-policy.md`, `financial-content-boundary-plan.md` e `docs/CODEOWNERS` são registros históricos com links para suas fontes atuais.
 
@@ -182,15 +155,18 @@ A API pública usa `/api/v1`, Problem Details (`application/problem+json`) e
 `docs/api/openapi.json`; o cliente gerado fica em `apps/web/src/generated/api.ts`.
 Valores monetários são serializados como strings decimais para preservar exatidão.
 
-## Verificações disponíveis no Dia 1
+## Verificações
 
-```powershell
-git status --short --branch --untracked-files=all
-git diff --check
-python -m json.tool package.json
-```
+| Verificação | Comando |
+| --- | --- |
+| Backend | `python -m uv run --directory apps/api python -m pytest -q` |
+| Frontend | `pnpm --filter @market-pulse/web lint`, `typecheck`, `test` e `build` |
+| Desempenho e bundle | `node scripts/day27_performance_gate.mjs` (depois do build) |
+| Bundle por rota | `node apps/web/scripts/bundle-audit.mjs` (dentro de `apps/web`) |
+| Acessibilidade | `pnpm --dir apps/web exec playwright test e2e/day36-wcag.spec.ts` (web e API locais no ar) |
+| Web Vitals num ambiente real | `BASE_URL=https://... node apps/web/performance/measure-vitals.mjs` |
 
-Build, lint, typecheck e testes de aplicação passam a existir após o scaffold. Verificação indisponível nunca deve ser descrita como aprovada.
+Verificação indisponível nunca deve ser descrita como aprovada.
 
 ## Contribuição e segurança
 
@@ -204,6 +180,7 @@ O repositório não adota licença open source neste momento; consulte [LICENSE]
 
 ## Próximo passo
 
-Dia 29: GitHub Actions agendado para o endpoint interno protegido, acumulando as
-pendências de [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md). Só começa com autorização
-explícita.
+Seguir a ordem da seção 3 do [handoff final](docs/FINAL_HANDOFF_DAY_40.md): desbloquear o
+CI (H-05), autorizar o deploy dos Dias 30 a 40 no staging, assinar a revisão de
+compliance do Morning Call e decidir os planos. As alternativas descartadas estão em
+[DISCARDED_ALTERNATIVES.md](docs/engineering/DISCARDED_ALTERNATIVES.md).

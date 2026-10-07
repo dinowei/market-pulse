@@ -117,6 +117,9 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Acessibilidade e daltonismo do Dia 36: [ACCESSIBILITY_DAY_36.md](design/ACCESSIBILITY_DAY_36.md)
 - Web Vitals e bundle do Dia 38: [PERFORMANCE_DAY_38.md](engineering/PERFORMANCE_DAY_38.md)
 - Regressão e hardening do Dia 39: [REGRESSION_DAY_39.md](engineering/REGRESSION_DAY_39.md)
+- Design system implementado: [DESIGN_SYSTEM.md](design/DESIGN_SYSTEM.md)
+- Alternativas descartadas: [DISCARDED_ALTERNATIVES.md](engineering/DISCARDED_ALTERNATIVES.md)
+- Handoff final da Fase 2: [FINAL_HANDOFF_DAY_40.md](FINAL_HANDOFF_DAY_40.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.
