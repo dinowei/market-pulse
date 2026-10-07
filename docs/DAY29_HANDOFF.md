@@ -223,6 +223,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Decisão em aberto:** o batch deve devolver resultado parcial (série marcada como indisponível) em vez de 404 total quando um id falha? Isso mexe em contrato OpenAPI e exige decisão.
 - **Critério de pronto:** `/compare` mostra a comparação por padrão no DEMO, e o E2E afirma o CONTEÚDO (não só a acessibilidade da tela de erro).
 - **Prova hoje:** causa **lida no código** (`multi-asset-comparison.tsx:11`, `instruments/catalog.py:152-157`, `routers.py:535-536`); o 404 foi **informado** pelo responsável a partir do log. Sem risco de segurança.
+- **Dia 37 (2026-10-07):** `GET /api/v1/instruments` deixou de ser stub e lista o catálogo ([ADR-019](adr/019-global-atlas-table-and-basic-heatmap.md)). Falta o `/compare` usar essa lista para escolher os ids padrão; até lá, H-22 segue aberto.
 - **Nota de 2026-10-05:** `GET /api/v1/instruments` é hoje um stub que devolve `items=[]` (`routers.py`, `list_instruments`), embora o contrato (`limit`, `offset`, `sort`, `order` e `InstrumentList`) já exista. Implementá-lo com o catálogo é o caminho natural para os ids padrão do `/compare`. Antes, comparar `docs/api/openapi.json` e rodar `npm run generate:api` se o contrato mudar. Classe B: não bloqueia o staging privado. Patches equivalentes preparados numa sessão na nuvem não chegaram a esta máquina e não foram usados.
 
 ### H-23 IP real do cliente atrás de proxies (rate limit)

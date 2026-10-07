@@ -95,6 +95,10 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
   corrigidos. **Medido:** axe WCAG 2.2 AA em 9 rotas × 2 temas, reflow, teclado e
   movimento reduzido (21 de 21, local, sem sessão); backend com 392 passed; frontend com
   73 testes. Falta a revisão humana (leitor de tela, zoom) e a varredura com sessão.
+- **Dia 37: entregue em 2026-10-07** na mesma branch (sem deploy): Global Atlas em
+  tabela (`/atlas`) e heatmap básico (`/heatmap`), conforme a ADR-019. Setor e valor de
+  mercado não existem em nenhum dataset aprovado; o contrato declara isso. **Medido:**
+  backend com 397 passed; frontend com 77 testes; gate WCAG com 11 rotas, 25 de 25.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia

@@ -301,6 +301,19 @@ H-25 no [handoff](DAY29_HANDOFF.md). O gate segue sem CI (H-05) e sem deploy no 
   tela, zoom de 200% e espaçamento de texto (revisão humana). Paleta alternativa não foi
   proposta.
 
+**Estado do Dia 37 em 2026-10-07** (mesma branch, sem deploy;
+[ADR-019](adr/019-global-atlas-table-and-basic-heatmap.md)):
+
+- **Entregue:** `/atlas` (Global Atlas em tabela, a partir de `GET /instruments`, que
+  deixou de ser stub) e `/heatmap` (heatmap básico com tabela equivalente). O contrato
+  declara o que os dados não permitem: agrupamento por tipo de instrumento (sem setor),
+  área igual (sem valor de mercado) e cor pela direção.
+- **Medido:** backend com 397 passed, 10 skipped e 0 failed; frontend com 77 testes;
+  gate WCAG com 11 rotas, 25 de 25 (local, sem sessão e com DEMO desligado). OpenAPI e
+  cliente gerado atualizados.
+- **Pendente:** dado real exige dataset `PUBLIC_APPROVED`; setor e valor de mercado
+  exigem fonte aprovada e nova ADR; revisão visual de Cláudio.
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento
