@@ -171,7 +171,7 @@ export function WatchlistsPanel() {
   }
 
   return (
-    <main className="watchlists-page terminal-root" data-theme="dark">
+    <main className="watchlists-page terminal-root">
       <header className="watchlists-header">
         <div><p className="eyebrow">PARTICLE ATLAS / ÁREA PRIVADA</p><h1 id="watchlists-title">Watchlists e favoritos</h1></div>
         <Link href="/" className="watchlists-back">Voltar ao terminal</Link>

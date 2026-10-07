@@ -186,7 +186,7 @@ export function PortfoliosPanel() {
   if (loading) return <main className="portfolios-page terminal-root"><h1 className="sr-only">Carteiras informativas</h1><p className="loading-state">Carregando carteiras…</p></main>;
   if (signedOut) return <main className="portfolios-page terminal-root"><section className="portfolios-card" aria-labelledby="portfolios-title"><p className="eyebrow">ÁREA PRIVADA</p><h1 id="portfolios-title">Carteiras</h1><p className="muted">Entre para acessar suas carteiras informativas.</p><Link className="auth-submit portfolios-link" href="/login">Ir para login</Link></section></main>;
 
-  return <main className="portfolios-page terminal-root" data-theme="dark">
+  return <main className="portfolios-page terminal-root">
     <header className="portfolios-header"><div><p className="eyebrow">PARTICLE ATLAS / ÁREA PRIVADA</p><h1 id="portfolios-title">Carteiras informativas</h1></div><Link href="/" className="portfolios-back">Voltar ao terminal</Link></header>
     <p className="portfolios-disclaimer">Esta carteira mostra eventos, caixa, posições, valuation, P&amp;L e TWR factuais, sempre acompanhados de metodologia. Estados possíveis: DEMO, STALE, PARTIAL e UNAVAILABLE.</p>
     {rateLimit && <RateLimitNotice retryAfter={rateLimit.retryAfter} onRetry={retry} />}

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { ParticleChart } from "./particle-chart";
 import { MorningCallPanel } from "./morning-call";
 import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-note";
+import { ThemeToggle } from "./theme-toggle";
 
 type PublicQuote = components["schemas"]["PublicQuote"];
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
@@ -121,7 +122,6 @@ export function InstrumentSearch({ onSelect }: { onSelect: (canonicalId: string)
 
 export function TerminalShell() {
   const router = useRouter();
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [period, setPeriod] = useState<HistoryPeriod>("1M");
   const [mode, setMode] = useState<SeriesMode>("PRICE");
   const [selectedCanonicalId, setSelectedCanonicalId] = useState("");
@@ -171,8 +171,8 @@ export function TerminalShell() {
     return () => controller.abort();
   }, [historyKey, apiBase, mode, period, selectedCanonicalId]);
 
-  return <div className="terminal-root" data-theme={theme}>
-    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/compare">Comparar</Link><Link href="/calendar">Calendário</Link><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><button type="button" className="theme-toggle" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label={`Mudar para tema ${theme === "dark" ? "claro" : "escuro"}`}>Tema {theme === "dark" ? "claro" : "escuro"}</button></header>
+  return <div className="terminal-root">
+    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/compare">Comparar</Link><Link href="/calendar">Calendário</Link><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><ThemeToggle /></header>
     {sessionError && <p role="alert">{sessionError}</p>}
     <div className="terminal-grid">
       <aside className="left-rail" aria-label="Contexto operacional"><MorningCallPanel /><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE · DEMO</span></section></aside>
