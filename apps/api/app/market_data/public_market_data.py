@@ -106,8 +106,10 @@ def public_quote(canonical_id: str, request_id: str) -> PublicQuote:
         exchange=entry.exchange,
         currency=entry.currency,
         price=result.value,
-        change=Decimal("0"),
-        change_percent=Decimal("0"),
+        # No previous close exists for this synthetic quote, so the change is unknown, not
+        # zero (integrity policy: never fill an absent value; FLAT must not be invented).
+        change=None,
+        change_percent=None,
         data_level=provenance.data_level,
         freshness=provenance.freshness,
         provider=provenance.provider,
