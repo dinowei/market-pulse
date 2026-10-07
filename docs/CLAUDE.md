@@ -120,6 +120,9 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Design system implementado: [DESIGN_SYSTEM.md](design/DESIGN_SYSTEM.md)
 - Alternativas descartadas: [DISCARDED_ALTERNATIVES.md](engineering/DISCARDED_ALTERNATIVES.md)
 - Handoff final da Fase 2: [FINAL_HANDOFF_DAY_40.md](FINAL_HANDOFF_DAY_40.md)
+- Índice de ADRs com estado de implementação: [adr/README.md](adr/README.md)
+- Checklist de compliance: [COMPLIANCE_CHECKLIST.md](COMPLIANCE_CHECKLIST.md)
+- Promoção dos Dias 30 a 40 para o staging: [STAGING_PROMOTION_DAYS_30_40.md](operations/STAGING_PROMOTION_DAYS_30_40.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.

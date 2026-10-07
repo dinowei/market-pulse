@@ -26,6 +26,20 @@ O histórico do Dia 28 está em
 [PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md) e as
 pendências em [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
 
+## Linha do tempo dos 40 dias
+
+| Período | Entrega | Situação |
+| --- | --- | --- |
+| Dias 1 a 23 | Fundação, API versionada, providers atrás de licença, dados públicos `DEMO`, shell e gráficos Particle Atlas, autenticação, watchlists, carteiras e performance factual, Morning Call | Entregues; critérios dos gates semanais em `docs/engineering/WEEK_*_GATE.md` |
+| Dias 24 a 28 | DEMO local isolado, painel interno, comparação multiativo, calendário, proventos, telemetria e hardening | Fechados por decisão do usuário |
+| Dia 29 | Staging privado na Vercel e no Render | No ar; gate aberto (rodadas oficiais) |
+| Dia 30 | RC do staging privado: ADR-009, ADR-010 e decisão de convite | Gate aberto; sem deploy |
+| Dias 31 a 39 | Downsampling, tokens OKLCH, tema, limite por usuário, overview da carteira, avisos legais, WCAG 2.2 AA, Global Atlas e heatmap, Web Vitals, regressão | Entregues **sem deploy**; gates abertos sem CI (H-05) |
+| Dia 40 | Documentação e handoff | Fechado |
+
+O que cada dia provou, e com que evidência, está na seção "Fase 2" do
+[roadmap](docs/ROADMAP_30_DAYS.md) e nos relatórios dos Dias 35 a 39.
+
 ## Demonstração local — Dia 24
 
 Consulte [DEMO_SEED_DAY_24.md](docs/demo/DEMO_SEED_DAY_24.md) para os comandos,
@@ -94,9 +108,11 @@ O gate operacional da Semana 1 está documentado em [WEEK_1_GATE.md](docs/engine
 | [Versionamento da API](docs/API_VERSIONING.md) | Política de `/api/v1` e compatibilidade |
 | [SLO inicial](docs/SLO.md) | Objetivos mensuráveis, ainda não SLA |
 | [Instruções operacionais](AGENTS.md) | Hierarquia, segurança, execução e Definition of Done |
-| [ADRs](docs/adr/) | Decisões arquiteturais aceitas (001 a 020) |
+| [ADRs](docs/adr/README.md) | Índice das decisões aceitas (001 a 020), com estado de implementação e de deploy |
 | [Design system](docs/design/DESIGN_SYSTEM.md) | Tokens, semântica e componentes implementados |
 | [Handoff final](docs/FINAL_HANDOFF_DAY_40.md) | Estado da Fase 2 e próximas ações |
+| [Checklist de compliance](docs/COMPLIANCE_CHECKLIST.md) | Controles, evidências e lacunas para auditoria |
+| [Promoção dos Dias 30 a 40](docs/operations/STAGING_PROMOTION_DAYS_30_40.md) | Deploy no staging, smoke e rollback, quando autorizado |
 
 `roadmap-30-days.md`, `architecture-overview.md`, `financial-content-policy.md`, `financial-content-boundary-plan.md` e `docs/CODEOWNERS` são registros históricos com links para suas fontes atuais.
 

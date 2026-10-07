@@ -4,6 +4,9 @@
 - **Fonte de verdade das pendências:** [DAY29_HANDOFF.md](DAY29_HANDOFF.md) (itens H-01 a
   H-27). Este documento resume o estado e a ordem das próximas ações; não substitui as
   ADRs nem os relatórios.
+- **Por onde começar:** este documento; depois o [índice de ADRs](adr/README.md), o
+  [checklist de compliance](COMPLIANCE_CHECKLIST.md) e o
+  [runbook de promoção](operations/STAGING_PROMOTION_DAYS_30_40.md).
 
 ## 1. Onde está cada coisa
 
@@ -45,7 +48,9 @@ Cada item depende do usuário: contratação, autorização ou revisão humana.
    que substitui as rodadas manuais, e o E2E com DEMO.
 2. **Autorizar o deploy dos Dias 30 a 40 no staging.** Como o push em
    `feature/dia-29-staging` implanta a produção da Vercel, a ação exige autorização
-   explícita. Depois dele, repetir a medição do Dia 38 e medir a cadeia de proxies (H-23).
+   explícita. O passo a passo, o smoke e o rollback estão no
+   [runbook de promoção](operations/STAGING_PROMOTION_DAYS_30_40.md). Depois dele,
+   repetir a medição do Dia 38 e medir a cadeia de proxies (H-23).
 3. **Assinar a revisão de compliance do Morning Call** (H-13,
    [pacote](editorial/MORNING_CALL_COMPLIANCE_REVIEW.md)) e decidir D-1 e D-3 do fluxo
    editorial em ADR (H-25).
@@ -64,7 +69,28 @@ Cada item depende do usuário: contratação, autorização ou revisão humana.
 | CI verde e rodadas oficiais (H-05) | Bloqueado pela cobrança |
 | Dívida de formatação (H-18) | 6 arquivos dos Dias 25 a 27 fora do `ruff format` |
 
-## 5. Como verificar o estado
+## 5. Notas de suporte
+
+| Sintoma | Causa conhecida | O que fazer |
+| --- | --- | --- |
+| Primeira carga sem dados por quase 1 min | API hibernada no plano grátis do Render (52,8 s medidos) | Esperar; a solução é o plano (H-27) |
+| Muitas variações "indisponíveis" no staging | DEMO desligado: as cotações sintéticas não têm fechamento anterior | Esperado; dados reais exigem dataset `PUBLIC_APPROVED` |
+| 429 para vários anônimos ao mesmo tempo | Sem IP real, todos chegam como `127.0.0.1` e dividem o balde | Esperado até ativar a ADR-020; usuários com sessão têm balde próprio (ADR-017) |
+| Cadastro responde 404 | Cadastro fechado em staging por desenho | Abrir só com `MARKET_PULSE_REGISTRATION_ENABLED=true` e fechar em seguida |
+| E2E local preso em "Carregando" | Postgres e Redis locais parados (Docker) | Ver o relatório do [Dia 36](design/ACCESSIBILITY_DAY_36.md), §3 |
+
+## 6. Problemas conhecidos
+
+| Problema | Impacto | Item |
+| --- | --- | --- |
+| CI e rodadas oficiais sem execução | Nenhum gate dos Dias 29 a 39 tem prova em CI | H-05 |
+| Aviso de privacidade e termos de uso inexistentes | Bloqueia abrir o produto a terceiros | [Checklist](COMPLIANCE_CHECKLIST.md), §3 |
+| CSP do frontend ausente | Defesa em profundidade incompleta no navegador | H-02 |
+| Telemetria só com médias | Sem P95 de campo | H-26 |
+| Margem de LCP móvel estreita em `/portfolios` e `/calendar` | 87% a 90% do budget | [Dia 38](engineering/PERFORMANCE_DAY_38.md), P-2 |
+| Formatação pendente em 6 arquivos antigos | Ruído no `ruff format --check` | H-18 |
+
+## 7. Como verificar o estado
 
 ```bash
 cd apps/api && uv run python -m pytest -q
