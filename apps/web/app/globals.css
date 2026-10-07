@@ -225,7 +225,7 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .editorial-block p { margin: .2rem 0; }
 .editorial-sources { color: var(--pa-text-secondary); font-size: .72rem; margin: .5rem 0 0; padding-left: 1rem; }
 .editorial-sources a { color: var(--pa-market-flat); }
-.editorial-disclaimer, .editorial-admin-disclaimer { border-left: 2px solid var(--pa-market-flat); color: var(--pa-text-secondary); font-size: .75rem; line-height: 1.45; padding-left: .7rem; }
+.editorial-disclaimer, .editorial-admin-disclaimer, .financial-disclaimer { border-left: 2px solid var(--pa-market-flat); color: var(--pa-text-secondary); font-size: .75rem; line-height: 1.45; padding-left: .7rem; }
 .editorial-admin-page { min-height: 100vh; padding: clamp(1rem, 4vw, 3rem); }
 .editorial-admin-header { align-items: flex-start; display: flex; justify-content: space-between; gap: 1rem; margin: 0 auto 1rem; max-width: 74rem; }
 .editorial-admin-header button, .editorial-admin-form button, .editorial-admin-actions button { background: transparent; border: 1px solid var(--pa-border-hairline); color: var(--pa-text-primary); cursor: pointer; padding: .55rem .7rem; }

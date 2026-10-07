@@ -8,6 +8,7 @@ import { ParticleChart } from "./particle-chart";
 import { MorningCallPanel } from "./morning-call";
 import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-note";
 import { ThemeToggle } from "./theme-toggle";
+import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 
 type PublicQuote = components["schemas"]["PublicQuote"];
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
@@ -179,6 +180,6 @@ export function TerminalShell() {
       <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} /></div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <>{downsamplingSummary(history.downsampling) && <p className="muted" role="note">{downsamplingSummary(history.downsampling)}</p>}<ParticleChart series={history} /><AccessibleDataTable points={history.points} reducedFrom={history.downsampling?.original_points} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}<p className="comparison-note">Comparação multissérie aguardando contrato com benchmark; nenhuma série foi inventada.</p></section></main>
       <AssetContextPanel quote={quote} loading={quoteLoading} error={quoteError} selectedId={selectedCanonicalId} />
     </div>
-    <footer><MarketStatusBar data={history ?? quote} /><span>Dados informativos; não constituem recomendação financeira.</span></footer>
+    <footer><MarketStatusBar data={history ?? quote} /><span>{FINANCIAL_DISCLAIMER}</span></footer>
   </div>;
 }

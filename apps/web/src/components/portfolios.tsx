@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { components } from "../generated/api";
+import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { EquityChart } from "./equity-chart";
 import { DataStateBadge } from "./market-data";
 import { isRateLimited, parseRetryAfter, RateLimitNotice, retryAfterSeconds } from "./rate-limit-notice";
@@ -170,7 +171,7 @@ export function PortfoliosPanel() {
 
   return <main className="portfolios-page terminal-root">
     <header className="portfolios-header"><div><p className="eyebrow">PARTICLE ATLAS / ÁREA PRIVADA</p><h1 id="portfolios-title">Carteiras informativas</h1></div><Link href="/" className="portfolios-back">Voltar ao terminal</Link></header>
-    <p className="portfolios-disclaimer">Esta carteira mostra eventos, caixa, posições, valuation, P&amp;L e TWR factuais, sempre acompanhados de metodologia. Estados possíveis: DEMO, STALE, PARTIAL e UNAVAILABLE.</p>
+    <p className="portfolios-disclaimer">Esta carteira mostra eventos, caixa, posições, valuation, P&amp;L e TWR factuais, sempre acompanhados de metodologia. Estados possíveis: DEMO, STALE, PARTIAL e UNAVAILABLE. {FINANCIAL_DISCLAIMER}</p>
     {rateLimit && <RateLimitNotice retryAfter={rateLimit.retryAfter} onRetry={retry} />}
     {error && <p className="state-note" role="alert">{error}</p>}
     {valuation?.provenance[0] && <DataStateBadge dataLevel={valuation.provenance[0].data_level} freshness={valuation.provenance[0].freshness} />}

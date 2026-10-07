@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { components } from "../generated/api";
 import { isRateLimited, parseRetryAfter, RateLimitNotice, retryAfterSeconds } from "./rate-limit-notice";
+import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { ADD_ITEM_ERROR, withAddedItem, withoutItem, withoutList, withReplacedList } from "../lib/watchlist-state";
 
 type Watchlist = components["schemas"]["WatchlistResponse"];
@@ -180,7 +181,7 @@ export function WatchlistsPanel() {
         <div><p className="eyebrow">PARTICLE ATLAS / ÁREA PRIVADA</p><h1 id="watchlists-title">Watchlists e favoritos</h1></div>
         <Link href="/" className="watchlists-back">Voltar ao terminal</Link>
       </header>
-      <p className="watchlists-disclaimer">Dados informativos. Uma watchlist registra identidade de instrumentos; não é recomendação financeira.</p>
+      <p className="watchlists-disclaimer">{FINANCIAL_DISCLAIMER} Uma watchlist apenas registra a identidade dos instrumentos acompanhados.</p>
       <section className="watchlists-toolbar" aria-label="Controles de watchlist">
         <form onSubmit={createWatchlist} className="watchlist-form">
           <label htmlFor="watchlist-name">Nova lista</label>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { components } from "../generated/api";
 import { DISPLAY_MAX_POINTS } from "../lib/downsampling-note";
+import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { seriesRole, seriesRoleLabel } from "../lib/series-role";
 
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
@@ -107,6 +108,7 @@ export function MultiAssetComparison({ initialIds = DEFAULT_IDS }: { initialIds?
         <div className="table-wrap"><table><caption>Fallback tabular sincronizado com as séries exibidas</caption><thead><tr><th scope="col">Data</th>{series.map((item) => <th scope="col" key={item.canonical_id}>{item.symbol} · {item.currency}</th>)}</tr></thead><tbody>{series[0].points.map((point, index) => <tr key={point.timestamp}><th scope="row">{point.session_date}</th>{series.map((item) => { const current = item.points[index]; const value = current ? pointValue(current, mode) : null; return <td key={item.canonical_id}>{value == null ? "—" : value}</td>; })}</tr>)}</tbody></table></div>
         <p className="comparison-provenance">Fonte sintética DEMO; cada série mantém `DataLevel`, `Freshness`, timestamps e limitações no contrato.</p>
       </>}
+      <p className="financial-disclaimer">{FINANCIAL_DISCLAIMER}</p>
     </section>
   );
 }
