@@ -5,6 +5,7 @@
   --pa-bg-surface: #111317;
   --pa-bg-elevated: #171a20;
   --pa-border-hairline: #2a2e35;
+  --pa-border-control: #636870;
   --pa-text-primary: #f7f7f5;
   --pa-text-secondary: #a7adb6;
   --pa-market-up: #5ee68a;
@@ -23,6 +24,7 @@
   --pa-bg-surface: #ffffff;
   --pa-bg-elevated: #e9edf1;
   --pa-border-hairline: #c3c9d1;
+  --pa-border-control: #81868e;
   --pa-text-primary: #111317;
   --pa-text-secondary: #4f5966;
   --pa-market-up: #137a3c;
@@ -33,6 +35,46 @@
   --pa-state-demo: #303942;
   --pa-focus: #111317;
   color-scheme: light;
+}
+
+/* Day 33 (ADR-015): OKLCH is the source of truth; the hex above is the identical sRGB
+   fallback for browsers without oklch(). app/oklch-tokens-day33.test.ts keeps both in sync.
+   --pa-border-control is derived from the hairline hue/chroma with lightness raised until
+   it reaches 3:1 against every background (WCAG 2.2 1.4.11) for form fields. */
+@supports (color: oklch(0% 0 0)) {
+  :root {
+    --pa-bg-canvas: oklch(13.90% 0.0029 246.26);
+    --pa-bg-surface: oklch(18.64% 0.0088 264.34);
+    --pa-bg-elevated: oklch(21.73% 0.0127 264.27);
+    --pa-border-hairline: oklch(30.01% 0.0139 261.71);
+    --pa-border-control: oklch(51.57% 0.0140 259.82);
+    --pa-text-primary: oklch(97.56% 0.0026 106.45);
+    --pa-text-secondary: oklch(74.56% 0.0146 258.35);
+    --pa-market-up: oklch(82.77% 0.1755 151.25);
+    --pa-market-down: oklch(72.21% 0.1727 22.37);
+    --pa-market-flat: oklch(76.30% 0.1256 250.73);
+    --pa-state-stale: oklch(81.21% 0.1364 63.40);
+    --pa-state-unavailable: oklch(65.78% 0.0182 259.42);
+    --pa-state-demo: oklch(92.66% 0.0092 258.34);
+    --pa-focus: oklch(100.00% 0.0000 0.00);
+  }
+
+  [data-theme="light"] {
+    --pa-bg-canvas: oklch(96.92% 0.0034 247.86);
+    --pa-bg-surface: oklch(100.00% 0.0000 0.00);
+    --pa-bg-elevated: oklch(94.42% 0.0069 247.90);
+    --pa-border-hairline: oklch(83.36% 0.0130 255.52);
+    --pa-border-control: oklch(61.85% 0.0134 259.82);
+    --pa-text-primary: oklch(18.64% 0.0088 264.34);
+    --pa-text-secondary: oklch(46.02% 0.0247 255.04);
+    --pa-market-up: oklch(50.97% 0.1305 150.82);
+    --pa-market-down: oklch(50.13% 0.1808 26.77);
+    --pa-market-flat: oklch(47.61% 0.1402 252.33);
+    --pa-state-stale: oklch(51.30% 0.1236 57.42);
+    --pa-state-unavailable: oklch(50.29% 0.0208 253.47);
+    --pa-state-demo: oklch(33.99% 0.0200 248.41);
+    --pa-focus: oklch(18.64% 0.0088 264.34);
+  }
 }
 
 * { box-sizing: border-box; }
@@ -48,7 +90,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .auth-card h1 { margin-bottom: 1rem; }
 .form-field { display: grid; gap: .4rem; margin-top: 1rem; }
 .form-field label { color: var(--pa-text-secondary); font-size: .78rem; }
-.form-field input { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-hairline); border-radius: var(--pa-radius); color: var(--pa-text-primary); padding: .65rem; }
+.form-field input { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-control); border-radius: var(--pa-radius); color: var(--pa-text-primary); padding: .65rem; }
 .auth-submit { background: var(--pa-text-primary); border: 1px solid var(--pa-text-primary); border-radius: var(--pa-radius); color: var(--pa-bg-canvas); cursor: pointer; margin-top: 1.25rem; padding: .65rem 1rem; width: 100%; }
 .auth-submit:disabled { cursor: wait; opacity: .65; }
 .auth-switch { color: var(--pa-text-secondary); font-size: .78rem; margin: 1.25rem 0 0; text-align: center; }
@@ -57,7 +99,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .brand { font-weight: 700; letter-spacing: .12em; text-decoration: none; white-space: nowrap; }
 .brand span { color: var(--pa-text-secondary); font-size: .68rem; }
 .search-wrap { position: relative; min-width: 0; }
-.search input { width: 100%; border: 1px solid var(--pa-border-hairline); border-radius: var(--pa-radius); background: var(--pa-bg-canvas); color: var(--pa-text-primary); padding: .55rem .7rem; }
+.search input { width: 100%; border: 1px solid var(--pa-border-control); border-radius: var(--pa-radius); background: var(--pa-bg-canvas); color: var(--pa-text-primary); padding: .55rem .7rem; }
 .search-results { background: var(--pa-bg-elevated); border: 1px solid var(--pa-border-hairline); left: 0; list-style: none; margin: .25rem 0 0; padding: .25rem; position: absolute; right: 0; z-index: 2; }
 .search-results button { background: transparent; border: 0; color: var(--pa-text-primary); cursor: pointer; display: grid; gap: .2rem; padding: .55rem; text-align: left; width: 100%; }
 .search-results button:hover, .search-results button:focus-visible { background: var(--pa-bg-surface); }
@@ -131,7 +173,7 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .watchlist-form { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); padding: 1rem; }
 .watchlist-form label { color: var(--pa-text-secondary); display: block; font-size: .75rem; margin-bottom: .45rem; }
 .watchlist-form-row { display: flex; gap: .5rem; }
-.watchlist-form input { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-hairline); color: var(--pa-text-primary); min-width: 0; padding: .6rem; width: 100%; }
+.watchlist-form input { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-control); color: var(--pa-text-primary); min-width: 0; padding: .6rem; width: 100%; }
 .watchlist-form button, .watchlist-select, .watchlist-item-actions button, .watchlist-danger { background: transparent; border: 1px solid var(--pa-border-hairline); color: var(--pa-text-primary); cursor: pointer; padding: .55rem .7rem; white-space: nowrap; }
 .watchlist-form button:hover, .watchlist-select:hover, .watchlist-item-actions button:hover { border-color: var(--pa-text-secondary); }
 .watchlist-form button:disabled, .watchlist-item-actions button:disabled { cursor: not-allowed; opacity: .45; }
@@ -160,7 +202,7 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .portfolio-form label, .portfolio-selector label { color: var(--pa-text-secondary); display: block; font-size: .75rem; margin-bottom: .45rem; }
 .portfolio-form-row, .portfolio-form-grid { display: flex; flex-wrap: wrap; gap: .5rem; }
 .portfolio-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.portfolio-form input, .portfolio-form select, .portfolio-selector select, .portfolio-form button { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-hairline); color: var(--pa-text-primary); min-width: 0; padding: .6rem; }
+.portfolio-form input, .portfolio-form select, .portfolio-selector select, .portfolio-form button { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-control); color: var(--pa-text-primary); min-width: 0; padding: .6rem; }
 .portfolio-form-row input { flex: 1; }
 .portfolio-form button { cursor: pointer; }
 .portfolio-form button:disabled { cursor: not-allowed; opacity: .45; }
@@ -186,7 +228,7 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .editorial-admin-form, .editorial-admin-card { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); padding: 1rem; }
 .editorial-admin-form { display: grid; gap: .8rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 1rem auto; max-width: 74rem; }
 .editorial-admin-form label { color: var(--pa-text-secondary); display: grid; font-size: .72rem; gap: .35rem; }
-.editorial-admin-form input, .editorial-admin-form select, .editorial-admin-form textarea { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-hairline); color: var(--pa-text-primary); padding: .55rem; }
+.editorial-admin-form input, .editorial-admin-form select, .editorial-admin-form textarea { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-control); color: var(--pa-text-primary); padding: .55rem; }
 .editorial-admin-form textarea { min-height: 6rem; resize: vertical; }
 .editorial-admin-wide { grid-column: 1 / -1; }
 .editorial-admin-list { display: grid; gap: .7rem; margin: 1rem auto; max-width: 74rem; }
