@@ -26,7 +26,7 @@ deploy; **C** é obrigatório antes de abrir o produto a outras pessoas.
 | H-08, H-09, convite no cadastro (H-11) | C | Agendados para o Dia 30 (decisão do usuário, 2026-10-05). |
 | H-19, H-21 | C | Implementados no Dia 35 (2026-10-07), branch `feature/dia-31-34`, ainda sem deploy. |
 | H-13 | C | Pacote de revisão pronto no Dia 35; **aguarda a assinatura humana**. |
-| H-23, Redis persistente, plano Vercel | C | Agendados para o Dia 39. |
+| H-23, Redis persistente, plano Vercel | C | Dia 39: mecanismo do H-23 pronto, ativação pendente de medição; Redis e Vercel dependem de contratação ([regressão do Dia 39](engineering/REGRESSION_DAY_39.md)). |
 | Demais itens | B | Abertos. |
 
 O que falta para o deploy depende do usuário (push, contas e painéis) e segue o
@@ -223,7 +223,8 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Decisão em aberto:** o batch deve devolver resultado parcial (série marcada como indisponível) em vez de 404 total quando um id falha? Isso mexe em contrato OpenAPI e exige decisão.
 - **Critério de pronto:** `/compare` mostra a comparação por padrão no DEMO, e o E2E afirma o CONTEÚDO (não só a acessibilidade da tela de erro).
 - **Prova hoje:** causa **lida no código** (`multi-asset-comparison.tsx:11`, `instruments/catalog.py:152-157`, `routers.py:535-536`); o 404 foi **informado** pelo responsável a partir do log. Sem risco de segurança.
-- **Dia 37 (2026-10-07):** `GET /api/v1/instruments` deixou de ser stub e lista o catálogo ([ADR-019](adr/019-global-atlas-table-and-basic-heatmap.md)). Falta o `/compare` usar essa lista para escolher os ids padrão; até lá, H-22 segue aberto.
+- **Dia 37 (2026-10-07):** `GET /api/v1/instruments` deixou de ser stub e lista o catálogo ([ADR-019](adr/019-global-atlas-table-and-basic-heatmap.md)).
+- **Resolvido no Dia 39 (2026-10-07):** o `/compare` escolhe o ativo padrão no catálogo servido, em DEMO ou não, e o benchmark é o Ibovespa. A decisão sobre resultado parcial no lote não foi necessária. Prova em `apps/web/app/day39-frontend.test.ts`; o E2E com DEMO segue pendente (Docker ou CI).
 - **Nota de 2026-10-05:** `GET /api/v1/instruments` é hoje um stub que devolve `items=[]` (`routers.py`, `list_instruments`), embora o contrato (`limit`, `offset`, `sort`, `order` e `InstrumentList`) já exista. Implementá-lo com o catálogo é o caminho natural para os ids padrão do `/compare`. Antes, comparar `docs/api/openapi.json` e rodar `npm run generate:api` se o contrato mudar. Classe B: não bloqueia o staging privado. Patches equivalentes preparados numa sessão na nuvem não chegaram a esta máquina e não foram usados.
 
 ### H-23 IP real do cliente atrás de proxies (rate limit)
@@ -233,6 +234,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Classe:** C. Aceitável num staging de um único usuário; **obrigatório antes de abrir o produto**. Relacionado a H-09 e H-19.
 - **Prova hoje:** leitura de código; nenhuma medição.
 - **Medido em 2026-10-06 no staging (piora o diagnóstico):** o IP do cliente **era forjável**. Um `X-Forwarded-For: 203.0.113.77` enviado pelo cliente virou `request.client.host`, porque o Uvicorn confia nos cabeçalhos de proxy e o proxy do Render não filtra o valor do cliente. Isso permitia contornar o limite de login. **Mitigação aplicada:** [ADR-012](adr/012-untrusted-proxy-headers.md), Uvicorn com `--no-proxy-headers` (forja reproduzida localmente e eliminada com a flag). A solução definitiva, IP real por saltos confiáveis com testes de forja, continua no Dia 39.
+- **Dia 39 (2026-10-07):** mecanismo de saltos confiáveis implementado e testado contra forja ([ADR-020](adr/020-trusted-proxy-hops.md)), com padrão 0. A ativação exige medir a cadeia de proxies e fechar o acesso direto ao Render, o que depende de deploy.
 - **Medido após a mitigação (2026-10-06, deploy por sync do Blueprint):** o mesmo `X-Forwarded-For` forjado aparece como `127.0.0.1`, o proxy local da instância. O IP não é mais forjável, e **todos os clientes compartilham um único balde por IP**. Isso é aceitável só no staging de 1 usuário.
 
 ### H-24 Cliente Redis novo a cada requisição
@@ -241,6 +243,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** clientes Redis compartilhados por processo, com teste que prove a reutilização, e latência medida antes e depois.
 - **Classe:** C, agendado para o Dia 39 (regressão e desempenho).
 - **Prova hoje:** leitura de código; nada medido.
+- **Dia 39 (2026-10-07):** clientes compartilhados por processo e configuração (`app/core/redis_client.py`), com teste de reutilização. Falta medir a latência no staging, o que depende de deploy.
 
 ### H-25 Fluxo editorial diverge da política
 - **Origem:** [pacote de revisão do Morning Call](editorial/MORNING_CALL_COMPLIANCE_REVIEW.md), seção 3.
@@ -248,6 +251,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** D-1 e D-3 decididos em ADR antes de mudar o fluxo; D-5 corrigido com teste.
 - **Classe:** C. Obrigatório antes de qualquer Morning Call sair do uso pessoal.
 - **Prova hoje:** leitura de código (`editorial/service.py`, `routers.py:_admin_transition`).
+- **Dia 39 (2026-10-07):** D-5 corrigido com teste (`test_editorial_archive_time_day39.py`). D-1 e D-3 continuam esperando ADR.
 
 ### H-26 Telemetria de campo sem percentil
 - **Origem:** medição do Dia 38 ([relatório](engineering/PERFORMANCE_DAY_38.md), P-3).

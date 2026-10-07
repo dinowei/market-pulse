@@ -327,6 +327,18 @@ H-25 no [handoff](DAY29_HANDOFF.md). O gate segue sem CI (H-05) e sem deploy no 
 - **Pendente:** medir os Dias 30 a 37 depois do deploy (autorização do usuário);
   percentil de campo (H-26); margem de LCP móvel em `/portfolios` e `/calendar`.
 
+**Estado do Dia 39 em 2026-10-07** ([relatório](engineering/REGRESSION_DAY_39.md)):
+
+- **Regressão local:** backend com 407 passed, 10 skipped e 0 failed; frontend com 80
+  testes, lint, typecheck e build OK; gate de desempenho OK; E2E de acessibilidade com
+  29 de 29.
+- **Corrigido:** tabela da comparação pareando valores pela posição (Q-1), escala da
+  comparação sem aviso (Q-2), H-22, H-24 e D-5 do H-25.
+- **H-23:** mecanismo pronto com testes de forja ([ADR-020](adr/020-trusted-proxy-hops.md));
+  ativação pendente de medição no staging.
+- **Gate aberto:** faltam as rodadas oficiais em CI (H-05), o E2E com DEMO e as
+  contratações (Redis persistente, planos da Vercel e do Render).
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento

@@ -103,6 +103,11 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
   Web Vitals medidos no staging real (código do Dia 29), todos dentro dos budgets nos
   perfis desktop e móvel; cold start da API de 52,8 s (H-27); bundle com orçamento de
   200 KB gzip por rota; o gate de desempenho passou a usar medição real.
+- **Dia 39: regressão local completa em 2026-10-07, gate aberto**
+  ([relatório](docs/engineering/REGRESSION_DAY_39.md)): backend com 407 passed; frontend
+  com 80 testes; E2E de acessibilidade com 29 de 29. Corrigidos Q-1 (tabela da comparação
+  pareando por posição), Q-2, H-22, H-24 e D-5. H-23 com mecanismo pronto (ADR-020) e
+  ativação pendente. Faltam CI (H-05), E2E com DEMO e contratações do usuário.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia
