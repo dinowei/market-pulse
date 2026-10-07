@@ -39,6 +39,36 @@ Definidos em `apps/web/app/globals.css`, com o mesmo valor em hex e em `oklch()`
 (`oklch-tokens-day33.test.ts`, `day35-frontend.test.ts`, `day36-a11y.test.ts`). O menor
 valor das cores de direção é 4,60:1 (alta, tema claro, fundo elevado).
 
+### Tipografia, forma e camadas
+
+Também extraídos de `globals.css`. O que não existe está dito como inexistente, em vez de
+uma escala sugerida.
+
+| Aspecto | Implementado |
+| --- | --- |
+| Família | `Arial, Helvetica, sans-serif` no corpo; `monospace` só para ids de requisição no painel interno |
+| Pesos | 400 e 700 |
+| Títulos | `h1`: `clamp(1.5rem, 3vw, 2.5rem)`, altura de linha 1,1; `h2`: `1rem` |
+| Texto auxiliar | Entre `.66rem` e `.85rem`; os mais usados são `.68rem`, `.72rem` e `.75rem` |
+| Altura de linha | 1,1 (títulos), 1,45 e 1,5 (texto corrido) |
+| Espaçamento | **Sem escala formal**: valores em `rem` por componente; o mais comum é `1rem`, e as páginas usam `clamp(1rem, 4vw, 3rem)` de margem interna |
+| Raio | Um token, `--pa-radius: 4px`; `999px` no selo de estado e `50%` na marca do selo |
+| Sombra | **Nenhuma**: profundidade por fundo (`canvas`, `surface`, `elevated`) e borda |
+| Breakpoints | `max-width: 1050px` e `max-width: 700px` |
+| Camadas | Um único `z-index: 2`, nos resultados da busca |
+
+**Estados de interação:**
+
+| Estado | Regra |
+| --- | --- |
+| Foco | Contorno de 2 px em `--pa-focus`, com afastamento de 3 px |
+| Hover | Texto do menu passa a `--pa-text-primary`; botões de watchlist ganham borda `--pa-text-secondary`; resultados da busca ganham fundo `--pa-bg-surface` |
+| Ativo | Controle selecionado com fundo `--pa-bg-elevated` e `aria-pressed` |
+| Desabilitado | Opacidade de 0,45 e cursor `not-allowed`; no envio de login e cadastro, 0,65 e cursor `wait` |
+
+Uma escala de espaçamento em tokens seria uma mudança visual, que fica para a revisão de
+Cláudio; ela não foi criada para não alterar a interface sem decisão.
+
 ## 2. Semântica obrigatória
 
 | Situação | Cor | Pista não cromática |
