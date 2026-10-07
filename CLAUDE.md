@@ -74,6 +74,14 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     - smoke de login e sessão no staging;
     - CI verde (H-05);
     - levar o código do Dia 30 ao staging (H-08, H-09 e migration 0012 ainda não estão lá).
+- **Dias 31–34: entregues em 2026-10-07** na branch `feature/dia-31-34` (sem deploy),
+  por autorização do usuário com o gate do Dia 30 aberto. Estado e evidência na seção
+  "Fase 2" do [roadmap](docs/ROADMAP_30_DAYS.md):
+  - downsampling M4 (ADR-013);
+  - SVG P0 mantido (ADR-014);
+  - tokens OKLCH e contraste AA nos dois temas (ADR-015).
+
+  Faltam a validação em CI (H-05) e a revisão visual humana.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia

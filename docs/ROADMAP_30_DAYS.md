@@ -254,6 +254,18 @@ oficial, que passou a ser o `release-gate.yml` e está bloqueada pela cobrança 
 cada gate registra a evidência medida; a validação oficial em CI fica pendente pelo mesmo
 motivo.
 
+**Estado dos Dias 31 a 34 em 2026-10-07** (branch `feature/dia-31-34`, sem deploy):
+
+| Dia | Entrega | Evidência medida | Pendente |
+| --- | --- | --- | --- |
+| 31 | Downsampling M4 opt-in com divulgação no contrato ([ADR-013](adr/013-history-display-downsampling.md)) | 12 testes de backend (subconjunto exato, extremos, gaps, endpoint); suíte com 380 passed e 0 failed; OpenAPI e cliente regenerados | Redução na comparação multissérie (exige faixas comuns de tempo) |
+| 32 | SVG P0 mantido; Lightweight Charts avaliada e não adotada ([ADR-014](adr/014-chart-engine-keep-svg.md)) | Benchmark reproduzível (`apps/web/scripts/chart-benchmark.tsx`); rótulo `INDEX_100` distinto de TWR; teste contra biblioteca sem ADR | Medição de layout e pintura no navegador (Dia 38) |
+| 33 | Tokens em OKLCH com fallback hex idêntico ([ADR-015](adr/015-oklch-tokens-and-theme-contrast.md)) | Paridade OKLCH↔hex testada; build preserva `oklch()` | — |
+| 34 | Revisão do tema claro: AA completo nos dois temas e borda de controle 3:1 ([ADR-015](adr/015-oklch-tokens-and-theme-contrast.md)) | Matriz de contraste testada (texto ≥ 4,5:1; foco e borda ≥ 3:1) | Tema global e persistente; âmbar do calendário (decisões de design) |
+
+Os quatro gates seguem sem a validação oficial em CI (bloqueio de cobrança, H-05) e sem
+revisão visual de Cláudio e do responsável humano.
+
 Ponto de atenção registrado: o H-19 (Dia 35) inclui decidir o IP como segunda
 chave, e o IP correto só fica confiável com o H-23 (Dia 39). O Dia 35 deve usar a
 medição de IP já feita no staging, ou deixar essa parte explícita para o Dia 39.
