@@ -247,6 +247,13 @@ documentação. Regras desta fase:
 | 35 | H-13 (compliance do Morning Call), H-19 (limite por sessão), H-21 (menos requisições ao balde standard) | H-13 é revisão humana registrada. H-21 prevê endpoint em lote: contrato OpenAPI e cliente gerado. |
 | 39 | H-23 (IP real atrás de proxy), Redis persistente (R1 ou R3), plano Vercel adequado ao uso | A medição do IP é feita no staging assim que ele existir. Redis persistente e plano Vercel dependem de contratação pelo usuário. |
 
+**Autorização do usuário em 2026-10-07:** iniciar os Dias 31 a 34 com o gate do Dia 30
+ainda aberto. O Dia 30 tem todas as entregas de código feitas e depende só da validação
+oficial, que passou a ser o `release-gate.yml` e está bloqueada pela cobrança do GitHub
+(H-05). Os Dias 31 a 34 são desenvolvidos na branch `feature/dia-31-34`, sem deploy, e
+cada gate registra a evidência medida; a validação oficial em CI fica pendente pelo mesmo
+motivo.
+
 Ponto de atenção registrado: o H-19 (Dia 35) inclui decidir o IP como segunda
 chave, e o IP correto só fica confiável com o H-23 (Dia 39). O Dia 35 deve usar a
 medição de IP já feita no staging, ou deixar essa parte explícita para o Dia 39.
