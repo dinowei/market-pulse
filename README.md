@@ -1,32 +1,169 @@
 # Market Pulse
 
-O Market Pulse é um terminal web autenticado para acompanhamento **informativo e analítico** de mercados financeiros e carteiras próprias. O beta de 30 dias terá universo aprovado de ativos, dashboard, busca/páginas de ativo, Particle Atlas acessível, Global Atlas tabular, watchlist, carteiras informativas, heatmap setorial, cotações com proveniência e freshness e Morning Call inserido por comando administrativo.
+O Market Pulse é um terminal web autenticado para acompanhamento **informativo e analítico** de mercados financeiros e carteiras próprias. O beta prevê universo aprovado de ativos, dashboard, busca/páginas de ativo, Particle Atlas acessível, Global Atlas tabular, watchlist, carteiras informativas, heatmap, cotações com proveniência e freshness e Morning Call inserido por comando administrativo.
 
 > **Conteúdo informativo. Não constitui recomendação de investimento.**
 
-## Status atual
+## Estado verificado — 2026-10-07
 
-**Fase 2 (Dias 31 a 40) entregue em 2026-10-07, com gates abertos.** O estado
-consolidado, a ordem das próximas ações e o que falta antes de abrir o produto estão no
-[handoff final](docs/FINAL_HANDOFF_DAY_40.md).
+As implementações dos Dias 31–39 estão no Git na branch `feature/dia-31-34`; o Dia 40
+fechou a entrega documental. Isso **não fecha** os gates dos Dias 31–39 nem valida o
+código atual em staging ou produção. A auditoria detalhada e as próximas ações estão no
+[handoff final](docs/FINAL_HANDOFF_DAY_40.md), no [handoff de pendências](docs/DAY29_HANDOFF.md)
+e nos relatórios ligados na [Fase 2 do roadmap](docs/ROADMAP_30_DAYS.md).
 
-- **Staging privado no ar** desde 2026-10-06: web `https://market-pulse-staging.vercel.app`
-  e API `https://market-pulse-staging-api.onrender.com`, com o código do Dia 29. Cadastro
-  fechado; acesso de uma única conta.
-- **Dias 30 a 40** estão nas branches `feature/dia-30-rc` e `feature/dia-31-34`, **sem
-  deploy**: downsampling M4, tokens OKLCH, tema global, limite por usuário, overview da
-  carteira, avisos canônicos, WCAG 2.2 AA, Global Atlas tabular, heatmap básico, Web
-  Vitals medidos no staging e regressão completa.
-- **Última medição local:** backend com 407 passed, 10 skipped e 0 failed; frontend com
-  80 testes, lint, typecheck e build OK; E2E de acessibilidade com 29 de 29.
-- **Bloqueios:** o GitHub Actions está parado pela cobrança da conta (H-05); o deploy dos
-  Dias 30 a 40, os planos pagos e as revisões humanas dependem do responsável.
+| Categoria | Estado comprovado no repositório | Limite da evidência |
+| --- | --- | --- |
+| Implementado no código | Dias 31–39; componentes anteriores de proxy, Morning Call e retenção também existem | Código na branch não significa gate fechado nem implantação |
+| Testado localmente | Nesta auditoria: web 80/80; 51 testes direcionados da API passaram com alvos locais; snapshot OpenAPI e cliente gerado conferidos. Evidência anterior da rodada completa: backend 407 passed/10 skipped e E2E de acessibilidade 29/29 | A suíte completa e o E2E DEMO não foram reexecutados nesta auditoria; evidência histórica não equivale a CI oficial |
+| Enviado para GitHub | `feature/dia-31-34` e `origin/feature/dia-31-34` apontam para `17471845c9a22719d2a84b1b7df4cf6ed7d288f7`; `origin/feature/dia-29-staging` também aponta para esse SHA | Referência Git não comprova deploy |
+| Deploy automático configurado | `render.yaml` configura deploy do serviço da API por commit na branch `feature/dia-29-staging`; documentos do staging registram a Vercel ligada a essa mesma branch | O projeto e os controles atuais dos painéis Vercel/Render não foram revalidados nesta auditoria |
+| Deploy confirmado | O runbook registra o staging com código do Dia 29, commit `60df9ca`, URLs e smoke | Não há evidência de deploy do SHA atual `1747184` |
+| Staging validado | Smoke e sessão foram medidos para o código do Dia 29 (`60df9ca`) | Dias 30–40 ainda não foram promovidos/validados nesse ambiente |
+| Produção validada | Nenhuma validação de produção com commit, URL e smoke foi encontrada | Estado do deployment atual da Vercel não foi consultado; não presumir que esteja inalterado |
+| Bloqueadores externos | Billing do GitHub, serviços/planos e variáveis em painéis, aprovação de deploy e licença de dados | H-05 é reportado nos documentos, mas seu estado atual não foi conferido no painel e não é o único bloqueador |
+| Pendências humanas | Assinatura H-13, decisões editoriais, revisão visual e de acessibilidade, revisão jurídica e aprovação manual | Não substituídas por documentação ou testes automáticos |
+| Pendências técnicas | CI oficial, convite, CSP do frontend, medição dos proxies, Cron de retenção e reconciliação do roadmap | Detalhadas abaixo e nos handoffs |
 
-O histórico do Dia 28 está em
-[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md) e as
-pendências em [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
+**Percentuais do trecho final do roadmap (Dias 31–50, 20 marcos com o mesmo peso):**
 
-## Linha do tempo dos 40 dias
+- Implementação de código: **45%** (9/20 marcos com a entrega principal de código verificada; outros artefatos parciais não contam como marco entregue).
+- Testes locais: **45%** (9/20 marcos com evidência local registrada; não equivale a CI oficial).
+- Documentação no README: **100%** (resumo e estado descritos para os 20 marcos; não significa que documentos jurídicos existam ou estejam aprovados).
+- Staging: **0%** dos marcos 31–50 implantados e validados; o smoke anterior é do código do Dia 29.
+- Produção: **0%** dos marcos 31–50 validados em produção.
+- Projeto total: **5%** dos gates dos marcos 31–50 fechados (1/20: Dia 40). Isso mede gates deste trecho, não um percentual ponderado de todo o produto.
+
+O roadmap canônico em `docs/ROADMAP_30_DAYS.md` contém reconciliação até o Dia 40. A
+seção abaixo registra, neste README, o plano final pedido para os Dias 41–50; a fonte
+canônica ainda precisa de reconciliação documental em uma tarefa autorizada. Registrar
+um marco planejado não autoriza iniciá-lo nem declara seu gate aprovado.
+
+### Dias 31–40 — auditoria do estado real
+
+| Dia | Estado | Evidência e pendência principal |
+| --- | --- | --- |
+| 31 | PARCIAL | M4 opt-in, contrato e testes existem; redução multissérie foi acrescentada no Dia 35; CI oficial pendente. |
+| 32 | PARCIAL | SVG P0 mantido, benchmark e distinção `INDEX_100`/TWR testados; layout e pintura no navegador ainda não medidos. |
+| 33 | PARCIAL | Tokens OKLCH, fallback hex e testes existem; validação oficial e revisão visual humana pendentes. |
+| 34 | PARCIAL | Contraste AA e borda de controle testados; gates oficiais e revisão visual permanecem pendentes. |
+| 35 | PARCIAL | Rate limit por usuário, overview, downsampling alinhado e avisos estão no código e têm testes; assinatura H-13 e validações de staging/CI pendentes. |
+| 36 | PARCIAL | Verificações automáticas registradas; leitor de tela, zoom de 200%, estado autenticado/DEMO e revisão humana pendentes. |
+| 37 | PARCIAL | Global Atlas tabular e heatmap básico têm contrato, implementação e testes; revisão visual e licença PUBLIC_APPROVED para dados reais pendentes. |
+| 38 | COMPLETO | Medição de staging registrada e bundle do código atual medido; a medição de staging é do commit `60df9ca` e precisa ser repetida após uma promoção autorizada. |
+| 39 | PARCIAL | Regressão local e correções testadas; CI oficial, E2E com DEMO e ativação segura dos saltos de proxy ainda pendentes. |
+| 40 | COMPLETO | Design system, alternativas descartadas e handoff documental publicados; isso não fecha os gates técnicos anteriores. |
+
+## Roadmap final — Dias 41 a 50
+
+O Dia 50 é o último marco deste plano final. “Último dia do roadmap” não significa que o
+trabalho esteja concluído. As etapas abaixo estão planejadas ou parciais conforme a
+evidência no repositório; nenhuma autoriza deploy em produção.
+
+### Dia 41 — Desbloqueio externo e isolamento de ambientes
+
+**Status: PENDENTE.** `render.yaml` descreve recursos de staging, inclusive um banco e um
+Key Value de staging. Não há configuração versionada equivalente para Redis de produção,
+secrets separados por ambiente, GitHub Environments ou banco de produção isolado; portanto,
+não há evidência de Redis de produção separado de staging, CI e DEMO. A configuração desses
+serviços nos painéis não foi verificada. O bloqueio de cobrança do GitHub Actions (H-05) é
+relatado no handoff, mas precisa ser confirmado no painel e não é o único bloqueador.
+Produção exige aprovação manual; essa proteção não foi comprovada.
+
+### Dia 42 — Infraestrutura de staging
+
+**Status: PENDENTE.** O Blueprint do Render define `autoDeployTrigger: commit`, branch
+`feature/dia-29-staging`, banco de staging e health check `/health/live`. Não foi
+encontrado Render deploy hook nem evidência versionada de GitHub Environments e secrets
+por ambiente. Os documentos dizem que a branch indicada também alimenta a produção da
+Vercel; portanto, não a trate como branch segura de staging. Não há evidência de deploy
+do SHA atual nem de que produção exija aprovação manual. O smoke registrado é do commit
+`60df9ca`, não do código atual.
+
+### Dias 43–44 — Segurança operacional
+
+**Status: PENDENTE.** A API já envia um CSP aplicado (`default-src 'self'`), mas não foi
+encontrado CSP Report-Only no frontend nem endpoint de relatório CSP. A mitigação do
+proxy com cabeçalhos não confiáveis foi medida no staging; a [ADR-020](docs/adr/020-trusted-proxy-hops.md)
+e a validação de IP por saltos confiáveis existem no código e têm testes, porém
+`MARKET_PULSE_TRUSTED_PROXY_HOPS` permanece `0`. A cadeia confiável ainda precisa ser
+medida no staging e o caminho direto para o Render, resolvido antes de ativar saltos.
+O rate limit por usuário autenticado e por IP para os demais já existe (ADR-017); com
+saltos em `0`, os clientes anônimos continuam compartilhando o IP do proxy.
+
+### Dias 45–47 — Jurídico e compliance
+
+**Status: BLOQUEADO EXTERNAMENTE** para aprovação jurídica e assinatura humana. Não foram
+encontrados Privacy Policy, Terms of Use, identificação do controlador, canal de
+atendimento ou inventário jurídico completo de coleta, retenção e direitos do titular.
+O inventário deve partir dos dados que aparecem no código — cadastro/sessão,
+watchlists/carteiras e telemetria agregada — e receber revisão humana; exportação e
+anonimização de conta e retenção operacional têm código, mas não são aprovação jurídica.
+A revisão do Morning Call H-13 aguarda assinatura.
+
+Fluxo alvo solicitado para o plano, ainda não implementado:
+`DRAFT → AUTOMATED_CHECK → COMPLIANCE_REVIEW → APPROVED → PUBLISHED`.
+A política canônica hoje define `DRAFT → VALIDATION_FAILED ou VALIDATED → IN_REVIEW → PUBLISHED → SUPERSEDED`; o código usa `DRAFT → UNDER_REVIEW → APPROVED → PUBLISHED → ARCHIVED`. A divergência D-1/D-3 exige decisão humana e ADR antes de alteração do fluxo. Não inventar texto jurídico definitivo.
+
+### Dias 48–49 — Governança de dados e retenção
+
+**Status: PARCIAL.** Há rotina de retenção operacional com dry-run por padrão,
+transação, tabela protegida, ordem de exclusão por dependência e métricas de contagem no
+CLI. Não há Render Cron Job diário. O workflow existente a cada 15 minutos é de refresh
+de mercado e roda `DRY_RUN`; não é rotina de retenção. Não foram encontrados limites de
+anomalia, exclusão em lotes nem auditoria de cada expurgo. `audit_logs` e
+`portfolio_events` estão protegidos e fora do plano. `--execute` altera dados e não é
+reversível pelo próprio comando depois do commit; validações de plano e janela inválidos
+abortam antes da exclusão. Nenhuma execução agendada deve ser criada sem novo gate.
+
+### Dia 50 — Fechamento e promoção
+
+**Status: DOCUMENTAÇÃO APENAS.** O roteiro de fechamento é:
+
+1. CI aprovado;
+2. migrations revisadas;
+3. deploy em staging;
+4. health check;
+5. smoke test;
+6. E2E crítico;
+7. revisão de segurança;
+8. revisão de compliance;
+9. aprovação manual;
+10. promoção para produção.
+
+Dia 50 é o último dia do roadmap, mas não prova que os gates anteriores passaram. Produção
+exige aprovação humana e não deve ser promovida automaticamente. O estado descrito para
+a branch `feature/dia-29-staging` (deploy por commit na Vercel) conflita com esse controle
+e precisa ser verificado/resolvido antes de qualquer push ou promoção.
+
+### Status de promoção e ressalva de Git
+
+> O push para `feature/dia-29-staging` foi realizado anteriormente, mas push não equivale a deploy concluído. O deploy só deve ser considerado confirmado com evidência do provedor, commit implantado, URL e smoke test.
+
+O commit atual da branch de origem e o ref remoto de staging coincidem, mas isso não
+confirma qual commit está implantado. Como o runbook identifica `feature/dia-29-staging`
+como branch de produção da Vercel, nenhum novo push deve ser feito para ela até que a
+topologia e a aprovação manual sejam confirmadas.
+
+### Pode começar agora / depende de terceiros
+
+- **Pode começar localmente:** revisar consistência documental, inventariar dados e
+  retenção sem apagar dados, medir fixtures sem serviços externos e preparar evidências
+  reproduzíveis para CI/staging.
+- **Bloqueado externamente ou por aprovação humana:** desbloqueio/validação do GitHub
+  Actions; configuração de ambientes, secrets e recursos em Render/Vercel; medição de
+  proxy no staging; planos de Redis/Vercel/Render; aprovação de licenças de dados;
+  assinatura H-13, ADRs editoriais e revisão jurídica/acessibilidade.
+- **Não fazer sem nova autorização específica:** configurar billing ou secrets reais,
+  alterar Render/Vercel, criar Cron de retenção, publicar texto jurídico, ativar CSP
+  enforced, enviar novo push para a branch ligada à produção ou fazer deploy de produção.
+
+O estado histórico dos Dias 29–40 permanece no [handoff final](docs/FINAL_HANDOFF_DAY_40.md),
+no [runbook do staging](docs/operations/STAGING_RUNBOOK_DAY_29.md), no
+[runbook de promoção](docs/operations/STAGING_PROMOTION_DAYS_30_40.md) e no
+[checklist de compliance](docs/COMPLIANCE_CHECKLIST.md).
+
+## Linha do tempo até o Dia 50
 
 | Período | Entrega | Situação |
 | --- | --- | --- |
@@ -34,11 +171,12 @@ pendências em [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
 | Dias 24 a 28 | DEMO local isolado, painel interno, comparação multiativo, calendário, proventos, telemetria e hardening | Fechados por decisão do usuário |
 | Dia 29 | Staging privado na Vercel e no Render | No ar; gate aberto (rodadas oficiais) |
 | Dia 30 | RC do staging privado: ADR-009, ADR-010 e decisão de convite | Gate aberto; sem deploy |
-| Dias 31 a 39 | Downsampling, tokens OKLCH, tema, limite por usuário, overview da carteira, avisos legais, WCAG 2.2 AA, Global Atlas e heatmap, Web Vitals, regressão | Entregues **sem deploy**; gates abertos sem CI (H-05) |
+| Dias 31 a 39 | Downsampling, tokens OKLCH, tema, limite por usuário, overview da carteira, avisos legais, WCAG 2.2 AA, Global Atlas e heatmap, Web Vitals, regressão | Implementações no Git; gates conforme a tabela de auditoria, staging não validado para o código atual |
 | Dia 40 | Documentação e handoff | Fechado |
+| Dias 41 a 50 | Isolamento, staging, segurança operacional, jurídico, retenção e fechamento | Planejado/parcial; nenhum gate declarado concluído |
 
 O que cada dia provou, e com que evidência, está na seção "Fase 2" do
-[roadmap](docs/ROADMAP_30_DAYS.md) e nos relatórios dos Dias 35 a 39.
+[roadmap](docs/ROADMAP_30_DAYS.md), nos relatórios dos Dias 35–39 e na tabela acima.
 
 ## Demonstração local — Dia 24
 
