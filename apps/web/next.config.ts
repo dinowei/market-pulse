@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 import { apiProxyRewrites } from "./src/lib/api-proxy";
+import { FRONTEND_CSP_REPORT_ONLY_RULE } from "./src/lib/security-headers";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -10,6 +11,12 @@ const nextConfig: NextConfig = {
   // session cookie stays first-party; local development keeps calling the API directly.
   async rewrites() {
     return apiProxyRewrites(process.env.MARKET_PULSE_API_PROXY_ORIGIN);
+  },
+  // H-02: observation only. The theme boot script is inline, so this policy must be
+  // reviewed in a browser before any future enforced CSP is considered. No report
+  // collector is configured, avoiding server-side storage of request details.
+  async headers() {
+    return [FRONTEND_CSP_REPORT_ONLY_RULE];
   },
 };
 
