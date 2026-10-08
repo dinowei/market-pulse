@@ -1,0 +1,290 @@
+name: Release Gate (Rodadas 1 e 2 em CI)
+
+# Versao em nuvem das rodadas oficiais run_local.ps1 (Rodada 1) e run_frontend.ps1
+# (Rodada 2), que antes rodavam so no PC do responsavel. Mesmos alvos locais e mesmos
+# placeholders do demo-integration.yml: nenhuma credencial real, nenhum provider real.
+# Uma etapa com teste opt-in so passa sem nenhum skip, como no CI do Dia 24.
+
+on:
+  pull_request:
+  push:
+    branches: ["main", "feature/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PG_BASE: postgresql://market_pulse:market_pulse_local_only@127.0.0.1:5432
+
+jobs:
+  rodada-1-backend:
+    name: Rodada 1 - DEMO, migrations, ciclo de conta e retencao
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: market_pulse
+          POSTGRES_USER: market_pulse
+          POSTGRES_PASSWORD: market_pulse_local_only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U market_pulse -d market_pulse"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    defaults:
+      run:
+        shell: bash
+        working-directory: apps/api
+    env:
+      PYTHONPATH: "."
+      PYTHONIOENCODING: utf-8
+      APP_ENV: development
+      MARKET_PULSE_ENVIRONMENT: local
+      MARKET_PULSE_REDIS_URL: redis://127.0.0.1:6379/15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+      - name: Install API dependencies
+        run: uv sync --group dev
+
+      - name: E2 - sem opt-in, os 10 testes de banco real ficam todos skipped
+        env:
+          MARKET_PULSE_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+        run: |
+          set -o pipefail
+          uv run pytest -q -rs -p no:cacheprovider \
+            tests/test_corporate_actions_migration_regression.py::test_populated_corporate_actions_rollback_is_lossless \
+            tests/test_day27_integrated_gates.py::test_all_demo_portfolio_markers_reference_persisted_rows \
+            tests/test_day27_integrated_gates.py::test_telemetry_endpoint_persists_only_aggregated_non_pii_columns \
+            tests/test_demo_persistence_day24.py::test_seed_persists_scenario_via_existing_services_and_is_idempotent \
+            tests/test_demo_persistence_day24.py::test_persisted_public_and_portfolio_reads_preserve_demo_integrity \
+            tests/test_demo_persistence_day24.py::test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it \
+            tests/test_demo_persistence_day24.py::test_editorial_real_dict_rows_preserve_version_in_review_audit \
+            tests/test_demo_reset_day24.py::test_reset_seed_twice_produces_identical_persisted_logical_state \
+            tests/test_hardening_day28.py::test_account_deletion_anonymizes_and_preserves_append_only_ledger \
+            tests/test_account_anonymization_day28.py::test_anonymization_end_to_end_on_a_real_database \
+            | tee "$RUNNER_TEMP/e2.log"
+          grep -Eq '(^|[^0-9])10 skipped' "$RUNNER_TEMP/e2.log"
+          ! grep -Eq '[0-9]+ (passed|failed|errors?)' "$RUNNER_TEMP/e2.log"
+
+      - name: E4 - bancos descartaveis (o banco market_pulse nunca e recriado)
+        run: >-
+          uv run python -c
+          "import psycopg; c=psycopg.connect('${{ env.PG_BASE }}/market_pulse', autocommit=True);
+          [c.execute(f'CREATE DATABASE {n} OWNER market_pulse') for n in ('market_pulse_demo','market_pulse_migration_test','market_pulse_restore_test')];
+          c.close()"
+
+      - name: E5/E6 - migrations e seed DEMO em market_pulse_demo
+        env:
+          MARKET_PULSE_DEMO_ENABLED: "true"
+          MARKET_PULSE_DEMO_ALLOW_RECREATE: "true"
+          MARKET_PULSE_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+          MARKET_PULSE_DEMO_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+        run: |
+          uv run alembic upgrade head
+          uv run python -m app.demo seed_demo | tee "$RUNNER_TEMP/seed.log"
+          grep -Eq '"status": "DEMO_(ALREADY_)?SEEDED"' "$RUNNER_TEMP/seed.log"
+
+      - name: E7 - migrations em market_pulse_restore_test (ciclo de conta)
+        env:
+          MARKET_PULSE_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_restore_test
+        run: uv run alembic upgrade head
+
+      - name: E8 - test_demo_browser_day24 com Redis local
+        env:
+          MARKET_PULSE_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+        run: |
+          set -o pipefail
+          uv run pytest -q -rs -p no:cacheprovider \
+            tests/test_demo_browser_day24.py::test_local_demo_preflight_is_explicit_and_external_origins_are_denied \
+            | tee "$RUNNER_TEMP/e8.log"
+          ! grep -Eiq '[0-9]+ skipped' "$RUNNER_TEMP/e8.log"
+
+      - name: E9 a E11 - DEMO fora do CI, regressao de migration e sequencia critica
+        env:
+          MARKET_PULSE_DEMO_ENABLED: "true"
+          MARKET_PULSE_DEMO_ALLOW_RECREATE: "true"
+          MARKET_PULSE_DEMO_INTEGRATION: "true"
+          MARKET_PULSE_DEMO_RESET_INTEGRATION: "true"
+          MARKET_PULSE_MIGRATION_REGRESSION: "true"
+          MARKET_PULSE_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+          MARKET_PULSE_DEMO_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+          MARKET_PULSE_MIGRATION_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_migration_test
+        run: |
+          set -o pipefail
+          run() { uv run pytest -q -rs -p no:cacheprovider "$@" | tee -a "$RUNNER_TEMP/e9.log"; }
+          # Os dois testes que o CI do Dia 24 nunca executa rodam antes, sobre o banco recem-semeado.
+          run tests/test_demo_persistence_day24.py::test_persisted_public_and_portfolio_reads_preserve_demo_integrity \
+              tests/test_demo_persistence_day24.py::test_editorial_real_dict_rows_preserve_version_in_review_audit
+          run tests/test_corporate_actions_migration_regression.py
+          # Ordem fixa: o teste de revogacao precisa rodar por ultimo entre os de DEMO (H-16).
+          run tests/test_demo_persistence_day24.py::test_seed_persists_scenario_via_existing_services_and_is_idempotent \
+              tests/test_demo_reset_day24.py::test_reset_seed_twice_produces_identical_persisted_logical_state \
+              tests/test_demo_persistence_day24.py::test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it \
+              tests/test_day27_integrated_gates.py
+          ! grep -Eiq '[0-9]+ skipped' "$RUNNER_TEMP/e9.log"
+
+      - name: E12 - ciclo de conta (anonimizacao) em banco descartavel
+        env:
+          MARKET_PULSE_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+          MARKET_PULSE_ACCOUNT_LIFECYCLE: "true"
+          MARKET_PULSE_ACCOUNT_LIFECYCLE_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_restore_test
+        run: |
+          set -o pipefail
+          uv run pytest -q -rs -p no:cacheprovider \
+            tests/test_hardening_day28.py::test_account_deletion_anonymizes_and_preserves_append_only_ledger \
+            tests/test_account_anonymization_day28.py::test_anonymization_end_to_end_on_a_real_database \
+            | tee "$RUNNER_TEMP/e12.log"
+          ! grep -Eiq '[0-9]+ skipped' "$RUNNER_TEMP/e12.log"
+
+      - name: E13 - expurgo em dry-run nao apaga nada
+        env:
+          MARKET_PULSE_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+        run: |
+          set -o pipefail
+          counts() {
+            uv run python -c "import psycopg; c=psycopg.connect('${{ env.PG_BASE }}/market_pulse_demo'); print(c.execute('SELECT (SELECT count(*) FROM audit_logs),(SELECT count(*) FROM portfolio_events),(SELECT count(*) FROM market_data_quarantine),(SELECT count(*) FROM corporate_actions_quarantine),(SELECT count(*) FROM raw_payload_records),(SELECT count(*) FROM web_vital_metrics)').fetchone())"
+          }
+          before="$(counts)"
+          uv run python -m app.cli.retention --dry-run | tee "$RUNNER_TEMP/e13.log"
+          after="$(counts)"
+          grep -q '^RETENTION_OK mode=dry-run' "$RUNNER_TEMP/e13.log"
+          grep -Eq '^database=market_pulse_demo\s*$' "$RUNNER_TEMP/e13.log"
+          grep -Eq '^audit_logs_in_plan=false\s*$' "$RUNNER_TEMP/e13.log"
+          grep -Eq '^portfolio_events_in_plan=false\s*$' "$RUNNER_TEMP/e13.log"
+          # "! grep" fora da ultima linha nao reprova o passo com set -e; por isso o if explicito.
+          if grep -Eq '^table=\S+ column=\S+ matched=[0-9]+ deleted=[1-9]' "$RUNNER_TEMP/e13.log"; then
+            echo "dry-run apagou registros"; exit 1
+          fi
+          echo "before=$before after=$after"
+          test "$before" = "$after"
+
+  rodada-2-frontend:
+    name: Rodada 2 - build, API DEMO e E2E Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: market_pulse
+          POSTGRES_USER: market_pulse
+          POSTGRES_PASSWORD: market_pulse_local_only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U market_pulse -d market_pulse"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    defaults:
+      run:
+        shell: bash
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v6.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+
+      - name: F1/F2/F3 - dependencias, testes unitarios e build do web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --dir apps/web lint
+          pnpm --dir apps/web typecheck
+          pnpm --dir apps/web test
+          pnpm --dir apps/web build
+
+      - name: F5 - market_pulse_demo migrado e semeado (DEMO sintetico)
+        working-directory: apps/api
+        env:
+          PYTHONPATH: "."
+          APP_ENV: development
+          MARKET_PULSE_ENVIRONMENT: local
+          MARKET_PULSE_DEMO_ENABLED: "true"
+          MARKET_PULSE_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+          MARKET_PULSE_DEMO_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+          MARKET_PULSE_REDIS_URL: redis://127.0.0.1:6379/15
+        run: |
+          uv sync
+          uv run python -c "import psycopg; c=psycopg.connect('${{ env.PG_BASE }}/market_pulse', autocommit=True); c.execute('CREATE DATABASE market_pulse_demo OWNER market_pulse'); c.close()"
+          uv run alembic upgrade head
+          uv run python -m app.demo seed_demo | tee "$RUNNER_TEMP/seed.log"
+          grep -Eq '"status": "DEMO_(ALREADY_)?SEEDED"' "$RUNNER_TEMP/seed.log"
+
+      - name: F6/F7 - API (1 worker) e frontend (next start)
+        env:
+          PYTHONPATH: "."
+          APP_ENV: development
+          MARKET_PULSE_ENVIRONMENT: local
+          MARKET_PULSE_DEMO_ENABLED: "true"
+          MARKET_PULSE_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+          MARKET_PULSE_DEMO_DATABASE_URL: ${{ env.PG_BASE }}/market_pulse_demo
+          MARKET_PULSE_REDIS_URL: redis://127.0.0.1:6379/15
+        run: |
+          (cd apps/api && nohup uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 \
+            > "$RUNNER_TEMP/api.log" 2>&1 &)
+          for i in $(seq 1 45); do curl --silent --fail http://127.0.0.1:8000/health/ready >/dev/null && break || sleep 2; done
+          curl --silent --fail http://127.0.0.1:8000/health/ready
+          (cd apps/web && env -u MARKET_PULSE_DATABASE_URL -u MARKET_PULSE_DEMO_DATABASE_URL \
+            nohup pnpm exec next start --hostname 127.0.0.1 --port 3000 > "$RUNNER_TEMP/web.log" 2>&1 &)
+          for i in $(seq 1 60); do curl --silent --fail http://127.0.0.1:3000/login >/dev/null && break || sleep 2; done
+          curl --silent --fail --output /dev/null http://127.0.0.1:3000/login
+
+      - name: F8 - Chromium do Playwright
+        run: pnpm --dir apps/web exec playwright install --with-deps chromium
+
+      - name: F9 - E2E em 3 execucoes espacadas (a11y, principal, isolation)
+        working-directory: apps/web
+        run: |
+          # O balde standard do rate limit e de 30 requisicoes por 60 s por IP; o E2E inteiro
+          # passa disso. Pausas maiores que a janela esvaziam o balde sem alterar o limite.
+          pnpm exec playwright test --reporter=list e2e/day27-a11y.spec.ts
+          sleep 65
+          pnpm exec playwright test --reporter=list e2e/demo.spec.ts --grep principal
+          sleep 65
+          pnpm exec playwright test --reporter=list e2e/demo.spec.ts --grep isolation
+
+      - name: F9 - status HTTP da API durante o E2E (403, 429 e 5xx reprovam)
+        if: always()
+        run: |
+          log="$RUNNER_TEMP/api.log"
+          test -f "$log" || { echo "API log ausente"; exit 1; }
+          echo "--- status por codigo ---"
+          grep -Eo '"[A-Z]+ [^ ]+ HTTP/[0-9.]+" [0-9]{3}' "$log" | awk '{print $NF}' | sort | uniq -c
+          echo "--- 401/404 por caminho (informativo) ---"
+          grep -Eo '"[A-Z]+ [^ ?]+[^ ]* HTTP/[0-9.]+" (401|404)' "$log" | sed -E 's/\?[^ ]*//; s/ HTTP\/[0-9.]+"//; s/"//' | sort | uniq -c | sort -rn || true
+          problems="$(grep -Eo '"[A-Z]+ [^ ]+ HTTP/[0-9.]+" (403|429|5[0-9]{2})' "$log" | sed -E 's/\?[^ ]*//; s/ HTTP\/[0-9.]+"//; s/"//' | sort | uniq -c | sort -rn || true)"
+          if [ -n "$problems" ]; then echo "--- 403/429/5xx ---"; echo "$problems"; exit 1; fi
+          echo "nenhuma requisicao 403, 429 ou 5xx."
+
+      - name: Logs da API e do frontend em caso de falha
+        if: failure()
+        run: |
+          tail -n 80 "$RUNNER_TEMP/api.log" || true
+          tail -n 40 "$RUNNER_TEMP/web.log" || true

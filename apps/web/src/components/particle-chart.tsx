@@ -68,7 +68,7 @@ export function ParticleChart({ series }: { series: PublicHistorySeries }) {
         {pathD && <path d={pathD} className="chart-line" fill="none" />}
         {values.map((value, index) => value === null ? null : <circle key={`${series.points[index].timestamp}-${index}`} cx={scaleX(index)} cy={scaleY(value)} r="1.1" className="chart-point" />)}
       </svg>
-      <figcaption>{series.mode === "INDEX_100" ? "Índice 100" : "Preço nominal"} — {series.data_level}; valores contratuais preservados</figcaption>
+      <figcaption>{series.mode === "INDEX_100" ? "Índice 100 — preço rebaseado a 100 no início do período; não é rentabilidade (TWR)" : "Preço nominal"} — {series.data_level}; valores contratuais preservados</figcaption>
     </figure>
   );
 }

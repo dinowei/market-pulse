@@ -106,7 +106,8 @@ def test_me_and_logout_revoke_opaque_session(monkeypatch) -> None:
     assert me.json()["email"] == "user@example.com"
     assert "token" not in me.text.lower()
 
-    assert client.post("/api/v1/auth/logout").status_code == 204
+    resp = client.post("/api/v1/auth/logout", headers={"Origin": "http://localhost:3000"})
+    assert resp.status_code == 204
     assert client.get("/api/v1/auth/me").status_code == 401
 
 

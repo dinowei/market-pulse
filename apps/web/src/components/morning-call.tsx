@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { components } from "../generated/api";
+import { EDITORIAL_DISCLAIMER } from "../lib/disclaimers";
 
 type EditorialPostResponse = components["schemas"]["EditorialPostResponse"];
 type EditorialPostListResponse = components["schemas"]["EditorialPostListResponse"];
@@ -60,7 +61,7 @@ export function MorningCallPanel() {
         setState({ loading: false, post });
       })
       .catch((error: unknown) => {
-        if (error instanceof Error && error.name !== "AbortError") setState({ loading: false, error: "servico indisponivel" });
+        if (error instanceof Error && error.name !== "AbortError") setState({ loading: false, error: "serviço indisponível" });
       });
     return () => controller.abort();
   }, [apiBase]);
@@ -69,21 +70,20 @@ export function MorningCallPanel() {
     <section id="morning-call" className="morning-call-panel" aria-labelledby="morning-call-title" data-editorial-types={editorialBlockTypes.join(",")}>
       <p className="eyebrow">MORNING CALL</p>
       <h2 id="morning-call-title">Resumo operacional</h2>
-      {state.loading && <p className="muted">Carregando conteudo editorial...</p>}
-      {state.error && <p className="state-note" role="alert">Indisponivel: {state.error}</p>}
-      {!state.loading && !state.error && !state.post && <p className="muted">Nenhum conteudo publicado.</p>}
+      {state.loading && <p className="muted">Carregando conteúdo editorial…</p>}
+      {state.error && <p className="state-note" role="alert">Indisponível: {state.error}</p>}
+      {!state.loading && !state.error && !state.post && <p className="muted">Nenhum conteúdo publicado.</p>}
       {state.post && state.post.status === publishedStatus && (
         <>
-          <p className="editorial-status">{state.post.status} · versao {state.post.version}</p>
+          <p className="editorial-status">{state.post.status} · versão {state.post.version}</p>
           <p className="editorial-time">Publicado em BRT: {formatBrt(state.post.published_at)}</p>
           <h3>{state.post.title}</h3>
           {state.post.summary && <p className="muted">{state.post.summary}</p>}
           <div className="editorial-blocks">{state.post.blocks.map((block, index) => <Block key={`${block.content_type}-${index}`} block={block} />)}</div>
-          <p className="editorial-disclaimer">Conteúdo factual e informativo. Não constitui orientação de investimento, oferta ou solicitação de ordem.</p>
-          {history.items.length > 1 && <details><summary>Historico de versoes publicadas ({history.items.length})</summary><ol>{history.items.map((version) => <li key={version.version}>v{version.version} · {formatBrt(version.published_at)}</li>)}</ol></details>}
+          <p className="editorial-disclaimer">{EDITORIAL_DISCLAIMER}</p>
+          {history.items.length > 1 && <details><summary>Histórico de versões publicadas ({history.items.length})</summary><ol>{history.items.map((version) => <li key={version.version}>v{version.version} · {formatBrt(version.published_at)}</li>)}</ol></details>}
         </>
       )}
-      <span className="sr-only" aria-hidden="true">Indisponível Nenhum conteúdo</span>
     </section>
   );
 }

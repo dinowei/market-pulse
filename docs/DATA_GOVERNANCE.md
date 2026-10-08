@@ -35,3 +35,14 @@ Carteiras próprias são registros factuais e informativos do usuário. O ledger
 ## Retenção e privacidade
 
 Retenção de snapshots, sessions e ingestion runs será definida antes da produção. Minimizar dados pessoais; não colocar e-mail, tokens ou cookies em logs. Pedidos de remoção exigem processo autenticado futuro.
+
+**Adendo de 2026-10-07 (Dia 40).** Parte do que estava como futuro foi implementada no
+Dia 28; o estado atual está no [checklist de compliance](COMPLIANCE_CHECKLIST.md), §3:
+
+- expurgo com retenção padrão de 90 dias para quarentenas, payloads brutos e telemetria
+  (`app/retention.py`), sem tocar em `audit_logs`; ainda sem execução agendada;
+- exclusão de conta por anonimização, com auditoria, e exportação dos dados do usuário
+  autenticado;
+- sessões no Redis com expiração.
+
+Continuam em aberto o aviso de privacidade e os termos de uso para o usuário.

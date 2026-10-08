@@ -150,6 +150,84 @@ format --check ainda aponta formatação legada em 14 arquivos fora do escopo do
 Dia 24. Revisão manual de licenças e vulnerabilidades continua necessária antes
 de uma release.
 
+### Auditoria dos cinco skips do backend
+
+Os cinco testes ignorados na execucao padrao sao integracoes opt-in do banco
+`market_pulse_demo`. Todos pertencem a categoria **(a) seguro ignorar por
+enquanto**: cobrem comportamento implementado, mas exigem autorizacao explicita
+e infraestrutura DEMO dedicada. Nenhum foi removido, reativado ou classificado
+como obsoleto/lacuna de produto.
+
+| Teste | Localizacao | Motivo do skip | Classificacao | Acao |
+| --- | --- | --- | --- | --- |
+| `test_seed_persists_scenario_via_existing_services_and_is_idempotent` | `apps/api/tests/test_demo_persistence_day24.py:28` | `MARKET_PULSE_DEMO_INTEGRATION != true` | (a) | Manter; executar no gate DEMO opt-in |
+| `test_persisted_public_and_portfolio_reads_preserve_demo_integrity` | `apps/api/tests/test_demo_persistence_day24.py:79` | leitura exige banco DEMO dedicado | (a) | Manter; executar no gate DEMO opt-in |
+| `test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it` | `apps/api/tests/test_demo_persistence_day24.py:123` | gate de revogacao opera somente em metadados DEMO local | (a) | Manter; executar no gate DEMO opt-in |
+| `test_editorial_real_dict_rows_preserve_version_in_review_audit` | `apps/api/tests/test_demo_persistence_day24.py:150` | `MARKET_PULSE_DEMO_INTEGRATION != true` | (a) | Manter; executar no gate DEMO opt-in |
+| `test_reset_seed_twice_produces_identical_persisted_logical_state` | `apps/api/tests/test_demo_reset_day24.py:100` | recriacao exige autorizacao local explicita e servidores parados | (a) | Manter; executar no gate DEMO opt-in |
+
+### Rotulo DEMO na interface
+
+O componente compartilhado `DataStateBadge` agora apresenta o texto humano
+**DADOS DE DEMONSTRACAO** quando `data_level=DEMO`, preservando tambem o valor
+contratual `DEMO` em texto acessivel. Ele aparece no dashboard/pagina de ativo,
+na barra de estado e na pagina de carteiras quando a proveniencia da valuation
+informa DEMO. O teste `apps/web/app/day24-demo-badge.test.ts` cobre DEMO e
+`REAL_TIME`.
+
+Watchlists exibem somente identidade/metadados do instrumento e explicitam
+`preco: UNAVAILABLE ate fonte aprovada`; como nao recebem `DataLevel`, nenhum
+rotulo foi inventado. Morning Call usa o contrato editorial, que tambem nao
+possui `DataLevel`; permanece identificado por fontes, versao e disclaimer
+factual, sem atribuir falsamente um nivel de dados.
+
+### Formatacao legada fora do escopo
+
+`ruff format --check` identifica 14 arquivos legados fora do escopo funcional do
+Dia 24: `app/instruments/catalog.py`, `app/market_data/reconciliation.py`,
+`app/market_data/refresh.py`, `app/market_data/refresh_application.py`,
+`app/providers/normalization.py`, `app/watchlists/service.py`,
+`tests/test_day12_1_guardrails.py`, `tests/test_day14_1_hardening.py`,
+`tests/test_day14_operations.py`, `tests/test_editorial_day22.py`,
+`tests/test_internal_refresh_day13.py`, `tests/test_portfolios_day20.py`,
+`tests/test_public_market_data_day15.py` e `tests/test_watchlists_day19.py`.
+Nao executar `ruff format` neste fechamento; abrir antes do Dia 30 um commit
+dedicado `chore: formatar legado`, separado de qualquer dia funcional.
+
+### Gate automatizado de integracao DEMO
+
+O workflow isolado `.github/workflows/demo-integration.yml` remove a dependencia
+de memoria humana para os gates persistidos. Ele cria servicos efemeros de
+PostgreSQL e Redis no CI, aplica as migrations no banco `market_pulse_demo` e
+define explicitamente `MARKET_PULSE_DEMO_ENABLED`,
+`MARKET_PULSE_DEMO_INTEGRATION` e `MARKET_PULSE_DEMO_RESET_INTEGRATION`.
+
+O job executa os testes críticos de idempotência/revogação, a regressão de
+rollback populado e os gates integrados do Dia 27 para marcadores referenciados
+e telemetria agregada sem PII. Ele falha se o relatório do pytest contiver
+qualquer teste skipped. O gatilho é um PR que toque no fluxo DEMO, o agendamento nightly (`03:00 UTC`) ou
+`workflow_dispatch`. O job e separado do workflow principal para manter o gate
+explicito sem tornar todo build dependente de operacoes de reset.
+
+Para reproduzir localmente, com Docker Compose saudavel e o ambiente DEMO
+dedicado configurado conforme este runbook:
+
+```powershell
+$env:MARKET_PULSE_DEMO_INTEGRATION = "true"
+$env:MARKET_PULSE_DEMO_RESET_INTEGRATION = "true"
+$env:MARKET_PULSE_DEMO_ENABLED = "true"
+python -m uv run --directory apps/api alembic upgrade head
+python -m uv run --directory apps/api pytest -q -rs `
+  apps/api/tests/test_demo_persistence_day24.py::test_seed_persists_scenario_via_existing_services_and_is_idempotent `
+  apps/api/tests/test_demo_reset_day24.py::test_reset_seed_twice_produces_identical_persisted_logical_state `
+  apps/api/tests/test_demo_persistence_day24.py::test_revoked_demo_dataset_is_unavailable_and_reset_rejects_it `
+  apps/api/tests/test_day27_integrated_gates.py
+```
+
+Uma execucao local nao substitui a execucao no provedor de CI. O
+`workflow_dispatch` real requer que o workflow esteja publicado no repositorio;
+nenhum login ou push e feito por esta tarefa.
+
 ## Encerramento
 
 Após validação, encerre somente os recursos do projeto:

@@ -60,39 +60,83 @@ class InstrumentCatalogEntry(BaseModel):
 
 MASTER_CATALOG: tuple[InstrumentCatalogEntry, ...] = (
     InstrumentCatalogEntry(
-        canonical_id="equity.br.b3.petr4", symbol="PETR4", display_symbol="PETR4",
-        name="Petrobras PN", instrument_type="EQUITY", exchange="B3", venue="B3",
-        country="BR", region="BR", currency="BRL", timezone="America/Sao_Paulo",
-        catalog_status=CatalogStatus.ACTIVE, coverage_tier=CoverageTier.P0_OPERATIONAL,
+        canonical_id="equity.br.b3.petr4",
+        symbol="PETR4",
+        display_symbol="PETR4",
+        name="Petrobras PN",
+        instrument_type="EQUITY",
+        exchange="B3",
+        venue="B3",
+        country="BR",
+        region="BR",
+        currency="BRL",
+        timezone="America/Sao_Paulo",
+        catalog_status=CatalogStatus.ACTIVE,
+        coverage_tier=CoverageTier.P0_OPERATIONAL,
         data_support_status=DataSupportStatus.PROVIDER_PENDING,
         notes="Metadados aprovados para o universo operacional; preço depende de provider/licença.",
     ),
     InstrumentCatalogEntry(
-        canonical_id="equity.us.nasdaq.aapl", symbol="AAPL", display_symbol="AAPL",
-        name="Apple Inc.", instrument_type="EQUITY", exchange="NASDAQ", venue="NASDAQ",
-        country="US", region="US", currency="USD", timezone="America/New_York",
-        catalog_status=CatalogStatus.ACTIVE, coverage_tier=CoverageTier.P0_OPERATIONAL,
+        canonical_id="equity.us.nasdaq.aapl",
+        symbol="AAPL",
+        display_symbol="AAPL",
+        name="Apple Inc.",
+        instrument_type="EQUITY",
+        exchange="NASDAQ",
+        venue="NASDAQ",
+        country="US",
+        region="US",
+        currency="USD",
+        timezone="America/New_York",
+        catalog_status=CatalogStatus.ACTIVE,
+        coverage_tier=CoverageTier.P0_OPERATIONAL,
         data_support_status=DataSupportStatus.PROVIDER_PENDING,
     ),
     InstrumentCatalogEntry(
-        canonical_id="fii.br.b3.mxrf11", symbol="MXRF11", display_symbol="MXRF11",
-        name="Maxi Renda FII", instrument_type="FII", exchange="B3", venue="B3",
-        country="BR", region="BR", currency="BRL", timezone="America/Sao_Paulo",
-        catalog_status=CatalogStatus.CANDIDATE, coverage_tier=CoverageTier.P0_CATALOG,
+        canonical_id="fii.br.b3.mxrf11",
+        symbol="MXRF11",
+        display_symbol="MXRF11",
+        name="Maxi Renda FII",
+        instrument_type="FII",
+        exchange="B3",
+        venue="B3",
+        country="BR",
+        region="BR",
+        currency="BRL",
+        timezone="America/Sao_Paulo",
+        catalog_status=CatalogStatus.CANDIDATE,
+        coverage_tier=CoverageTier.P0_CATALOG,
         data_support_status=DataSupportStatus.LICENSE_PENDING,
     ),
     InstrumentCatalogEntry(
-        canonical_id="crypto.global.btc-usd", symbol="BTC-USD", display_symbol="BTC/USD",
-        name="Bitcoin", instrument_type="CRYPTO", country="GLOBAL", region="GLOBAL",
-        currency="USD", timezone="UTC", aliases=("BTC/USD",),
-        catalog_status=CatalogStatus.CANDIDATE, coverage_tier=CoverageTier.FUTURE_REVIEW,
+        canonical_id="crypto.global.btc-usd",
+        symbol="BTC-USD",
+        display_symbol="BTC/USD",
+        name="Bitcoin",
+        instrument_type="CRYPTO",
+        country="GLOBAL",
+        region="GLOBAL",
+        currency="USD",
+        timezone="UTC",
+        aliases=("BTC/USD",),
+        catalog_status=CatalogStatus.CANDIDATE,
+        coverage_tier=CoverageTier.FUTURE_REVIEW,
         data_support_status=DataSupportStatus.METADATA_ONLY,
     ),
     InstrumentCatalogEntry(
-        canonical_id="bdr.br.b3.aapl34", symbol="AAPL34", display_symbol="AAPL34",
-        name="Apple BDR", instrument_type="BDR", exchange="B3", venue="B3",
-        country="BR", region="BR", currency="BRL", timezone="America/Sao_Paulo",
-        catalog_status=CatalogStatus.CANDIDATE, coverage_tier=CoverageTier.FUTURE_REVIEW,
+        canonical_id="bdr.br.b3.aapl34",
+        symbol="AAPL34",
+        display_symbol="AAPL34",
+        name="Apple BDR",
+        instrument_type="BDR",
+        exchange="B3",
+        venue="B3",
+        country="BR",
+        region="BR",
+        currency="BRL",
+        timezone="America/Sao_Paulo",
+        catalog_status=CatalogStatus.CANDIDATE,
+        coverage_tier=CoverageTier.FUTURE_REVIEW,
         data_support_status=DataSupportStatus.METADATA_ONLY,
     ),
 )
@@ -107,9 +151,12 @@ FUTURE_CANDIDATE_UNIVERSE = frozenset(
 
 def get_catalog() -> tuple[InstrumentCatalogEntry, ...]:
     if get_settings().demo_enabled:
-        from app.demo.read_models import catalog_entries
+        try:
+            from app.demo.read_models import catalog_entries
 
-        return catalog_entries()
+            return catalog_entries()
+        except Exception:
+            return MASTER_CATALOG
     return MASTER_CATALOG
 
 

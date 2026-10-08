@@ -1,6 +1,7 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -225,6 +226,11 @@ class InstrumentSummary(StrictModel):
     coverage_tier: str
     data_support_status: str
     support_state: str
+    # Day 37 (ADR-019): catalog metadata used by the tabular Global Atlas.
+    exchange: str | None = None
+    country: str | None = None
+    region: str | None = None
+    timezone: str | None = None
 
 
 class InstrumentList(StrictModel):
@@ -336,6 +342,26 @@ class PublicQuote(StrictModel):
         return self
 
 
+class HeatmapGroup(StrictModel):
+    group: str
+    tiles: list[PublicQuote]
+
+
+class HeatmapResponse(StrictModel):
+    """Basic P0 heatmap (ADR-019). Each tile is a full PublicQuote with its own provenance.
+
+    The response declares what the data allows: no approved dataset carries sector or
+    market cap, so tiles are grouped by instrument type and share the same area.
+    """
+
+    grouping: Literal["INSTRUMENT_TYPE"] = "INSTRUMENT_TYPE"
+    sizing: Literal["EQUAL_AREA"] = "EQUAL_AREA"
+    color_basis: Literal["DIRECTION_VS_PREVIOUS_CLOSE"] = "DIRECTION_VS_PREVIOUS_CLOSE"
+    groups: list[HeatmapGroup]
+    limitations: tuple[str, ...]
+    request_id: str
+
+
 class PublicHistoryPoint(StrictModel):
     timestamp: datetime
     session_date: date
@@ -347,6 +373,23 @@ class PublicHistoryPoint(StrictModel):
     value: Decimal | None = None
     index_100: Decimal | None = None
     is_gap: bool = False
+
+
+class SeriesDownsampling(StrictModel):
+    """Disclosure that ``points`` is an exact subset of the full series (ADR-013)."""
+
+    method: Literal["M4"] = "M4"
+    max_points: int = Field(ge=1)
+    original_points: int = Field(ge=0)
+    returned_points: int = Field(ge=0)
+    preserved: tuple[Literal["FIRST", "LAST", "MIN", "MAX", "GAPS"], ...] = (
+        "FIRST",
+        "LAST",
+        "MIN",
+        "MAX",
+        "GAPS",
+    )
+    basis: Literal["value"] = "value"
 
 
 class PublicHistorySeries(StrictModel):
@@ -365,6 +408,7 @@ class PublicHistorySeries(StrictModel):
     latency_ms: int | None = Field(default=None, ge=0)
     limitations: tuple[str, ...] = ()
     points: list[PublicHistoryPoint]
+    downsampling: SeriesDownsampling | None = None
     tabular_fallback: bool = True
     accessibility: dict[str, bool]
     unavailable_reason: str | None = None
@@ -381,17 +425,122 @@ class PublicHistorySeries(StrictModel):
         return self
 
 
-class PortfolioEventCreate(StrictModel):
-    portfolio_id: str
-    event_type: PortfolioEventType
+class EconomicEventImportance(StrEnum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
+class EconomicEventStatus(StrEnum):
+    SCHEDULED = "SCHEDULED"
+    RELEASED = "RELEASED"
+    CANCELLED = "CANCELLED"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class EconomicEventValueStatus(StrEnum):
+    AVAILABLE = "AVAILABLE"
+    PENDING = "PENDING"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class EconomicCalendarProvenance(StrictModel):
+    source: str
+    dataset: str
+    data_level: DataLevel
+    freshness: Freshness
+    source_timestamp: datetime | None = None
+    collected_at: datetime
+    timezone: str
+    limitations: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def require_demo_until_licensed(self) -> "EconomicCalendarProvenance":
+        if self.data_level is not DataLevel.DEMO:
+            raise ValueError("economic calendar remains DEMO until a provider is approved")
+        if self.freshness is not Freshness.UNAVAILABLE and self.source_timestamp is None:
+            raise ValueError("available calendar data requires source_timestamp")
+        return self
+
+
+class EconomicCalendarEvent(StrictModel):
+    event_id: str
+    event_key: str
+    country: str = Field(pattern="^[A-Z]{2}$")
+    timezone: str
     event_date: date
+    event_time: datetime | None = None
+    title: str = Field(min_length=1, max_length=240)
+    description: str = Field(min_length=1, max_length=1000)
+    importance: EconomicEventImportance
+    status: EconomicEventStatus
+    value_status: EconomicEventValueStatus
+    actual: Decimal | None = None
+    forecast: Decimal | None = None
+    previous: Decimal | None = None
+    unit: str | None = Field(default=None, max_length=40)
+    provenance: EconomicCalendarProvenance
+
+
+class EconomicCalendarResponse(StrictModel):
+    items: list[EconomicCalendarEvent]
+    date_from: date
+    date_to: date
+    limit: int = Field(ge=1, le=100)
+
+
+class BenchmarkItem(StrictModel):
+    canonical_id: str
+    symbol: str
+    name: str
     currency: str = Field(pattern="^[A-Z]{3}$")
-    quantity: Decimal | None = None
-    price: Decimal | None = None
-    gross_amount: Decimal | None = None
-    fees: Decimal | None = None
-    cash_amount: Decimal | None = None
-    note: str | None = Field(default=None, max_length=2000)
+    value: Decimal | None = None
+    change_percent: Decimal | None = None
+    data_level: DataLevel
+    freshness: Freshness
+    source: str
+    dataset: str
+    timestamp_official: datetime | None = None
+    timestamp_collected: datetime
+    limitations: tuple[str, ...] = ()
+    unavailable_reason: str | None = None
+
+
+class BenchmarkListResponse(StrictModel):
+    items: list[BenchmarkItem]
+
+
+class BatchHistoryRequest(StrictModel):
+    canonical_ids: list[str] = Field(min_length=1, max_length=10)
+    period: HistoryPeriod = HistoryPeriod.ONE_M
+    mode: SeriesMode = SeriesMode.INDEX_100
+    adjustment_type: str = "UNADJUSTED"
+    # Same bounds as app.market_data.downsampling (asserted by tests); opt-in, aligned M4.
+    max_points: int | None = Field(default=None, ge=64, le=5000)
+
+    @model_validator(mode="after")
+    def require_unique_ids(self) -> "BatchHistoryRequest":
+        if len(set(self.canonical_ids)) != len(self.canonical_ids):
+            raise ValueError("canonical_ids must be unique")
+        return self
+
+
+class BatchHistoryResponse(StrictModel):
+    items: list[PublicHistorySeries]
+
+
+class BatchQuoteRequest(StrictModel):
+    canonical_ids: list[str] = Field(min_length=1, max_length=10)
+
+    @model_validator(mode="after")
+    def require_unique_ids(self) -> "BatchQuoteRequest":
+        if len(set(self.canonical_ids)) != len(self.canonical_ids):
+            raise ValueError("canonical_ids must be unique")
+        return self
+
+
+class BatchQuoteResponse(StrictModel):
+    items: list[PublicQuote]
 
 
 class PortfolioCreateRequest(StrictModel):
@@ -510,6 +659,90 @@ class PerformanceProvenance(StrictModel):
     limitations: tuple[str, ...] = ()
 
 
+class PortfolioIncomeType(StrEnum):
+    DIVIDEND = "DIVIDEND"
+    JCP = "JCP"
+    SPLIT = "SPLIT"
+    REVERSE_SPLIT = "REVERSE_SPLIT"
+
+
+class PortfolioIncomeStatus(StrEnum):
+    APPLIED = "APPLIED"
+    PENDING = "PENDING"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class MarkerSourceType(StrEnum):
+    LEDGER_EVENT = "LEDGER_EVENT"
+    CORPORATE_ACTION = "CORPORATE_ACTION"
+
+
+class PortfolioIncomeResponse(StrictModel):
+    portfolio_id: str
+    source_type: MarkerSourceType
+    source_id: str
+    canonical_id: str
+    event_type: PortfolioIncomeType
+    status: PortfolioIncomeStatus
+    ex_date: date | None = None
+    payment_date: date | None = None
+    payer: str
+    gross_amount_per_unit: Decimal | None = None
+    net_amount_per_unit: Decimal | None = None
+    quantity: Decimal | None = None
+    currency: str | None = Field(default=None, pattern="^[A-Z]{3}$")
+    split_ratio_from: Decimal | None = None
+    split_ratio_to: Decimal | None = None
+    provenance: PerformanceProvenance
+
+
+class PortfolioEventMarkerResponse(StrictModel):
+    portfolio_id: str
+    source_type: MarkerSourceType
+    source_id: str
+    event_type: str
+    canonical_id: str
+    occurred_at: datetime
+    quantity: Decimal | None = None
+    amount: Decimal | None = None
+    currency: str = Field(pattern="^[A-Z]{3}$")
+    provenance: PerformanceProvenance
+
+
+class PortfolioEventMarkersResponse(StrictModel):
+    portfolio_id: str
+    items: list[PortfolioEventMarkerResponse]
+
+
+class WebVitalsMetric(StrEnum):
+    LCP = "LCP"
+    INP = "INP"
+    CLS = "CLS"
+
+
+class WebVitalsRequest(StrictModel):
+    metric: WebVitalsMetric
+    value: Decimal = Field(ge=0)
+    route: str = Field(min_length=1, max_length=160, pattern=r"^/")
+    sample_count: int = Field(default=1, ge=1, le=100000)
+    observed_at: datetime | None = None
+
+    @model_validator(mode="after")
+    def require_aware_timestamp(self) -> "WebVitalsRequest":
+        if self.observed_at is not None:
+            if self.observed_at.tzinfo is None or self.observed_at.utcoffset() is None:
+                raise ValueError("observed_at must be timezone-aware")
+            self.observed_at = self.observed_at.astimezone(timezone.utc)
+        return self
+
+
+class WebVitalsAcceptedResponse(StrictModel):
+    status: str = "accepted"
+    metric: WebVitalsMetric
+    route: str
+    sample_count: int
+
+
 class PortfolioValuationPositionResponse(StrictModel):
     canonical_id: str
     quantity: Decimal
@@ -587,9 +820,21 @@ class PortfolioPerformanceResponse(StrictModel):
     provenance: tuple[PerformanceProvenance, ...] = ()
 
 
-class PortfolioEventAccepted(StrictModel):
-    status: str = "accepted"
-    idempotency_key: str
+class PortfolioOverviewResponse(StrictModel):
+    """H-21: the eight read models the portfolio page shows, in one round trip.
+
+    Each part is exactly the payload of its own endpoint (same function, same ownership
+    check), so methodology, status, DataLevel and provenance travel unchanged.
+    """
+
+    summary: PortfolioSummaryResponse
+    events: list[PortfolioEventResponse]
+    valuation: PortfolioValuationResponse
+    performance: PortfolioPerformanceResponse
+    equity_curve: EquityCurveResponse
+    decomposition: PerformanceDecompositionResponse
+    income: list[PortfolioIncomeResponse]
+    event_markers: PortfolioEventMarkersResponse
 
 
 class ErrorProblem(StrictModel):
@@ -600,3 +845,90 @@ class ErrorProblem(StrictModel):
     instance: str
     code: str
     request_id: str
+
+
+class AdminHealthStatus(StrictModel):
+    status: str = Field(pattern="^(ok|degraded|down)$")
+    latency_ms: int | None = Field(default=None, ge=0)
+    checked_at: datetime
+
+
+class AdminContractStatus(StrictModel):
+    version: str
+    checked_at: datetime
+
+
+class AdminBackfillStatus(StrictModel):
+    status: str
+    occurred_at: datetime
+    job_id: str | None = None
+
+
+class AdminStructuredError(StrictModel):
+    code: str
+    message: str
+    occurred_at: datetime
+
+
+class AdminBackgroundJobsStatus(StrictModel):
+    last_refresh_at: datetime | None = None
+    backfills: list[AdminBackfillStatus] = Field(default_factory=list)
+    errors: list[AdminStructuredError] = Field(default_factory=list)
+    checked_at: datetime
+
+
+class AdminProviderStatus(StrictModel):
+    provider: str
+    dataset: str
+    provider_status: str
+    dataset_status: str
+    license_status: str
+    access: str = Field(pattern="^(allowed|denied)$")
+
+
+class AdminProviderGovernanceStatus(StrictModel):
+    items: list[AdminProviderStatus] = Field(default_factory=list)
+    checked_at: datetime
+
+
+class AdminQuarantineStatus(StrictModel):
+    price_anomalies: int = Field(ge=0)
+    corporate_actions: int = Field(ge=0)
+    checked_at: datetime
+
+
+class AdminLockStatus(StrictModel):
+    name: str
+    acquired_at: datetime
+    ttl_seconds: int | None = Field(default=None, ge=0)
+
+
+class AdminLocksStatus(StrictModel):
+    items: list[AdminLockStatus] = Field(default_factory=list)
+    checked_at: datetime
+
+
+class AdminEditorialConsumptionStatus(StrictModel):
+    last_published_at: datetime | None = None
+    archived_versions: int = Field(ge=0)
+    checked_at: datetime
+
+
+class AdminVolumetricStatus(StrictModel):
+    active_users: int = Field(ge=0)
+    active_portfolios: int = Field(ge=0)
+    checked_at: datetime
+
+
+class AdminSystemResponse(StrictModel):
+    request_id: str
+    checked_at: datetime
+    postgres: AdminHealthStatus
+    redis: AdminHealthStatus
+    openapi: AdminContractStatus
+    background_jobs: AdminBackgroundJobsStatus
+    providers: AdminProviderGovernanceStatus
+    quarantine: AdminQuarantineStatus
+    locks: AdminLocksStatus
+    editorial: AdminEditorialConsumptionStatus
+    volumetrics: AdminVolumetricStatus

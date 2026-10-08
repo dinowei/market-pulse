@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ParticleChart } from "./particle-chart";
 import { MorningCallPanel } from "./morning-call";
+import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-note";
+import { ThemeToggle } from "./theme-toggle";
+import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
+import { describeChange } from "../lib/price-direction";
 
 type PublicQuote = components["schemas"]["PublicQuote"];
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
@@ -21,10 +25,11 @@ const periods = ["1D", "5D", "1M", "3M", "6M", "YTD", "1A", "5A", "MAX"] as cons
 const modes = ["PRICE", "INDEX_100"] as const satisfies readonly SeriesMode[];
 
 export function DataStateBadge({ dataLevel, freshness }: { dataLevel: DataLevel; freshness: Freshness }) {
+  const label = dataLevel === "DEMO" ? "DADOS DE DEMONSTRAÇÃO" : `${dataLevel} · ${freshness}`;
   return (
     <span className={`data-badge data-badge-${freshness.toLowerCase()}`} aria-label={`Estado ${freshness}, nível ${dataLevel}`}>
       <span aria-hidden="true" className="badge-mark" />
-      {dataLevel} · {freshness}
+      {label}{dataLevel === "DEMO" && <span className="sr-only">DEMO · {freshness}</span>}
     </span>
   );
 }
@@ -58,17 +63,28 @@ export function MarketStatusBar({ data }: { data?: PublicQuote | PublicHistorySe
   );
 }
 
+function PriceChange({ quote }: { quote: PublicQuote }) {
+  const change = describeChange(quote.change, quote.change_percent, quote.currency);
+  if (!change) return <p className="asset-change">Variação indisponível</p>;
+  const { cue } = change;
+  return (
+    <p className={`asset-change direction-${change.direction.toLowerCase()}`}>
+      <span aria-hidden="true">{cue.glyph}</span> {change.text} · {cue.word} · base: fechamento anterior
+    </p>
+  );
+}
+
 export function AssetContextPanel({ quote, loading, error, selectedId }: { quote?: PublicQuote; loading: boolean; error?: string; selectedId: string }) {
   return (
     <aside className="asset-context" aria-labelledby="asset-context-title">
-      <div className="section-heading"><p className="eyebrow">ATIVO SELECIONADO</p><h2 id="asset-context-title">{quote?.symbol ?? selectedId}</h2></div>
+      <div className="section-heading"><p className="eyebrow">ATIVO SELECIONADO</p><h2 id="asset-context-title">{quote?.symbol ?? (selectedId || "Ativo indisponível")}</h2></div>
       {loading && <p className="muted">Carregando contrato…</p>}
       {error && <p className="state-note" role="alert">Dados indisponíveis: {error}</p>}
       {!loading && !error && quote && (
         <>
           <p className="asset-name">{quote.name}</p>
           <p className="asset-price">{quote.price == null ? "Indisponível" : `${quote.currency} ${quote.price}`}</p>
-          <p className="asset-change">{quote.change_percent == null ? "Variação indisponível" : `${quote.change_percent}%`}</p>
+          <PriceChange quote={quote} />
           <dl className="meta-grid compact">
             <div><dt>Moeda</dt><dd>{quote.currency}</dd></div>
             <div><dt>Bolsa</dt><dd>{quote.exchange ?? "Indisponível"}</dd></div>
@@ -89,9 +105,10 @@ export function SeriesModeToggle({ value, onChange }: { value: SeriesMode; onCha
   return <fieldset className="control-group"><legend>Modo de comparação</legend><div className="control-row">{modes.map((mode) => <button type="button" className={mode === value ? "control active" : "control"} aria-pressed={mode === value} key={mode} onClick={() => onChange(mode)}>{mode}</button>)}</div></fieldset>;
 }
 
-export function AccessibleDataTable({ points }: { points: PublicHistoryPoint[] }) {
+export function AccessibleDataTable({ points, reducedFrom }: { points: PublicHistoryPoint[]; reducedFrom?: number }) {
+  const caption = reducedFrom ? `Fallback tabular da série histórica (${points.length} de ${reducedFrom} pontos, redução M4 declarada)` : "Fallback tabular da série histórica";
   return (
-    <div className="table-wrap"><table><caption>Fallback tabular da série histórica</caption><thead><tr><th scope="col">Sessão</th><th scope="col">Fechamento</th><th scope="col">Índice 100</th><th scope="col">Gap</th></tr></thead><tbody>{points.map((point) => <tr key={`${point.timestamp}-${point.session_date}`}><th scope="row">{point.session_date}</th><td>{point.close ?? "—"}</td><td>{point.index_100 ?? "—"}</td><td>{point.is_gap ? "Sim" : "Não"}</td></tr>)}</tbody></table></div>
+    <div className="table-wrap"><table><caption>{caption}</caption><thead><tr><th scope="col">Sessão</th><th scope="col">Fechamento</th><th scope="col">Índice 100</th><th scope="col">Gap</th></tr></thead><tbody>{points.map((point) => <tr key={`${point.timestamp}-${point.session_date}`}><th scope="row">{point.session_date}</th><td>{point.close ?? "—"}</td><td>{point.index_100 ?? "—"}</td><td>{point.is_gap ? "Sim" : "Não"}</td></tr>)}</tbody></table></div>
   );
 }
 
@@ -113,12 +130,11 @@ export function InstrumentSearch({ onSelect }: { onSelect: (canonicalId: string)
     return () => controller.abort();
   }, [apiBase, query]);
   const items: InstrumentSummary[] = state.key === query.trim() ? state.data?.items ?? [] : [];
-  return <div className="search-wrap"><label className="search"><span className="sr-only">Buscar instrumento</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar símbolo ou nome" aria-controls="instrument-results" /></label>{items.length > 0 && <ul id="instrument-results" className="search-results" role="listbox">{items.map((item) => <li key={item.canonical_id}><button type="button" role="option" aria-selected={false} onClick={() => { onSelect(item.canonical_id); setQuery(item.display_symbol); }}>{item.display_symbol} · {item.name}<small>{item.support_state}</small></button></li>)}</ul>}{query.trim().length >= 2 && state.key === query.trim() && items.length === 0 && <p className="search-empty">Nenhum instrumento no catálogo.</p>}</div>;
+  return <div className="search-wrap"><label className="search"><span className="sr-only">Buscar instrumento</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar símbolo ou nome" /></label>{items.length > 0 && <ul id="instrument-results" className="search-results" role="listbox">{items.map((item) => <li key={item.canonical_id}><button type="button" role="option" aria-selected={false} onClick={() => { onSelect(item.canonical_id); setQuery(item.display_symbol); }}>{item.display_symbol} · {item.name}<small>{item.support_state}</small></button></li>)}</ul>}{query.trim().length >= 2 && state.key === query.trim() && items.length === 0 && <p className="search-empty">Nenhum instrumento no catálogo.</p>}</div>;
 }
 
 export function TerminalShell() {
   const router = useRouter();
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [period, setPeriod] = useState<HistoryPeriod>("1M");
   const [mode, setMode] = useState<SeriesMode>("PRICE");
   const [selectedCanonicalId, setSelectedCanonicalId] = useState("");
@@ -164,18 +180,18 @@ export function TerminalShell() {
   useEffect(() => {
     if (!selectedCanonicalId) return;
     const controller = new AbortController();
-    fetchJson<PublicHistorySeries>(`${apiBase}/api/v1/market-data/history/${encodeURIComponent(selectedCanonicalId)}?period=${period}&mode=${mode}&adjustment_type=UNADJUSTED`, controller.signal).then((data) => setHistoryState({ key: historyKey, data })).catch((error: unknown) => { if (error instanceof Error && error.name !== "AbortError") setHistoryState({ key: historyKey, error: error.message }); });
+    fetchJson<PublicHistorySeries>(`${apiBase}/api/v1/market-data/history/${encodeURIComponent(selectedCanonicalId)}?period=${period}&mode=${mode}&adjustment_type=UNADJUSTED&max_points=${DISPLAY_MAX_POINTS}`, controller.signal).then((data) => setHistoryState({ key: historyKey, data })).catch((error: unknown) => { if (error instanceof Error && error.name !== "AbortError") setHistoryState({ key: historyKey, error: error.message }); });
     return () => controller.abort();
   }, [historyKey, apiBase, mode, period, selectedCanonicalId]);
 
-  return <div className="terminal-root" data-theme={theme}>
-    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><button type="button" className="theme-toggle" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label={`Mudar para tema ${theme === "dark" ? "claro" : "escuro"}`}>Tema {theme === "dark" ? "claro" : "escuro"}</button></header>
+  return <div className="terminal-root">
+    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/compare">Comparar</Link><Link href="/calendar">Calendário</Link><Link href="/heatmap">Heatmap</Link><Link href="/atlas">Global Atlas</Link><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><ThemeToggle /></header>
     {sessionError && <p role="alert">{sessionError}</p>}
     <div className="terminal-grid">
       <aside className="left-rail" aria-label="Contexto operacional"><MorningCallPanel /><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE · DEMO</span></section></aside>
-      <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} /></div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <><ParticleChart series={history} /><AccessibleDataTable points={history.points} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}<p className="comparison-note">Comparação multissérie aguardando contrato com benchmark; nenhuma série foi inventada.</p></section></main>
+      <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} /></div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <>{downsamplingSummary(history.downsampling) && <p className="muted" role="note">{downsamplingSummary(history.downsampling)}</p>}<ParticleChart series={history} /><AccessibleDataTable points={history.points} reducedFrom={history.downsampling?.original_points} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}<p className="comparison-note">Comparação multissérie aguardando contrato com benchmark; nenhuma série foi inventada.</p></section></main>
       <AssetContextPanel quote={quote} loading={quoteLoading} error={quoteError} selectedId={selectedCanonicalId} />
     </div>
-    <footer><MarketStatusBar data={history ?? quote} /><span>Dados informativos; não constituem recomendação financeira.</span></footer>
+    <footer><MarketStatusBar data={history ?? quote} /><span>{FINANCIAL_DISCLAIMER}</span></footer>
   </div>;
 }

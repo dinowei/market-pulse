@@ -178,3 +178,12 @@ gráfico final não é requisito. No Dia 17, implementar linha, multilinha,
 registrar ADR se adotada. Candles entram quando houver OHLC adequado; heatmap e
 treemap seguem P1; WebSocket/`REAL_TIME` exige provider licenciado e nova
 arquitetura. Nenhuma etapa ativa dado real ou recomendação financeira.
+
+## Adendo de 2026-10-07 (Dia 37)
+
+O heatmap básico e o Global Atlas em tabela são P0 pela especificação, que prevalece
+sobre este documento, e foram entregues no Dia 37 conforme a
+[ADR-019](../adr/019-global-atlas-table-and-basic-heatmap.md). O texto acima que os
+classifica como "P1/futuros" vale agora só para os recursos avançados: escala contínua
+de intensidade, área por valor de mercado sem dataset aprovado, malha e globo do Global
+Atlas.

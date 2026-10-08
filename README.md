@@ -6,11 +6,39 @@ O Market Pulse é um terminal web autenticado para acompanhamento **informativo 
 
 ## Status atual
 
-O repositório possui a implementação até o **Dia 24**, incluindo autenticação,
-watchlists, carteiras, Morning Call e uma demonstração local persistida,
-determinística e isolada. O Dia 24 foi validado com PostgreSQL e Redis locais,
-migrations, reset/seed do banco DEMO e E2E de fluxo principal e isolamento entre
-usuários. Nenhum provider real, Stripe ou deploy foi ativado por esta etapa.
+**Fase 2 (Dias 31 a 40) entregue em 2026-10-07, com gates abertos.** O estado
+consolidado, a ordem das próximas ações e o que falta antes de abrir o produto estão no
+[handoff final](docs/FINAL_HANDOFF_DAY_40.md).
+
+- **Staging privado no ar** desde 2026-10-06: web `https://market-pulse-staging.vercel.app`
+  e API `https://market-pulse-staging-api.onrender.com`, com o código do Dia 29. Cadastro
+  fechado; acesso de uma única conta.
+- **Dias 30 a 40** estão nas branches `feature/dia-30-rc` e `feature/dia-31-34`, **sem
+  deploy**: downsampling M4, tokens OKLCH, tema global, limite por usuário, overview da
+  carteira, avisos canônicos, WCAG 2.2 AA, Global Atlas tabular, heatmap básico, Web
+  Vitals medidos no staging e regressão completa.
+- **Última medição local:** backend com 407 passed, 10 skipped e 0 failed; frontend com
+  80 testes, lint, typecheck e build OK; E2E de acessibilidade com 29 de 29.
+- **Bloqueios:** o GitHub Actions está parado pela cobrança da conta (H-05); o deploy dos
+  Dias 30 a 40, os planos pagos e as revisões humanas dependem do responsável.
+
+O histórico do Dia 28 está em
+[PRODUCTION_RUNBOOK_DAY_28.md](docs/operations/PRODUCTION_RUNBOOK_DAY_28.md) e as
+pendências em [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md).
+
+## Linha do tempo dos 40 dias
+
+| Período | Entrega | Situação |
+| --- | --- | --- |
+| Dias 1 a 23 | Fundação, API versionada, providers atrás de licença, dados públicos `DEMO`, shell e gráficos Particle Atlas, autenticação, watchlists, carteiras e performance factual, Morning Call | Entregues; critérios dos gates semanais em `docs/engineering/WEEK_*_GATE.md` |
+| Dias 24 a 28 | DEMO local isolado, painel interno, comparação multiativo, calendário, proventos, telemetria e hardening | Fechados por decisão do usuário |
+| Dia 29 | Staging privado na Vercel e no Render | No ar; gate aberto (rodadas oficiais) |
+| Dia 30 | RC do staging privado: ADR-009, ADR-010 e decisão de convite | Gate aberto; sem deploy |
+| Dias 31 a 39 | Downsampling, tokens OKLCH, tema, limite por usuário, overview da carteira, avisos legais, WCAG 2.2 AA, Global Atlas e heatmap, Web Vitals, regressão | Entregues **sem deploy**; gates abertos sem CI (H-05) |
+| Dia 40 | Documentação e handoff | Fechado |
+
+O que cada dia provou, e com que evidência, está na seção "Fase 2" do
+[roadmap](docs/ROADMAP_30_DAYS.md) e nos relatórios dos Dias 35 a 39.
 
 ## Demonstração local — Dia 24
 
@@ -18,6 +46,11 @@ Consulte [DEMO_SEED_DAY_24.md](docs/demo/DEMO_SEED_DAY_24.md) para os comandos,
 barreiras, dados sintéticos e gates executados. O único banco autorizado para
 reset ou seed é `market_pulse_demo`, local e isolado. Nunca execute limpeza,
 reset ou a suíte integrada contra o banco principal.
+
+O workflow isolado [Day 24 DEMO Integration Gate](.github/workflows/demo-integration.yml)
+executa migrations e os tres testes criticos de seed/reset em Postgres e Redis
+efemeros. Ele roda em PRs que tocam o fluxo DEMO, nightly e por
+`workflow_dispatch`; nao faz parte do job principal de qualidade.
 
 ## Escopo P0 do beta
 
@@ -31,7 +64,7 @@ reset ou a suíte integrada contra o banco principal.
 - Providers substituíveis, license gate e fallback para último snapshot validado.
 - `source`, timestamps, `DataLevel`, `Freshness` e limitações em dados financeiros.
 - Cadastro por e-mail/senha com sessão opaca em cookie `HttpOnly`.
-- Watchlist por usuário e heatmap por setor.
+- Watchlist por usuário e heatmap básico. Sem dataset aprovado com setor e valor de mercado, o heatmap agrupa por tipo de instrumento, com área igual ([ADR-019](docs/adr/019-global-atlas-table-and-basic-heatmap.md)).
 - Múltiplas carteiras próprias, ledger manual e cálculos factuais de posição, custo, patrimônio, P&L, rentabilidade, proventos e performance.
 - Morning Call sem IA, inserido por comando interno e publicado após revisão humana.
 - Testes essenciais, documentação, observabilidade e artefatos de deploy, sem publicação automática.
@@ -44,13 +77,17 @@ Stripe pode ser considerado no beta **somente em modo de teste**, isolado e opci
 
 ## Arquitetura resumida
 
-- `apps/web`: Next.js App Router, React, TypeScript strict e Tailwind, a partir do Dia 2.
-- `apps/api`: FastAPI, SQLAlchemy 2 e Alembic, a partir do Dia 2.
+- `apps/web`: Next.js App Router, React e TypeScript strict; gráficos em SVG
+  ([ADR-014](docs/adr/014-chart-engine-keep-svg.md)) e tokens em
+  [design system](docs/design/DESIGN_SYSTEM.md).
+- `apps/api`: FastAPI e Alembic, monólito modular sob `/api/v1`.
 - Carteiras: ledger factual, append-only e isolado por usuário, com cálculos no domínio/backend.
-- PostgreSQL/Neon compatível: fonte persistente.
-- Redis/Upstash REST compatível: cache não autoritativo e locks.
-- Refresh: processo curto/idempotente acionado futuramente por GitHub Actions cron contra endpoint interno protegido.
-- Destinos pretendidos: Vercel para web e Render para API; nenhum serviço foi criado.
+- PostgreSQL: fonte persistente. Redis: sessões, rate limit e cache não autoritativo.
+- Staging: web na Vercel com proxy same-origin para a API
+  ([ADR-008](docs/adr/008-same-origin-api-proxy.md)); API, Postgres e Key Value no Render
+  pelo Blueprint `render.yaml`.
+- Refresh: processo curto e idempotente para um endpoint interno protegido; o agendamento
+  pelo GitHub Actions está bloqueado (H-05).
 
 Leia a [arquitetura canônica](docs/ARCHITECTURE.md) e as [ADRs](docs/adr/).
 A [baseline enterprise de engenharia](docs/engineering/ENTERPRISE_ENGINEERING_BASELINE.md) é a constituição técnica para qualquer alteração futura.
@@ -71,7 +108,11 @@ O gate operacional da Semana 1 está documentado em [WEEK_1_GATE.md](docs/engine
 | [Versionamento da API](docs/API_VERSIONING.md) | Política de `/api/v1` e compatibilidade |
 | [SLO inicial](docs/SLO.md) | Objetivos mensuráveis, ainda não SLA |
 | [Instruções operacionais](AGENTS.md) | Hierarquia, segurança, execução e Definition of Done |
-| [ADRs](docs/adr/) | Decisões arquiteturais aceitas |
+| [ADRs](docs/adr/README.md) | Índice das decisões aceitas (001 a 020), com estado de implementação e de deploy |
+| [Design system](docs/design/DESIGN_SYSTEM.md) | Tokens, semântica e componentes implementados |
+| [Handoff final](docs/FINAL_HANDOFF_DAY_40.md) | Estado da Fase 2 e próximas ações |
+| [Checklist de compliance](docs/COMPLIANCE_CHECKLIST.md) | Controles, evidências e lacunas para auditoria |
+| [Promoção dos Dias 30 a 40](docs/operations/STAGING_PROMOTION_DAYS_30_40.md) | Deploy no staging, smoke e rollback, quando autorizado |
 
 `roadmap-30-days.md`, `architecture-overview.md`, `financial-content-policy.md`, `financial-content-boundary-plan.md` e `docs/CODEOWNERS` são registros históricos com links para suas fontes atuais.
 
@@ -130,15 +171,18 @@ A API pública usa `/api/v1`, Problem Details (`application/problem+json`) e
 `docs/api/openapi.json`; o cliente gerado fica em `apps/web/src/generated/api.ts`.
 Valores monetários são serializados como strings decimais para preservar exatidão.
 
-## Verificações disponíveis no Dia 1
+## Verificações
 
-```powershell
-git status --short --branch --untracked-files=all
-git diff --check
-python -m json.tool package.json
-```
+| Verificação | Comando |
+| --- | --- |
+| Backend | `python -m uv run --directory apps/api python -m pytest -q` |
+| Frontend | `pnpm --filter @market-pulse/web lint`, `typecheck`, `test` e `build` |
+| Desempenho e bundle | `node scripts/day27_performance_gate.mjs` (depois do build) |
+| Bundle por rota | `node apps/web/scripts/bundle-audit.mjs` (dentro de `apps/web`) |
+| Acessibilidade | `pnpm --dir apps/web exec playwright test e2e/day36-wcag.spec.ts` (web e API locais no ar) |
+| Web Vitals num ambiente real | `BASE_URL=https://... node apps/web/performance/measure-vitals.mjs` |
 
-Build, lint, typecheck e testes de aplicação passam a existir após o scaffold. Verificação indisponível nunca deve ser descrita como aprovada.
+Verificação indisponível nunca deve ser descrita como aprovada.
 
 ## Contribuição e segurança
 
@@ -152,5 +196,7 @@ O repositório não adota licença open source neste momento; consulte [LICENSE]
 
 ## Próximo passo
 
-O **Dia 24** está concluído localmente. O Dia 25 não está autorizado por esta
-etapa.
+Seguir a ordem da seção 3 do [handoff final](docs/FINAL_HANDOFF_DAY_40.md): desbloquear o
+CI (H-05), autorizar o deploy dos Dias 30 a 40 no staging, assinar a revisão de
+compliance do Morning Call e decidir os planos. As alternativas descartadas estão em
+[DISCARDED_ALTERNATIVES.md](docs/engineering/DISCARDED_ALTERNATIVES.md).

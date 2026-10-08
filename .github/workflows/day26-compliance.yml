@@ -1,0 +1,61 @@
+name: Day 26 Comparison and Calendar Compliance
+
+on:
+  pull_request:
+    paths:
+      - "apps/api/app/contracts.py"
+      - "apps/api/app/market_data/**"
+      - "apps/api/app/routers.py"
+      - "apps/api/tests/test_day26_*.py"
+      - "apps/web/**"
+      - "docs/api/openapi.json"
+      - "scripts/day26_compliance.py"
+      - ".github/workflows/day26-compliance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: apps/api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+      - name: Install API dependencies
+        run: uv sync --project apps/api --group dev
+      - name: API contract and compliance tests
+        run: |
+          uv run --directory apps/api pytest -q tests/test_day26_multiativo_calendar.py
+          uv run --directory apps/api ruff check app tests
+          uv run --directory apps/api python ../../scripts/day26_compliance.py
+      - name: Repository safety gates
+        run: |
+          python scripts/week1_gate.py secrets
+          python scripts/week1_gate.py supply-chain
+          python -m json.tool docs/api/openapi.json > /dev/null
+          git diff --check
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v6.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install web dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Accessible frontend contract gates
+        run: |
+          pnpm --dir apps/web lint
+          pnpm --dir apps/web typecheck
+          pnpm --dir apps/web test
+          pnpm --dir apps/web build

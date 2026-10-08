@@ -14,8 +14,10 @@ SECRET_PATTERNS = (
     re.compile(r"BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"\b(?:sk_live|rk_live|ghp_|github_pat_)[A-Za-z0-9_\-]+\b"),
+    # The rediss scheme is Redis over TLS (managed services require it), and the user part
+    # of the authority may be empty (only a colon before the password), so both are matched.
     re.compile(
-        r"(?i)(?:postgres(?:ql)?|redis)://[^\s/:]+:(?P<password>[^\s/@]+)@"
+        r"(?i)(?:postgres(?:ql)?|rediss?)://[^\s/:]*:(?P<password>[^\s/@]+)@"
     ),
     re.compile(
         r"(?i)\b(?:BRAPI_API_TOKEN|HG_BRASIL_API_KEY|TWELVE_DATA_API_KEY|"

@@ -68,6 +68,18 @@ def test_demo_provider_declares_capability_and_demo_provenance() -> None:
     assert result.value != Decimal("100.00")
 
 
+def test_demo_limitations_are_honest_outside_local_environments() -> None:
+    # The synthetic DEMO provider also answers on the private staging (found by the Day 29
+    # smoke), so its limitation must not claim the data is local; it must say it is not real.
+    provider = DemoProvider()
+    texts = [
+        *provider.latest_quote("DEMO-ASSET").provenance.limitations,
+        *provider.fx_rate("BRL", "USD").provenance.limitations,
+    ]
+    assert texts and not any("local" in text.lower() for text in texts)
+    assert all("não representa" in text for text in texts if "Demonstração" in text)
+
+
 def test_gateway_rejects_missing_capability_and_unapproved_dataset() -> None:
     class QuoteOnlyProvider:
         capabilities = frozenset({ProviderCapability.LATEST_QUOTE})

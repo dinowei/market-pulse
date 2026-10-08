@@ -1,5 +1,66 @@
 # Instruções complementares para documentação
+# Instruções do projeto
 
+## Idioma
+
+- Responda sempre em português do Brasil.
+- Seja direto e objetivo.
+- Não repita minha solicitação.
+- Não explique conceitos básicos quando eu já demonstrar conhecimento.
+- Use inglês somente para código, nomes de APIs, comandos, bibliotecas, variáveis e termos técnicos quando necessário.
+
+## Forma de trabalhar
+
+- Antes de modificar arquivos, entenda primeiro a estrutura relevante do projeto.
+- Não altere arquivos que não sejam necessários para a tarefa.
+- Não crie arquivos desnecessários.
+- Preserve a arquitetura existente quando ela estiver funcionando.
+- Prefira soluções simples, robustas e fáceis de manter.
+- Não introduza dependências novas sem justificar.
+- Não faça mudanças cosméticas que não foram solicitadas.
+
+## Código
+
+- Escreva código limpo e legível.
+- Siga os padrões já utilizados no projeto.
+- Reutilize funções e componentes existentes antes de criar novos.
+- Evite duplicação.
+- Não use comentários óbvios.
+- Não deixe código morto, temporário ou de debug.
+
+## Antes de alterar
+
+- Leia os arquivos relevantes.
+- Identifique dependências e possíveis impactos.
+- Se houver mais de uma abordagem razoável, escolha a mais simples e explique brevemente.
+
+## Depois de alterar
+
+- Verifique os arquivos modificados.
+- Execute os testes ou verificações disponíveis.
+- Corrija erros encontrados.
+- Informe somente:
+  1. o que foi alterado;
+  2. quais arquivos foram alterados;
+  3. quais verificações foram executadas;
+  4. qualquer problema restante.
+
+## Economia de contexto
+
+- Não leia arquivos inteiros sem necessidade.
+- Procure primeiro por símbolos, funções, classes, rotas e referências relevantes.
+- Não carregue documentação extensa se a parte necessária puder ser localizada diretamente.
+- Não repita informações já disponíveis no contexto.
+- Para tarefas grandes, divida o trabalho em etapas.
+- Use Skills para conhecimentos específicos em vez de colocar documentação extensa neste arquivo.
+- Quando o contexto estiver ficando grande, compacte a sessão.
+
+## Segurança
+
+- Nunca exponha ou copie secrets, tokens, senhas ou chaves privadas.
+- Não altere configurações de produção sem confirmação explícita.
+- Não execute comandos destrutivos sem confirmação.
+- Não faça `git reset --hard`, `git clean`, remoções em massa ou operações equivalentes sem confirmação.
 Estas regras se somam ao [`AGENTS.md` da raiz](../AGENTS.md). Em conflito, prevalece a hierarquia definida na raiz.
 
 A baseline enterprise é o documento canônico de engenharia. Se a implementação divergir da baseline, pare antes de escrever e reporte o conflito, impacto e opção segura.
@@ -46,6 +107,22 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Morning Call público e administrativo do Dia 23: [MORNING_CALL_ADMIN_DAY_23.md](editorial/MORNING_CALL_ADMIN_DAY_23.md)
 - Demo local validada do Dia 24: [DEMO_SEED_DAY_24.md](demo/DEMO_SEED_DAY_24.md)
 - Gate da Semana 3: [WEEK_3_GATE.md](engineering/WEEK_3_GATE.md)
+- Painel operacional interno do Dia 25: [ADMIN_SYSTEM_DAY_25.md](operations/ADMIN_SYSTEM_DAY_25.md)
+- Comparação multiativo, benchmarks e calendário do Dia 26: [DAY_26_MULTIATIVE_CALENDAR.md](market_data/DAY_26_MULTIATIVE_CALENDAR.md)
+- Proventos, marcadores e performance do Dia 27: [DAY_27_INCOME_MARKERS_PERFORMANCE.md](market_data/DAY_27_INCOME_MARKERS_PERFORMANCE.md)
+- Rollback seguro de eventos corporativos do Dia 27: [DAY_27_MIGRATION_ROLLBACK.md](engineering/DAY_27_MIGRATION_ROLLBACK.md)
+- Staging privado do Dia 29: [STAGING_RUNBOOK_DAY_29.md](operations/STAGING_RUNBOOK_DAY_29.md)
+- Release candidate do Dia 30: [DAY_30_RELEASE_CANDIDATE.md](engineering/DAY_30_RELEASE_CANDIDATE.md)
+- Revisão de compliance do Morning Call (Dia 35): [MORNING_CALL_COMPLIANCE_REVIEW.md](editorial/MORNING_CALL_COMPLIANCE_REVIEW.md)
+- Acessibilidade e daltonismo do Dia 36: [ACCESSIBILITY_DAY_36.md](design/ACCESSIBILITY_DAY_36.md)
+- Web Vitals e bundle do Dia 38: [PERFORMANCE_DAY_38.md](engineering/PERFORMANCE_DAY_38.md)
+- Regressão e hardening do Dia 39: [REGRESSION_DAY_39.md](engineering/REGRESSION_DAY_39.md)
+- Design system implementado: [DESIGN_SYSTEM.md](design/DESIGN_SYSTEM.md)
+- Alternativas descartadas: [DISCARDED_ALTERNATIVES.md](engineering/DISCARDED_ALTERNATIVES.md)
+- Handoff final da Fase 2: [FINAL_HANDOFF_DAY_40.md](FINAL_HANDOFF_DAY_40.md)
+- Índice de ADRs com estado de implementação: [adr/README.md](adr/README.md)
+- Checklist de compliance: [COMPLIANCE_CHECKLIST.md](COMPLIANCE_CHECKLIST.md)
+- Promoção dos Dias 30 a 40 para o staging: [STAGING_PROMOTION_DAYS_30_40.md](operations/STAGING_PROMOTION_DAYS_30_40.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.

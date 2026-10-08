@@ -1,44 +1,62 @@
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.config import get_settings
+from app.core.config import (
+    get_settings,
+    is_protected_environment,
+    validate_production_settings,
+)
 from app.errors import (
     http_exception_handler,
-    problem,
     unhandled_exception_handler,
     validation_exception_handler,
 )
 from app.health import check_cache, check_database, timestamp
-from app.middleware import RequestIdMiddleware
+from app.middleware import (
+    CSRFMiddleware,
+    RateLimitMiddleware,
+    RequestIdMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.routers import router
 
 settings = get_settings()
-app = FastAPI(title="Market Pulse API", version=settings.api_version)
+validate_production_settings(settings)
+# Interactive docs and the live schema stay off where the API is reachable from the
+# internet; the versioned contract remains docs/api/openapi.json, built from app.openapi().
+_public_docs = not is_protected_environment(settings)
+app = FastAPI(
+    title="Market Pulse API",
+    version=settings.api_version,
+    docs_url="/docs" if _public_docs else None,
+    redoc_url="/redoc" if _public_docs else None,
+    openapi_url="/openapi.json" if _public_docs else None,
+)
 if settings.demo_enabled:
     from app.demo.operations import demo_settings
 
     demo_settings()  # fail startup closed if any dedicated-local barrier is missing
-    demo_origins = ("http://localhost:3000",)
 
-    @app.middleware("http")
-    async def demo_origin_guard(request: Request, call_next):
-        origin = request.headers.get("origin")
-        if request.method not in {"GET", "HEAD", "OPTIONS"} and origin not in {None, *demo_origins}:
-            return problem(request, 403, "Forbidden", "Origin not allowed", "FORBIDDEN")
-        return await call_next(request)
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=list(demo_origins),
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type", "Accept", "Idempotency-Key", "X-Request-ID"],
-        expose_headers=["X-Request-ID"],
-    )
+# Wire middlewares in reverse order of wrapping (last added runs first on request).
+# Request order (ADR-009): RequestId -> SecurityHeaders -> CORS -> CSRF -> RateLimit.
+# CSRF runs before the rate limit so forged requests are refused without Redis and
+# without consuming quota; security headers wrap every response, errors included.
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(CSRFMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS", "PUT"],
+    allow_headers=["Content-Type", "Accept", "Idempotency-Key", "X-Request-ID", "Cookie"],
+    expose_headers=["X-Request-ID"],
+)
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIdMiddleware)
+
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
