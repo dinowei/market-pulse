@@ -4,7 +4,7 @@ O Market Pulse é um terminal web autenticado para acompanhamento **informativo 
 
 > **Conteúdo informativo. Não constitui recomendação de investimento.**
 
-## Estado verificado — 2026-10-07
+## Estado verificado — 2026-10-08
 
 As implementações dos Dias 31–39 estão no Git na branch `feature/dia-31-34`; o Dia 40
 fechou a entrega documental. Isso **não fecha** os gates dos Dias 31–39 nem valida o
@@ -14,16 +14,16 @@ e nos relatórios ligados na [Fase 2 do roadmap](docs/ROADMAP_30_DAYS.md).
 
 | Categoria | Estado comprovado no repositório | Limite da evidência |
 | --- | --- | --- |
-| Implementado no código | Dias 31–39; componentes anteriores de proxy, Morning Call e retenção também existem | Código na branch não significa gate fechado nem implantação |
-| Testado localmente | Nesta auditoria: web 80/80; 51 testes direcionados da API passaram com alvos locais; snapshot OpenAPI e cliente gerado conferidos. Evidência anterior da rodada completa: backend 407 passed/10 skipped e E2E de acessibilidade 29/29 | A suíte completa e o E2E DEMO não foram reexecutados nesta auditoria; evidência histórica não equivale a CI oficial |
-| Enviado para GitHub | `feature/dia-31-34` e `origin/feature/dia-31-34` apontam para `17471845c9a22719d2a84b1b7df4cf6ed7d288f7`; `origin/feature/dia-29-staging` também aponta para esse SHA | Referência Git não comprova deploy |
+| Implementado no código | Dias 31–39; CSP Report-Only do frontend e limites de segurança do CLI de retenção foram acrescentados localmente nesta rodada | Código na branch não significa gate fechado nem implantação |
+| Testado localmente | Nesta rodada: API 52 testes direcionados passaram; web 81/81; lint, typecheck, build, OpenAPI e Ruff passaram. A API completa e o E2E não foram executados | Dois testes que exigem Redis/banco descartável foram excluídos; os testes de retenção usaram conexão simulada; não equivale a CI oficial |
+| Enviado para GitHub | `origin/feature/dia-31-34` e `origin/feature/dia-29-staging` continuam em `17471845c9a22719d2a84b1b7df4cf6ed7d288f7`; `e967b36` e esta integração são locais e não foram enviados | Referência Git não comprova deploy |
 | Deploy automático configurado | `render.yaml` configura deploy do serviço da API por commit na branch `feature/dia-29-staging`; documentos do staging registram a Vercel ligada a essa mesma branch | O projeto e os controles atuais dos painéis Vercel/Render não foram revalidados nesta auditoria |
-| Deploy confirmado | O runbook registra o staging com código do Dia 29, commit `60df9ca`, URLs e smoke | Não há evidência de deploy do SHA atual `1747184` |
+| Deploy confirmado | O runbook registra o staging com código do Dia 29, commit `60df9ca`, URLs e smoke | Não há evidência de deploy do HEAD local nem consulta atual ao painel |
 | Staging validado | Smoke e sessão foram medidos para o código do Dia 29 (`60df9ca`) | Dias 30–40 ainda não foram promovidos/validados nesse ambiente |
 | Produção validada | Nenhuma validação de produção com commit, URL e smoke foi encontrada | Estado do deployment atual da Vercel não foi consultado; não presumir que esteja inalterado |
 | Bloqueadores externos | Billing do GitHub, serviços/planos e variáveis em painéis, aprovação de deploy e licença de dados | H-05 é reportado nos documentos, mas seu estado atual não foi conferido no painel e não é o único bloqueador |
 | Pendências humanas | Assinatura H-13, decisões editoriais, revisão visual e de acessibilidade, revisão jurídica e aprovação manual | Não substituídas por documentação ou testes automáticos |
-| Pendências técnicas | CI oficial, convite, CSP do frontend, medição dos proxies, Cron de retenção e reconciliação do roadmap | Detalhadas abaixo e nos handoffs |
+| Pendências técnicas | CI oficial, convite, validação de CSP no navegador/staging, medição dos proxies, Cron de retenção e reconciliação do roadmap | Detalhadas abaixo e nos handoffs |
 
 **Percentuais do trecho final do roadmap (Dias 31–50, 20 marcos com o mesmo peso):**
 
@@ -62,44 +62,54 @@ evidência no repositório; nenhuma autoriza deploy em produção.
 
 ### Dia 41 — Desbloqueio externo e isolamento de ambientes
 
-**Status: PENDENTE.** `render.yaml` descreve recursos de staging, inclusive um banco e um
-Key Value de staging. Não há configuração versionada equivalente para Redis de produção,
-secrets separados por ambiente, GitHub Environments ou banco de produção isolado; portanto,
-não há evidência de Redis de produção separado de staging, CI e DEMO. A configuração desses
-serviços nos painéis não foi verificada. O bloqueio de cobrança do GitHub Actions (H-05) é
-relatado no handoff, mas precisa ser confirmado no painel e não é o único bloqueador.
-Produção exige aprovação manual; essa proteção não foi comprovada.
+**Status: PENDENTE.** `render.yaml` descreve somente recursos de staging: API, banco e Key
+Value separados entre si, branch `feature/dia-29-staging` e deploy por commit. Não há
+recursos de produção, Redis de produção, configuração de separação de secrets por ambiente,
+GitHub Environments ou evidência de aprovação manual de produção no repositório. Não existe
+`vercel.json`; a configuração da Vercel, GitHub, Neon, Upstash e Cloudflare não foi
+consultada. Os painéis precisam confirmar o isolamento antes de qualquer deploy. Os nomes
+de variáveis que a configuração do serviço da API precisa definir por ambiente incluem
+`MARKET_PULSE_ENVIRONMENT`, `MARKET_PULSE_DATABASE_URL`, `MARKET_PULSE_REDIS_URL`,
+`MARKET_PULSE_INTERNAL_REFRESH_SECRET`, `MARKET_PULSE_CORS_ORIGINS`,
+`MARKET_PULSE_AUTH_COOKIE_SECURE`, `MARKET_PULSE_AUTH_COOKIE_SAMESITE`,
+`MARKET_PULSE_REGISTRATION_ENABLED` e `MARKET_PULSE_TRUSTED_PROXY_HOPS`; nenhum valor foi
+consultado ou incluído aqui. O runbook do frontend lista `MARKET_PULSE_API_PROXY_ORIGIN` e
+`NEXT_PUBLIC_API_BASE_URL`; confirmar aplicação e escopo no painel antes de definir valores.
+H-05 é reportado como bloqueio histórico de cobrança do GitHub, mas o estado atual precisa
+ser confirmado no painel.
 
 ### Dia 42 — Infraestrutura de staging
 
-**Status: PENDENTE.** O Blueprint do Render define `autoDeployTrigger: commit`, branch
-`feature/dia-29-staging`, banco de staging e health check `/health/live`. Não foi
-encontrado Render deploy hook nem evidência versionada de GitHub Environments e secrets
-por ambiente. Os documentos dizem que a branch indicada também alimenta a produção da
-Vercel; portanto, não a trate como branch segura de staging. Não há evidência de deploy
-do SHA atual nem de que produção exija aprovação manual. O smoke registrado é do commit
-`60df9ca`, não do código atual.
+**Status: PENDENTE.** O Blueprint do Render configura auto deploy por commit na branch
+`feature/dia-29-staging`, banco e Key Value de staging e health check `/health/live`.
+Não há Cron de retenção nem evidência versionada de GitHub Environments, secrets separados
+ou gate manual de produção. Os runbooks identificam a branch também como origem da produção
+Vercel; não a trate como staging isolado. Nenhum painel foi revalidado e não há prova de
+deploy do código local. O smoke registrado é do commit `60df9ca`.
 
 ### Dias 43–44 — Segurança operacional
 
-**Status: PENDENTE.** A API já envia um CSP aplicado (`default-src 'self'`), mas não foi
-encontrado CSP Report-Only no frontend nem endpoint de relatório CSP. A mitigação do
-proxy com cabeçalhos não confiáveis foi medida no staging; a [ADR-020](docs/adr/020-trusted-proxy-hops.md)
-e a validação de IP por saltos confiáveis existem no código e têm testes, porém
-`MARKET_PULSE_TRUSTED_PROXY_HOPS` permanece `0`. A cadeia confiável ainda precisa ser
-medida no staging e o caminho direto para o Render, resolvido antes de ativar saltos.
-O rate limit por usuário autenticado e por IP para os demais já existe (ADR-017); com
-saltos em `0`, os clientes anônimos continuam compartilhando o IP do proxy.
+**Status: PARCIAL.** A API envia CSP aplicado (`default-src 'self'`). O frontend agora
+envia `Content-Security-Policy-Report-Only` com uma política observacional restrita; não há
+endpoint coletor, `report-uri` ou `report-to`, e a política não bloqueia conteúdo. Ela ainda
+precisa ser observada em navegador e staging. A cadeia de proxy não foi medida nesta rodada;
+`MARKET_PULSE_TRUSTED_PROXY_HOPS` segue `0`, e os cabeçalhos encaminhados continuam
+ignorados nesse modo. Não aumentar esse valor antes de medir a cadeia e fechar o acesso
+direto à API. CSRF/Origin, rate limit por usuário e IP e proteção contra falsificação do
+prefixo de `X-Forwarded-For` estão implementados e cobertos por testes locais.
 
 ### Dias 45–47 — Jurídico e compliance
 
-**Status: BLOQUEADO EXTERNAMENTE** para aprovação jurídica e assinatura humana. Não foram
-encontrados Privacy Policy, Terms of Use, identificação do controlador, canal de
-atendimento ou inventário jurídico completo de coleta, retenção e direitos do titular.
-O inventário deve partir dos dados que aparecem no código — cadastro/sessão,
-watchlists/carteiras e telemetria agregada — e receber revisão humana; exportação e
-anonimização de conta e retenção operacional têm código, mas não são aprovação jurídica.
-A revisão do Morning Call H-13 aguarda assinatura.
+**Status: BLOQUEADO EXTERNAMENTE/HUMANAMENTE.** Não foram encontrados Privacy Policy,
+Terms of Use, identificação aprovada do controlador, canal de atendimento, registro de
+aceite ou inventário jurídico completo. Exportação Decimal, anonimização, RBAC editorial,
+validador lexical, histórico append-only e disclaimers estão no código; isso não constitui
+aprovação jurídica. Permanecem pendentes texto final, base legal, prazo de retenção,
+avaliação jurídica e assinatura H-13.
+
+As rotas atuais restringem aprovação/publicação a `REVIEWER` ou `ADMIN`, mas `ADMIN` também
+pode criar posts; não há regra de duas pessoas que impeça o mesmo administrador de publicar
+o próprio conteúdo. A segregação de funções e o fluxo editorial precisam de decisão/ADR.
 
 Fluxo alvo solicitado para o plano, ainda não implementado:
 `DRAFT → AUTOMATED_CHECK → COMPLIANCE_REVIEW → APPROVED → PUBLISHED`.
@@ -107,29 +117,28 @@ A política canônica hoje define `DRAFT → VALIDATION_FAILED ou VALIDATED → 
 
 ### Dias 48–49 — Governança de dados e retenção
 
-**Status: PARCIAL.** Há rotina de retenção operacional com dry-run por padrão,
-transação, tabela protegida, ordem de exclusão por dependência e métricas de contagem no
-CLI. Não há Render Cron Job diário. O workflow existente a cada 15 minutos é de refresh
-de mercado e roda `DRY_RUN`; não é rotina de retenção. Não foram encontrados limites de
-anomalia, exclusão em lotes nem auditoria de cada expurgo. `audit_logs` e
-`portfolio_events` estão protegidos e fora do plano. `--execute` altera dados e não é
-reversível pelo próprio comando depois do commit; validações de plano e janela inválidos
-abortam antes da exclusão. Nenhuma execução agendada deve ser criada sem novo gate.
+**Status: PARCIAL.** A rotina mantém dry-run como padrão, proteção de `audit_logs`,
+`portfolio_events` e ledger, ordem por dependência e transação. Nesta rodada, `--execute`
+passou a exigir `--max-rows` e `--batch-size`; todos os alvos são contados antes de qualquer
+exclusão, volume acima do limite aborta e cada tabela é verificada antes do commit. A CLI
+registra contagens `RETENTION_BEFORE` e `RETENTION_AFTER`; testes locais simulados cobrem
+limite, lotes e rollback. A integração com PostgreSQL descartável não foi executada. Não há
+Render Cron. O workflow a cada 15 minutos é de refresh de mercado em `DRY_RUN`, não de
+retenção. O expurgo continua irreversível após commit; Cron futuro precisa de dry-run,
+limites revisados e aprovação humana.
 
 ### Dia 50 — Fechamento e promoção
 
-**Status: DOCUMENTAÇÃO APENAS.** O roteiro de fechamento é:
+**Status: PARCIAL — checklist documentado, gates não executados.** O roteiro de fechamento é:
 
-1. CI aprovado;
-2. migrations revisadas;
-3. deploy em staging;
-4. health check;
-5. smoke test;
-6. E2E crítico;
-7. revisão de segurança;
-8. revisão de compliance;
-9. aprovação manual;
-10. promoção para produção.
+1. CI aprovado e migrations revisadas;
+2. confirmar um destino de staging isolado e autorizado; registrar SHA implantado;
+3. verificar `/health/live` e `/health/ready`;
+4. smoke de login, portfolios, compare, Atlas, heatmap e watchlists;
+5. E2E crítico, acessibilidade, teclado e zoom de 200%;
+6. verificar rate limit, `audit_logs`, migrations e revisão de segurança;
+7. concluir revisão jurídica, compliance e aprovação humana;
+8. obter aprovação manual de produção antes da promoção.
 
 Dia 50 é o último dia do roadmap, mas não prova que os gates anteriores passaram. Produção
 exige aprovação humana e não deve ser promovida automaticamente. O estado descrito para
@@ -140,19 +149,45 @@ e precisa ser verificado/resolvido antes de qualquer push ou promoção.
 
 > O push para `feature/dia-29-staging` foi realizado anteriormente, mas push não equivale a deploy concluído. O deploy só deve ser considerado confirmado com evidência do provedor, commit implantado, URL e smoke test.
 
-O commit atual da branch de origem e o ref remoto de staging coincidem, mas isso não
-confirma qual commit está implantado. Como o runbook identifica `feature/dia-29-staging`
-como branch de produção da Vercel, nenhum novo push deve ser feito para ela até que a
-topologia e a aprovação manual sejam confirmadas.
+O HEAD local (`e967b36` mais esta integração) está à frente dos refs remotos, que continuam
+em `17471845c9a22719d2a84b1b7df4cf6ed7d288f7`. Isso não confirma qual commit está
+implantado. Como o runbook identifica `feature/dia-29-staging` como branch de produção da
+Vercel, nenhum novo push deve ser feito para ela até que a topologia e a aprovação manual
+sejam confirmadas.
+
+#### Próxima validação de staging (não executada)
+
+1. Confirmar nos painéis GitHub, Vercel e Render que a branch/serviço selecionado é isolado
+   de produção e que produção exige aprovação manual.
+2. Confirmar os nomes de variáveis aplicáveis e configurar valores separados diretamente
+   nos respectivos ambientes, nunca no Git ou neste documento.
+3. Só após autorização específica, implantar o SHA aprovado no staging confirmado e
+   registrar o SHA efetivamente servido.
+4. Executar `/health/live`, `/health/ready`, smoke de login, portfolios, compare, Atlas,
+   heatmap e watchlists, além do E2E e das revisões de acessibilidade/segurança.
+5. Registrar evidências antes de qualquer pedido de promoção; produção permanece pendente
+   de aprovação humana explícita.
+
+### Plano local futuro para agendar retenção
+
+- Horário e fuso: definir no painel somente depois de um gate e da confirmação do ambiente.
+- Comando inicial: `python -m app.cli.retention --dry-run`; revisar as contagens antes/depois.
+- `X-Cron-Secret`: não se aplica ao CLI que conecta direto ao banco; essa credencial é do
+  endpoint atual de refresh. Não criar segredo ou endpoint de retenção sem decisão própria.
+- Apply futuro: escolher e revisar `--max-rows` e `--batch-size` a partir do dry-run; exige
+  aprovação humana para cada configuração. `--execute` sem os dois limites aborta.
+- Monitoramento: preservar stdout/stderr do job, observar código de saída, abortos e
+  contagens `RETENTION_BEFORE`/`RETENTION_AFTER`; alertas e retenção desses logs dependem
+  de configuração externa ainda não verificada.
 
 ### Pode começar agora / depende de terceiros
 
-- **Pode começar localmente:** revisar consistência documental, inventariar dados e
-  retenção sem apagar dados, medir fixtures sem serviços externos e preparar evidências
-  reproduzíveis para CI/staging.
+- **Pode começar localmente:** preparar inventário jurídico para revisão humana, observar
+  CSP Report-Only no navegador local e revisar o dry-run de retenção sem apagar dados.
 - **Bloqueado externamente ou por aprovação humana:** desbloqueio/validação do GitHub
-  Actions; configuração de ambientes, secrets e recursos em Render/Vercel; medição de
-  proxy no staging; planos de Redis/Vercel/Render; aprovação de licenças de dados;
+  Actions; configuração de ambientes, secrets e recursos em
+  Render/Vercel/Neon/Upstash/Cloudflare; medição de proxy no staging; planos de
+  Redis/Vercel/Render; aprovação de licenças de dados;
   assinatura H-13, ADRs editoriais e revisão jurídica/acessibilidade.
 - **Não fazer sem nova autorização específica:** configurar billing ou secrets reais,
   alterar Render/Vercel, criar Cron de retenção, publicar texto jurídico, ativar CSP
@@ -173,7 +208,11 @@ no [runbook do staging](docs/operations/STAGING_RUNBOOK_DAY_29.md), no
 | Dia 30 | RC do staging privado: ADR-009, ADR-010 e decisão de convite | Gate aberto; sem deploy |
 | Dias 31 a 39 | Downsampling, tokens OKLCH, tema, limite por usuário, overview da carteira, avisos legais, WCAG 2.2 AA, Global Atlas e heatmap, Web Vitals, regressão | Implementações no Git; gates conforme a tabela de auditoria, staging não validado para o código atual |
 | Dia 40 | Documentação e handoff | Fechado |
-| Dias 41 a 50 | Isolamento, staging, segurança operacional, jurídico, retenção e fechamento | Planejado/parcial; nenhum gate declarado concluído |
+| Dias 41–42 | Isolamento e staging | Dependem de configuração e validação externa |
+| Dias 43–44 | Segurança operacional | CSP Report-Only local; observação e proxy em staging pendentes |
+| Dias 45–47 | Privacidade e Morning Call | Controles de código existentes; jurídico, assinatura humana e ADR pendentes |
+| Dias 48–49 | Retenção e auditoria | CLI limitado e testado com fakes; DB descartável e Cron não validados/configurados |
+| Dia 50 | Gate final | Checklist atualizado; CI, staging, revisões e aprovação humana pendentes |
 
 O que cada dia provou, e com que evidência, está na seção "Fase 2" do
 [roadmap](docs/ROADMAP_30_DAYS.md), nos relatórios dos Dias 35–39 e na tabela acima.

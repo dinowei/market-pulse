@@ -207,11 +207,23 @@ A rotina de retenção (`app/retention.py`) purga apenas registros operacionais:
 ```bash
 python -m app.cli.retention                    # dry-run (padrão): relata e não apaga nada
 python -m app.cli.retention --dry-run          # igual ao padrão, com a intenção explícita
-python -m app.cli.retention --execute          # apaga as linhas expiradas (irreversível)
+python -m app.cli.retention --execute --max-rows N --batch-size B
 python -m app.cli.retention --retention-days 30
 ```
 
-A janela vem de `MARKET_PULSE_RETENTION_DAYS` (padrão 90). `--dry-run` e `--execute` são mutuamente exclusivos. A saída traz só o **nome** do banco, nunca a conexão, e uma falha imprime o tipo da exceção, nunca a mensagem, porque o driver pode pôr o valor ofensor nela. Códigos de saída: `0` ok, `1` falha ao purgar, `2` abortado antes de tocar no banco (plano nomeia tabela protegida, janela inválida ou argumentos incompatíveis). Faça backup (§3.1) antes de qualquer `--execute` em ambiente com dado que importe.
+A janela vem de `MARKET_PULSE_RETENTION_DAYS` (padrão 90). `--dry-run` e `--execute` são
+mutuamente exclusivos. Para executar, substitua `N` pelo máximo total de linhas aprovado
+após revisar o dry-run e `B` pelo tamanho de lote aprovado (`1 <= B <= N`); sem ambos os
+argumentos, o comando aborta antes de conectar. O total é conferido antes de qualquer
+exclusão; exceder `N` aborta sem excluir. A exclusão usa lotes de até `B` por instrução e
+uma divergência de contagem antes do commit aborta a transação inteira. O CLI registra
+contagens agregadas `RETENTION_BEFORE` e `RETENTION_AFTER`, sem valores de linha. Não há
+`X-Cron-Secret` para o CLI direto ao banco; esse segredo pertence ao endpoint separado de
+refresh. A saída traz só o **nome** do banco, nunca a conexão, e uma falha imprime o tipo da
+exceção, nunca a mensagem, porque o driver pode pôr o valor ofensor nela. Códigos de saída:
+`0` ok, `1` falha ao purgar, `2` abortado antes de excluir (limites, plano protegido, janela
+inválida, excesso de volume ou contagem alterada). Faça backup (§3.1) antes de qualquer
+`--execute` em ambiente com dado que importe.
 
 `audit_logs` está em `PROTECTED_TABLES`, e `assert_plan_is_safe()` falha fechado se o plano de expurgo algum dia passar a nomeá-la. Definir retenção para auditoria é trabalho separado, que exige decisão explícita sobre prazo legal e destino dos registros (expurgo versus arquivamento frio).
 
