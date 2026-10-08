@@ -15,10 +15,27 @@ def _record(monkeypatch, calls: list[dict], *, raises: Exception | None = None) 
         calls.append(kwargs)
         if raises is not None:
             raise raises
-        return [
-            PurgeResult("market_data_quarantine", "created_at", 4, 0 if kwargs["dry_run"] else 4),
-            PurgeResult("web_vital_metrics", "bucket_start", 1, 0 if kwargs["dry_run"] else 1),
+        results = [
+            PurgeResult(
+                "market_data_quarantine",
+                "created_at",
+                4,
+                0 if kwargs["dry_run"] else 4,
+                4 if kwargs["dry_run"] else 0,
+            ),
+            PurgeResult(
+                "web_vital_metrics",
+                "bucket_start",
+                1,
+                0 if kwargs["dry_run"] else 1,
+                1 if kwargs["dry_run"] else 0,
+            ),
         ]
+        callback = kwargs.get("on_before_count")
+        if callback is not None:
+            for result in results:
+                callback(result.table, result.matched_rows)
+        return results
 
     monkeypatch.setattr(cli, "purge_expired_records", fake)
 
@@ -32,7 +49,11 @@ def test_default_run_is_a_dry_run(monkeypatch, capsys) -> None:
     assert [call["dry_run"] for call in calls] == [True]
     out = capsys.readouterr().out
     assert "mode=dry-run" in out
-    assert "table=market_data_quarantine column=created_at matched=4 deleted=0" in out
+    assert "RETENTION_BEFORE table=market_data_quarantine matched=4" in out
+    assert (
+        "RETENTION_AFTER table=market_data_quarantine column=created_at remaining=4 deleted=0"
+        in out
+    )
     assert "RETENTION_OK mode=dry-run" in out
 
 
@@ -49,12 +70,15 @@ def test_execute_must_be_asked_for_explicitly(monkeypatch, capsys) -> None:
     calls: list[dict] = []
     _record(monkeypatch, calls)
 
-    assert cli.main(["--execute"]) == 0
+    assert cli.main(["--execute", "--max-rows", "10", "--batch-size", "5"]) == 0
 
     assert [call["dry_run"] for call in calls] == [False]
     out = capsys.readouterr().out
     assert "mode=execute" in out
-    assert "table=market_data_quarantine column=created_at matched=4 deleted=4" in out
+    assert (
+        "RETENTION_AFTER table=market_data_quarantine column=created_at remaining=0 deleted=4"
+        in out
+    )
 
 
 def test_dry_run_and_execute_cannot_be_combined(monkeypatch) -> None:
@@ -66,6 +90,29 @@ def test_dry_run_and_execute_cannot_be_combined(monkeypatch) -> None:
 
     assert stopped.value.code == 2
     assert calls == []
+
+
+def test_execute_requires_explicit_limits_before_touching_the_database(monkeypatch, capsys) -> None:
+    calls: list[dict] = []
+    _record(monkeypatch, calls)
+
+    assert cli.main(["--execute"]) == 2
+
+    assert calls == []
+    assert "execute_requires_max_rows_and_batch_size" in capsys.readouterr().err
+
+
+def test_dry_run_with_a_maximum_reports_an_anomaly_without_applying(monkeypatch, capsys) -> None:
+    calls: list[dict] = []
+    _record(monkeypatch, calls)
+
+    assert cli.main(["--dry-run", "--max-rows", "4"]) == 2
+
+    assert calls[0]["dry_run"] is True
+    captured = capsys.readouterr()
+    assert "RETENTION_BEFORE" in captured.out
+    assert "RETENTION_ABORTED reason=matched_rows_exceed_max_rows" in captured.err
+    assert "RETENTION_OK" not in captured.out
 
 
 def test_retention_window_comes_from_the_flag_or_the_setting(monkeypatch) -> None:
@@ -94,7 +141,7 @@ def test_a_plan_naming_a_protected_table_aborts_before_any_deletion(monkeypatch,
     _record(monkeypatch, calls)
     monkeypatch.setattr("app.retention.PURGE_PLAN", (("audit_logs", "occurred_at"),))
 
-    assert cli.main(["--execute"]) == 2
+    assert cli.main(["--execute", "--max-rows", "10", "--batch-size", "5"]) == 2
 
     assert calls == []
     assert "plan_names_a_protected_table" in capsys.readouterr().err
@@ -119,7 +166,7 @@ def test_output_and_failures_never_expose_connection_details(monkeypatch, capsys
     leaked = "connection to " + "postgresql" + "://someone:" + "hunter2@db.invalid failed"
     _record(monkeypatch, [], raises=RuntimeError(leaked))
 
-    assert cli.main(["--execute"]) == 1
+    assert cli.main(["--execute", "--max-rows", "10", "--batch-size", "5"]) == 1
 
     captured = capsys.readouterr()
     everything = captured.out + captured.err

@@ -1,7 +1,7 @@
 """Retention purge command.
 
     python -m app.cli.retention                  # dry-run (default): reports, deletes nothing
-    python -m app.cli.retention --execute        # deletes expired operational rows
+    python -m app.cli.retention --execute --max-rows N --batch-size B
     python -m app.cli.retention --retention-days 30
 
 Only operational records are purged (see app.retention). The financial ledger and
@@ -20,9 +20,12 @@ from app.core.config import get_settings
 from app.retention import (
     PROTECTED_TABLES,
     PURGE_PLAN,
+    RetentionCountChanged,
+    RetentionLimitExceeded,
     assert_plan_is_safe,
     cutoff_for,
     purge_expired_records,
+    validate_purge_limits,
 )
 
 
@@ -48,12 +51,34 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="retention window in days (default: MARKET_PULSE_RETENTION_DAYS)",
     )
+    parser.add_argument(
+        "--max-rows",
+        type=int,
+        default=None,
+        help="maximum total eligible rows for this run; required with --execute",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=None,
+        help="maximum rows deleted per statement; required with --execute",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     dry_run = not args.execute
+
+    try:
+        validate_purge_limits(
+            dry_run=dry_run,
+            max_rows=args.max_rows,
+            batch_size=args.batch_size,
+        )
+    except ValueError as exc:
+        print(f"RETENTION_ABORTED reason={exc}", file=sys.stderr)
+        return 2
 
     try:
         assert_plan_is_safe()
@@ -74,6 +99,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"mode={'dry-run' if dry_run else 'execute'}")
     print(f"database={database}")
     print(f"retention_days={days}")
+    print(f"max_rows={args.max_rows if args.max_rows is not None else 'unbounded-dry-run'}")
+    print(f"batch_size={args.batch_size if args.batch_size is not None else 'not-applicable'}")
     print(f"cutoff={cutoff.isoformat()}")
     print(f"plan={','.join(planned)}")
     print(f"protected_tables={','.join(sorted(PROTECTED_TABLES))}")
@@ -81,16 +108,37 @@ def main(argv: list[str] | None = None) -> int:
     print(f"portfolio_events_in_plan={'portfolio_events' in planned}".lower())
 
     try:
-        results = purge_expired_records(dry_run=dry_run, retention_days=days)
+        results = purge_expired_records(
+            dry_run=dry_run,
+            retention_days=days,
+            max_rows=args.max_rows,
+            batch_size=args.batch_size,
+            on_before_count=lambda table, count: print(
+                f"RETENTION_BEFORE table={table} matched={count}"
+            ),
+        )
+    except RetentionLimitExceeded:
+        print("RETENTION_ABORTED reason=matched_rows_exceed_max_rows", file=sys.stderr)
+        return 2
+    except RetentionCountChanged:
+        print("RETENTION_ABORTED reason=row_count_changed_during_purge", file=sys.stderr)
+        return 2
     except Exception as exc:
         print(f"RETENTION_FAILED error_type={type(exc).__name__}", file=sys.stderr)
         return 1
 
     for result in results:
         print(
-            f"table={result.table} column={result.column} "
-            f"matched={result.matched_rows} deleted={result.deleted_rows}"
+            f"RETENTION_AFTER table={result.table} column={result.column} "
+            f"remaining={result.remaining_rows} deleted={result.deleted_rows}"
         )
+    if (
+        dry_run
+        and args.max_rows is not None
+        and sum(result.matched_rows for result in results) > args.max_rows
+    ):
+        print("RETENTION_ABORTED reason=matched_rows_exceed_max_rows", file=sys.stderr)
+        return 2
     print(f"RETENTION_OK mode={'dry-run' if dry_run else 'execute'}")
     return 0
 

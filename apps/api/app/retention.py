@@ -6,6 +6,7 @@ nothing unless the caller explicitly asks for it.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
@@ -45,6 +46,15 @@ class PurgeResult:
     column: str
     matched_rows: int
     deleted_rows: int
+    remaining_rows: int
+
+
+class RetentionLimitExceeded(RuntimeError):
+    """The number of eligible rows exceeds the operator's explicit safety limit."""
+
+
+class RetentionCountChanged(RuntimeError):
+    """The rows changed while the purge was running; the transaction must roll back."""
 
 
 def cutoff_for(retention_days: int, now: datetime | None = None) -> datetime:
@@ -63,19 +73,38 @@ def assert_plan_is_safe() -> None:
             raise ValueError(f"Refusing to purge protected table: {table}")
 
 
+def validate_purge_limits(*, dry_run: bool, max_rows: int | None, batch_size: int | None) -> None:
+    """Require explicit bounds for writes; dry-runs may omit bounds to inspect counts."""
+    if not dry_run and (max_rows is None or batch_size is None):
+        raise ValueError("execute_requires_max_rows_and_batch_size")
+    if batch_size is not None and max_rows is None:
+        raise ValueError("batch_size_requires_max_rows")
+    if max_rows is not None and max_rows < 1:
+        raise ValueError("max_rows_must_be_at_least_1")
+    if batch_size is not None and batch_size < 1:
+        raise ValueError("batch_size_must_be_at_least_1")
+    if max_rows is not None and batch_size is not None and batch_size > max_rows:
+        raise ValueError("batch_size_must_not_exceed_max_rows")
+
+
 def purge_expired_records(
     *,
     dry_run: bool = True,
     retention_days: int | None = None,
     now: datetime | None = None,
+    max_rows: int | None = None,
+    batch_size: int | None = None,
+    on_before_count: Callable[[str, int], None] | None = None,
 ) -> list[PurgeResult]:
     """Delete operational rows older than the retention window.
 
     Deleting by cutoff is naturally idempotent: a second run finds nothing left to
     remove. With dry_run the transaction is rolled back, so counts are measured
-    against the same snapshot a real run would see.
+    without modifying any row. Apply requires explicit total and per-statement limits;
+    rows are counted before any delete and verified again before commit.
     """
     assert_plan_is_safe()
+    validate_purge_limits(dry_run=dry_run, max_rows=max_rows, batch_size=batch_size)
     settings = get_settings()
     window = settings.retention_days if retention_days is None else retention_days
     cutoff = cutoff_for(window, now)
@@ -83,15 +112,61 @@ def purge_expired_records(
     results: list[PurgeResult] = []
     with psycopg.connect(settings.database_url) as connection:
         with connection.cursor() as cursor:
-            for table, column in PURGE_PLAN:
-                matched = cursor.execute(
-                    f"SELECT COUNT(*) FROM {table} WHERE {column} < %s", (cutoff,)
-                ).fetchone()[0]
+            counts = [
+                (
+                    table,
+                    column,
+                    int(
+                        cursor.execute(
+                            f"SELECT COUNT(*) FROM {table} WHERE {column} < %s", (cutoff,)
+                        ).fetchone()[0]
+                    ),
+                )
+                for table, column in PURGE_PLAN
+            ]
+            total_matched = sum(matched for _, _, matched in counts)
+            if on_before_count is not None:
+                for table, _, matched in counts:
+                    on_before_count(table, matched)
+
+            if max_rows is not None and total_matched > max_rows:
+                if dry_run:
+                    connection.rollback()
+                    return [
+                        PurgeResult(table, column, matched, 0, matched)
+                        for table, column, matched in counts
+                    ]
+                raise RetentionLimitExceeded
+
+            for table, column, matched in counts:
                 deleted = 0
                 if not dry_run and matched:
-                    cursor.execute(f"DELETE FROM {table} WHERE {column} < %s", (cutoff,))
-                    deleted = cursor.rowcount
-                results.append(PurgeResult(table, column, int(matched), int(deleted)))
+                    assert batch_size is not None
+                    remaining_to_delete = matched
+                    while remaining_to_delete:
+                        current_batch = min(batch_size, remaining_to_delete)
+                        cursor.execute(
+                            f"WITH candidates AS ("
+                            f"SELECT ctid FROM {table} WHERE {column} < %s "
+                            f"ORDER BY {column}, ctid LIMIT %s) "
+                            f"DELETE FROM {table} AS target USING candidates "
+                            f"WHERE target.ctid = candidates.ctid",
+                            (cutoff, current_batch),
+                        )
+                        batch_deleted = cursor.rowcount
+                        if batch_deleted != current_batch:
+                            raise RetentionCountChanged
+                        deleted += batch_deleted
+                        remaining_to_delete -= batch_deleted
+
+                remaining_rows = int(
+                    cursor.execute(
+                        f"SELECT COUNT(*) FROM {table} WHERE {column} < %s", (cutoff,)
+                    ).fetchone()[0]
+                )
+                if not dry_run and remaining_rows:
+                    raise RetentionCountChanged
+                results.append(PurgeResult(table, column, matched, deleted, remaining_rows))
         if dry_run:
             connection.rollback()
         else:
