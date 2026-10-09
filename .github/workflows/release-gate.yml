@@ -24,7 +24,7 @@ env:
 jobs:
   rodada-1-backend:
     name: Rodada 1 - DEMO, migrations, ciclo de conta e retencao
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
       postgres:
@@ -175,7 +175,7 @@ jobs:
 
   rodada-2-frontend:
     name: Rodada 2 - build, API DEMO e E2E Playwright
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     services:
       postgres:
