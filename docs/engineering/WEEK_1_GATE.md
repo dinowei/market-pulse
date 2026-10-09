@@ -54,6 +54,12 @@ docker compose down
 
 O workflow executa instalação congelada, lint/typecheck/test/build web, Ruff/Pytest, migrations com PostgreSQL/Redis de serviço, JSON OpenAPI, sincronização do cliente gerado, testes de default deny/imutabilidade/idempotência e os scripts de segredo/supply chain. O cliente é regenerado em diretório temporário e comparado; nenhuma mudança pública deve ser silenciosa.
 
+As Actions de terceiros devem usar SHA completo de 40 caracteres; `actions/checkout`
+usa `persist-credentials: false`. O gate de supply chain verifica essas duas regras.
+Dependabot abre atualizações semanais para as Actions, preservando comentários de
+versão junto aos SHAs para que as referências imutáveis possam ser atualizadas por PR.
+Consulte a [prática oficial de uso seguro do GitHub Actions](https://docs.github.com/en/actions/reference/security/secure-use).
+
 ## Banco, cache e falhas
 
 `/health/live` deve responder 200. `/health/ready` deve responder 200 quando PostgreSQL e Redis estiverem saudáveis. Falha de migration, serviço, contrato, segredo, licença ou regra financeira bloqueia a Semana 2; não contorne o erro removendo o teste.
