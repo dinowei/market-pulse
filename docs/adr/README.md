@@ -34,6 +34,7 @@
 | [023](023-markets-hub-chart-type-and-motion.md) | Hub de mercados, linha/candles e movimento do Atlas | Accepted | Sim, em `feature/dia-41-sync`; movimento desligável por `NEXT_PUBLIC_ATLAS_MOTION=off` | Não |
 | [024](024-benchmark-units-pending.md) | Unidade dos benchmarks | **Proposed** | Mitigação: limitação "Unidade não declarada" na API e na tela | Não |
 | [025](025-provider-registry-and-lifecycle.md) | Registro, ciclo de vida e camada canônica de providers | Accepted (arquitetura) | Sim, em `feature/dia-41-sync`; nenhum provider ativo | Não |
+| [026](026-particle-atlas-visual-system-v2.md) | Sistema visual v2 do Particle Atlas | Accepted | Sim, em `feature/dia-41-sync` | Não |
 
 Alternativas que não viraram decisão estão em
 [DISCARDED_ALTERNATIVES.md](../engineering/DISCARDED_ALTERNATIVES.md).

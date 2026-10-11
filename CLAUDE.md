@@ -168,6 +168,14 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
 
     **Nenhum provider está ativo.** Detalhes no
     [relatório](docs/providers/PROVIDER_INTEGRATION_REPORT_DAY_41.md).
+  - **Sistema visual v2 (ADR-026), só no código:**
+    - cabeçalho único em todas as páginas;
+    - IBM Plex Sans e mono do sistema;
+    - textura de partículas e moldura técnica;
+    - CSS dentro do orçamento de 10 KB.
+  - **H-34:** os dados reais de providers dependem das chaves no Render (cadastradas pelo
+    responsável) e de decisão de licença; o modo de uso pessoal foi bloqueado pela trava de
+    segurança da sessão.
   - **Banco do staging expira em 2026-11-05 (H-29).**
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do

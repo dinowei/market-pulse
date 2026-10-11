@@ -326,6 +326,15 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Classe:** A para o staging.
 - **Medido de novo em 2026-10-11:** o push de `fa6a95c` também não disparou. O usuário fez o deploy manual, que ficou no ar às 14:10 UTC. O deploy manual é o procedimento até a configuração ser revista.
 
+### H-34 Dados reais de providers dependem de decisão de licença
+- **Origem:** pedido do responsável em 2026-10-11 para colocar as chaves e usar os providers.
+- **Fato:**
+  - Login nos sites dos providers, cópia de chaves e cadastro no Render ou no `.env` são ações que o agente não executa: credenciais ficam com o responsável.
+  - A ligação dos dados reais às rotas públicas para a sessão do responsável (uso pessoal, rótulo `DEVELOPMENT_ONLY`) foi bloqueada pela trava de segurança da sessão como enfraquecimento da regra de licença. O código parcial foi revertido.
+  - A arquitetura da ADR-025 continua pronta.
+- **Critério de pronto:** o responsável cadastra as chaves no painel do Render e decide formalmente a licença de cada provider (revisão dos termos e status no registro por pull request), ou autoriza explicitamente o modo de uso pessoal com essa ressalva.
+- **Classe:** C para o staging privado; A antes de qualquer exibição pública.
+
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 
 - **Rodada 1** (`run_local.ps1`) e **Rodada 2** (`run_frontend.ps1`): executadas e informadas pelo responsável, ambas OK (ver runbook §5.19).

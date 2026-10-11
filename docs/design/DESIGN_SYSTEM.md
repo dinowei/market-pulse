@@ -46,15 +46,15 @@ uma escala sugerida.
 
 | Aspecto | Implementado |
 | --- | --- |
-| Família | `Arial, Helvetica, sans-serif` no corpo; `monospace` só para ids de requisição no painel interno |
-| Pesos | 400 e 700 |
+| Família | IBM Plex Sans no corpo (`next/font`, auto-hospedada); pilha monoespaçada do sistema (`--pa-mono`) em rótulos, números, cabeçalhos de tabela e selos ([ADR-026](../adr/026-particle-atlas-visual-system-v2.md)) |
+| Pesos | 400 e 600 |
 | Números | Algarismos tabulares em todas as tabelas, no preço e nas métricas da carteira |
 | Títulos | `h1`: `clamp(1.5rem, 3vw, 2.5rem)`, altura de linha 1,1; `h2`: `1rem` |
 | Texto auxiliar | Entre `.66rem` e `.85rem`; os mais usados são `.68rem`, `.72rem` e `.75rem` |
 | Altura de linha | 1,1 (títulos), 1,45 e 1,5 (texto corrido) |
 | Espaçamento | **Sem escala formal**: valores em `rem` por componente; o mais comum é `1rem`, e as páginas usam `clamp(1rem, 4vw, 3rem)` de margem interna |
-| Raio | Um token, `--pa-radius: 4px`; `999px` no selo de estado e `50%` na marca do selo |
-| Sombra | **Nenhuma**: profundidade por fundo (`canvas`, `surface`, `elevated`) e borda |
+| Raio | `--pa-radius: 4px` em painéis; `999px` em controles, menu e selos |
+| Profundidade | Sem sombra projetada: camadas de fundo, gradiente sutil no topo dos painéis, marcas técnicas nos cantos e textura de pontos no fundo (decorativa) |
 | Breakpoints | `max-width: 1050px` e `max-width: 700px` |
 | Camadas | Um único `z-index: 2`, nos resultados da busca |
 
