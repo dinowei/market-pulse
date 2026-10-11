@@ -43,7 +43,8 @@ test("the pre-hydration script applies the same rule and fails closed to dark", 
 
 test("the root layout runs the init script before hydration on <html>", () => {
   const layout = readFileSync(join(root, "app", "layout.tsx"), "utf8");
-  assert.match(layout, /<html lang="pt-BR" suppressHydrationWarning>/);
+  // The font variables add a className; suppressHydrationWarning must stay on <html>.
+  assert.match(layout, /<html lang="pt-BR"[^>]*suppressHydrationWarning>/);
   assert.match(layout, /<Script id="mp-theme-init" strategy="beforeInteractive">\{THEME_INIT_SCRIPT\}<\/Script>/);
 });
 

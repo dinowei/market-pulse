@@ -2,15 +2,13 @@
 
 import type { components } from "../generated/api";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ParticleChart } from "./particle-chart";
 import { ChartTypeToggle, effectiveChartKind } from "./chart-type-toggle";
 import { candleAvailability, type ChartKind } from "../lib/chart-geometry";
 import { MorningCallPanel } from "./morning-call";
 import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-note";
-import { ThemeToggle } from "./theme-toggle";
-import { PaletteToggle } from "./palette-toggle";
+import { SiteHeader } from "./site-header";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { describeChange } from "../lib/price-direction";
 import { formatReason } from "../lib/unavailable-reasons";
@@ -141,12 +139,10 @@ export function InstrumentSearch({ onSelect }: { onSelect: (canonicalId: string)
 }
 
 export function TerminalShell() {
-  const router = useRouter();
   const [period, setPeriod] = useState<HistoryPeriod>("1M");
   const [mode, setMode] = useState<SeriesMode>("PRICE");
   const [chartKind, setChartKind] = useState<ChartKind>("line");
   const [selectedCanonicalId, setSelectedCanonicalId] = useState("");
-  const [sessionError, setSessionError] = useState("");
   const [quoteState, setQuoteState] = useState<{ key: string; data?: PublicQuote; error?: string }>({ key: "" });
   const [historyState, setHistoryState] = useState<{ key: string; data?: PublicHistorySeries; error?: string }>({ key: "" });
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -168,16 +164,6 @@ export function TerminalShell() {
     return () => controller.abort();
   }, [apiBase, selectedCanonicalId]);
 
-  async function logout() {
-    try {
-      const response = await fetch(`${apiBase}/api/v1/auth/logout`, { method: "POST", credentials: "include" });
-      if (!response.ok) throw new Error("Logout unavailable");
-      router.push("/login");
-    } catch {
-      setSessionError("Não foi possível encerrar a sessão. Tente novamente.");
-    }
-  }
-
   useEffect(() => {
     if (!selectedCanonicalId) return;
     const controller = new AbortController();
@@ -193,8 +179,7 @@ export function TerminalShell() {
   }, [historyKey, apiBase, mode, period, selectedCanonicalId]);
 
   return <div className="terminal-root">
-    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/markets">Mercados</Link><Link href="/compare">Comparar</Link><Link href="/calendar">Calendário</Link><Link href="/heatmap">Heatmap</Link><Link href="/atlas">Global Atlas</Link><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/account">Conta</Link><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><div className="display-toggles"><ThemeToggle /><PaletteToggle /></div></header>
-    {sessionError && <p role="alert">{sessionError}</p>}
+    <SiteHeader search={<InstrumentSearch onSelect={setSelectedCanonicalId} />} extraLinks={<a href="#morning-call">Morning Call</a>} />
     <div className="terminal-grid">
       <aside className="left-rail" aria-label="Contexto operacional"><MorningCallPanel /><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE · DEMO</span></section></aside>
       <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} />{history && <ChartTypeToggle value={chartKind} onChange={setChartKind} availability={candleAvailability(history)} />}</div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <>{downsamplingSummary(history.downsampling) && <p className="muted" role="note">{downsamplingSummary(history.downsampling)}</p>}<ParticleChart series={history} kind={effectiveChartKind(chartKind, candleAvailability(history))} /><AccessibleDataTable points={history.points} reducedFrom={history.downsampling?.original_points} ohlc={effectiveChartKind(chartKind, candleAvailability(history)) === "candles"} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}{selectedCanonicalId && <p className="comparison-note"><Link href={`/compare?ids=${encodeURIComponent(`${selectedCanonicalId},${DEFAULT_BENCHMARK_ID}`)}`}>Comparar com o Ibovespa</Link> em INDEX_100, com tabela equivalente.</p>}</section></main>

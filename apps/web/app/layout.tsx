@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { SiteChrome } from "../src/components/site-header";
 import { WebVitalsReporter } from "../src/components/web-vitals-reporter";
 import { THEME_INIT_SCRIPT } from "../src/lib/theme";
+
+// Self-hosted at build time by next/font: no request to Google at runtime.
+// Data labels use the system monospace stack: no second font download (CSS budget, Day 38).
+const sans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "600"], variable: "--pa-font-sans", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Market Pulse",
@@ -13,10 +19,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     // data-theme is set before hydration by the init script (ADR-016), so React must not
     // treat it as a mismatch.
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" className={sans.variable} suppressHydrationWarning>
       <body>
         <Script id="mp-theme-init" strategy="beforeInteractive">{THEME_INIT_SCRIPT}</Script>
         <WebVitalsReporter />
+        <SiteChrome />
         {children}
       </body>
     </html>

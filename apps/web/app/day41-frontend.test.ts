@@ -84,7 +84,8 @@ test("T3: account deletion needs the typed word and the acknowledgement", () => 
   assert.match(account, /\/api\/v1\/account\/data-export/);
   assert.match(account, /irreversível/);
   assert.doesNotMatch(read("app", "globals.css"), /account-delete/, "red stays reserved for DOWN");
-  assert.match(dashboard, /<Link href="\/account">Conta<\/Link>/);
+  const header = readFileSync(join(process.cwd(), "src", "components", "site-header.tsx"), "utf8");
+  assert.match(header, /\{ href: "\/account", label: "Conta" \}/, "the shared header links the account page");
 });
 
 test("the new pages are inside the WCAG gate", () => {

@@ -161,10 +161,10 @@ export function WatchlistsPanel() {
     }
   }
 
-  if (loading) return <main className="watchlists-page terminal-root"><h1 className="sr-only">Watchlists e favoritos</h1><p className="loading-state">Carregando watchlists…</p></main>;
+  if (loading) return <main id="main-content" className="watchlists-page terminal-root"><h1 className="sr-only">Watchlists e favoritos</h1><p className="loading-state">Carregando watchlists…</p></main>;
   if (signedOut) {
     return (
-      <main className="watchlists-page terminal-root">
+      <main id="main-content" className="watchlists-page terminal-root">
         <section className="watchlists-card" aria-labelledby="watchlists-title">
           <p className="eyebrow">ÁREA PRIVADA</p>
           <h1 id="watchlists-title">Watchlists</h1>
@@ -176,7 +176,7 @@ export function WatchlistsPanel() {
   }
 
   return (
-    <main className="watchlists-page terminal-root">
+    <main id="main-content" className="watchlists-page terminal-root">
       <header className="watchlists-header">
         <div><p className="eyebrow">PARTICLE ATLAS / ÁREA PRIVADA</p><h1 id="watchlists-title">Watchlists e favoritos</h1></div>
         <Link href="/" className="watchlists-back">Voltar ao terminal</Link>

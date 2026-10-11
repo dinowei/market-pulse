@@ -9,7 +9,6 @@ const root = process.cwd();
 const read = (...parts: string[]) => readFileSync(join(root, ...parts), "utf8");
 const heatmap = read("src", "components", "market-heatmap.tsx");
 const atlas = read("src", "components", "global-atlas.tsx");
-const dashboard = read("src", "components", "market-data.tsx");
 const e2e = read("e2e", "day36-wcag.spec.ts");
 
 test("describeChange keeps the exact Decimal digits and the cue, or reports unknown", () => {
@@ -47,7 +46,9 @@ test("Global Atlas: catalog metadata in an accessible table, never a price", () 
 });
 
 test("both pages are reachable and inside the WCAG gate", () => {
-  assert.match(dashboard, /<Link href="\/heatmap">Heatmap<\/Link><Link href="\/atlas">Global Atlas<\/Link>/);
+  // The menu lives in the shared header (site-header.tsx) since 2026-10-11.
+  const header = readFileSync(join(process.cwd(), "src", "components", "site-header.tsx"), "utf8");
+  assert.match(header, /\{ href: "\/heatmap", label: "Heatmap" \},\s*\{ href: "\/atlas", label: "Global Atlas" \}/);
   for (const page of [["app", "atlas", "page.tsx"], ["app", "heatmap", "page.tsx"]]) {
     assert.match(read(...page), /<h1 className="sr-only">/);
   }

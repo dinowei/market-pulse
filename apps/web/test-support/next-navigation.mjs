@@ -9,3 +9,8 @@ export function useRouter() {
 export function useSearchParams() {
   return new URLSearchParams();
 }
+
+// The dashboard route: the static harness has no router, so tests render as on "/".
+export function usePathname() {
+  return "/";
+}

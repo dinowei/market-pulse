@@ -102,7 +102,7 @@ export function AdminSystemPanel() {
   }, []);
 
   return (
-    <main className="admin-system-page">
+    <main id="main-content" className="admin-system-page">
       <header className="admin-system-header">
         <div>
           <p className="eyebrow">PARTICLE ATLAS / OPERAÇÕES</p>
