@@ -78,6 +78,8 @@ Cláudio; ela não foi criada para não alterar a interface sem decisão.
 | `UP` | `--pa-market-up` | Sinal `+`, seta `▲` e a palavra "alta" |
 | `DOWN` | `--pa-market-down` | Sinal `-`, seta `▼` e a palavra "queda" |
 | `FLAT` | `--pa-market-flat` | Valor zero, `▬` e a palavra "estável" |
+| Candle | Direção da própria barra | Corpo vazado (alta), cheio (queda) ou traço (estável), com legenda |
+| Partícula do pulso | Direção da série | Triângulo para cima, triângulo para baixo, barra ou anel vazio (sem variação conhecida) |
 | Variação sem base | `--pa-text-secondary` | Texto "Variação indisponível" |
 | Benchmark na comparação | `--pa-market-flat` | Linha tracejada e legenda "referência (benchmark)" |
 | `FRESH` | `--pa-accent-neutral` | Rótulo textual |
@@ -94,7 +96,8 @@ epsilon e sem converter para ponto flutuante. Os dígitos não são arredondados
 | Painel de proveniência | `ProvenancePanel` em `market-data.tsx` | Fonte, dataset, horários, latência e limitações |
 | Variação com direção | `describeChange` em `src/lib/price-direction.ts` | Texto assinado, seta e palavra, ou `null` |
 | Avisos legais | `src/lib/disclaimers.ts` | Texto literal da política (§11), testado contra ela |
-| Gráfico de série | `particle-chart.tsx` (SVG) | Uma série, uma linha; tabela equivalente |
+| Gráfico de série | `particle-chart.tsx` (SVG) | Uma série, uma linha; candles só com OHLC completo em PRICE; tabela equivalente (com OHLC e volume nos candles) |
+| Tipo de gráfico | `chart-type-toggle.tsx` e `src/lib/chart-geometry.ts` | Linha ou Candles; Candles desabilitado com o motivo em texto |
 | Comparação | `multi-asset-comparison.tsx` | `INDEX_100` padrão, escala declarada, tabela alinhada por instante |
 | Heatmap básico | `market-heatmap.tsx` | Mesma área, cor pela direção, tabela equivalente com proveniência |
 | Global Atlas | `global-atlas.tsx` | Tabela por região, sem preço |
@@ -105,6 +108,9 @@ epsilon e sem converter para ponto flutuante. Os dígitos não são arredondados
 | Filtro por classe | `asset-class-filter.tsx` e `src/lib/asset-classes.ts` | Classes vindas da API; Fundos e Renda fixa indisponíveis com motivo |
 | Paleta para daltonismo | `palette-toggle.tsx` e `src/lib/theme.ts` | Opcional, desligada por padrão ([ADR-021](../adr/021-optional-color-vision-palette.md)) |
 | Conta | `account-panel.tsx` | Exportação; exclusão com confirmação digitada |
+| Hub de mercados | `markets-hub.tsx` e `src/lib/markets.ts` (`/markets?tab=`) | Uma aba por família (padrão WAI-ARIA); famílias sem dataset com motivo e sem número; seleção para comparar ([ADR-023](../adr/023-markets-hub-chart-type-and-motion.md)) |
+| Pulso do mercado | `market-pulse-field.tsx` | Arte P1 derivada das linhas: uma partícula por série, tamanho igual, `aria-hidden`, contagem em texto, botão para desligar |
+| Movimento | `src/lib/atlas-motion.ts` e classe `.atlas-motion` | Só em transição (ativo, período, modo, tipo, aba, atualização); `NEXT_PUBLIC_ATLAS_MOTION=off` remove; desligado com `prefers-reduced-motion` |
 
 ## 4. Regras de interação e acessibilidade
 
@@ -116,11 +122,14 @@ epsilon e sem converter para ponto flutuante. Os dígitos não são arredondados
 - `prefers-reduced-motion` reduz transições sem esconder informação.
 - Gráficos e o heatmap sempre têm tabela equivalente.
 
-Prova: `apps/web/e2e/day36-wcag.spec.ts` (axe WCAG 2.2 AA em 11 rotas e nos dois temas)
+Prova: `apps/web/e2e/day36-wcag.spec.ts` (axe WCAG 2.2 AA em 15 rotas e nos dois temas,
+mais o teclado das abas de mercados)
 e o [relatório do Dia 36](ACCESSIBILITY_DAY_36.md).
 
 ## 5. Fora do P0
 
-Partículas, Canvas e WebGL, malha e globo do Global Atlas, escala contínua de
-intensidade no heatmap e transições avançadas continuam P1, com feature flag e
-alternativa sem perda de informação (diretriz §24).
+Canvas e WebGL, malha e globo do Global Atlas, escala contínua de intensidade no heatmap
+continuam P1. O pulso de partículas e as transições do gráfico existem desde a
+[ADR-023](../adr/023-markets-hub-chart-type-and-motion.md), também como P1: atrás de
+`NEXT_PUBLIC_ATLAS_MOTION`, com alternativa em texto e tabela, sem perda de informação
+(diretriz §24).

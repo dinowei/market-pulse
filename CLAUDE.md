@@ -114,12 +114,22 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
   [handoff final](docs/FINAL_HANDOFF_DAY_40.md). O convite da ADR-011 **não foi
   implementado** (exige verificação em Postgres) e segue obrigatório antes de abrir o
   produto.
-- **Dia 41 (sincronização com o NotebookLM), 2026-10-11:** local na branch
-  `feature/dia-41-sync`, sem push nem deploy.
+- **Dia 41 (sincronização com o NotebookLM), 2026-10-11:** na branch
+  `feature/dia-41-sync` (enviada ao GitHub), sem deploy.
   - **Entregue:** página de ativo, conta, comparação livre, filtros por classe, proventos
     por ativo, drawdown, paleta para daltonismo e auditoria de negação editorial
     (ADR-021 e ADR-022).
-  - **Medido:** backend com 431 passed; frontend com 92 testes; WCAG com 33 de 33.
+  - **Hub de mercados (ADR-023), mesmo dia:**
+    - `/markets` com uma aba por família;
+    - Tesouro, crédito privado e fundos aparecem indisponíveis, com o motivo;
+    - linha ou candles, com volume;
+    - movimento do Particle Atlas desligável;
+    - VALE3 e CMIN3 só com metadados;
+    - benchmark sem variação inventada.
+  - **Medido:** backend com 433 passed; frontend com 101 testes; WCAG com 34 de 34;
+    bundle de `/markets` com 189,1 KB gzip.
+  - **Novas pendências:** H-30 (benchmark sem unidade) e H-31 (catálogo documentado maior
+    que o do código).
   - **Staging misturado (H-28):** a web está nos Dias 30–40 e a API no Dia 29, o que quebra
     carteira, comparação, heatmap e Atlas até o deploy manual da API no Render.
   - **Banco do staging expira em 2026-11-05 (H-29).**

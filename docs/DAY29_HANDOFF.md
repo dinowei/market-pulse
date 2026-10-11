@@ -279,6 +279,18 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** decisão entre plano pago, Neon ou recriação, conforme as [opções documentadas](operations/STAGING_DATABASE_EXPIRY.md), executada antes da data.
 - **Classe:** A para o staging.
 
+### H-30 Contrato de benchmark sem unidade
+- **Origem:** hub de mercados ([ADR-023](adr/023-markets-hub-chart-type-and-motion.md)), 2026-10-11.
+- **Fato:** `BenchmarkItem` traz `value` e `currency`, mas não diz se o valor é taxa ao ano (CDI), variação ou número-índice (IPCA), nível de índice (IBOV) ou cotação (USD/BRL). A aba Juros e inflação avisa que nenhuma unidade é presumida.
+- **Critério de pronto:** campo de unidade no contrato (nova versão do OpenAPI e cliente gerado) definido junto com o provider que substituir os benchmarks sintéticos.
+- **Classe:** C para abrir o produto.
+
+### H-31 Catálogo documentado maior que o catálogo no código
+- **Origem:** verificação de 2026-10-11.
+- **Fato:** o [catálogo documentado](instruments/MASTER_INSTRUMENT_CATALOG.md) descreve uma importação de 727 linhas; `MASTER_CATALOG` tem 7 entradas (VALE3 e CMIN3 incluídas no Dia 41 só com metadados).
+- **Critério de pronto:** decisão do usuário entre importar o catálogo (só metadados, com testes de identidade) ou reescrever o documento para o universo real.
+- **Classe:** C.
+
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 
 - **Rodada 1** (`run_local.ps1`) e **Rodada 2** (`run_frontend.ps1`): executadas e informadas pelo responsável, ambas OK (ver runbook §5.19).

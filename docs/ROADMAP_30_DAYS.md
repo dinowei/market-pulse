@@ -374,6 +374,15 @@ usuário como T1 a T8):
   - drawdown da carteira;
   - paleta opcional para daltonismo;
   - auditoria das tentativas editoriais negadas.
+- **Hub de mercados, a pedido do usuário no mesmo dia**
+  ([ADR-023](adr/023-markets-hub-chart-type-and-motion.md)):
+  - `/markets` com uma aba por família de mercado;
+  - Tesouro Direto, crédito privado e fundos aparecem indisponíveis, com o motivo;
+  - linha ou candles com volume, e movimento do Particle Atlas desligável;
+  - VALE3 e CMIN3 só com metadados;
+  - benchmark sem variação inventada.
+
+  **Medido:** backend com 433 passed; frontend com 101 testes; WCAG com 34 de 34.
 - **Medido localmente:** backend com 431 passed, 10 skipped e 0 failed; frontend com 92
   testes, lint, typecheck e build OK; gate de desempenho OK; gate WCAG com 15 rotas, 33 de
   33.

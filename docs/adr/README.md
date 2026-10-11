@@ -31,6 +31,7 @@
 | [020](020-trusted-proxy-hops.md) | IP por saltos de proxy confiáveis | Accepted (mecanismo) | Sim, **desligado** (`MARKET_PULSE_TRUSTED_PROXY_HOPS=0`) até medir a cadeia | Não |
 | [021](021-optional-color-vision-palette.md) | Paleta opcional para daltonismo | Accepted | Sim, desligada por padrão; revisão de Cláudio pendente | Não |
 | [022](022-day-41-frontend-integration.md) | Integração do Dia 41 | Accepted | Sim, em `feature/dia-41-sync` | Não |
+| [023](023-markets-hub-chart-type-and-motion.md) | Hub de mercados, linha/candles e movimento do Atlas | Accepted | Sim, em `feature/dia-41-sync`; movimento desligável por `NEXT_PUBLIC_ATLAS_MOTION=off` | Não |
 
 Alternativas que não viraram decisão estão em
 [DISCARDED_ALTERNATIVES.md](../engineering/DISCARDED_ALTERNATIVES.md).
