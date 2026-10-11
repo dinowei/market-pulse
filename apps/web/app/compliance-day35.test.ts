@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
-import { EDITORIAL_DISCLAIMER, FINANCIAL_DISCLAIMER } from "../src/lib/disclaimers";
+import { EDITORIAL_DISCLAIMER, FINANCIAL_DISCLAIMER, MORNING_CALL_REVIEW_NOTE } from "../src/lib/disclaimers";
 
 const root = process.cwd();
 const read = (...parts: string[]) => readFileSync(join(root, ...parts), "utf8");
@@ -34,4 +34,12 @@ test("H-13: every financial area renders the minimum disclaimer", () => {
     assert.match(component(name), /\{FINANCIAL_DISCLAIMER\}/, name);
   }
   assert.doesNotMatch(component("market-data"), /Dados informativos; não constituem/);
+});
+
+test("H-13: the pending-review note is shown exactly while the review is unsigned", () => {
+  const review = read("..", "..", "docs", "editorial", "MORNING_CALL_COMPLIANCE_REVIEW.md");
+  const unsigned = /\| Decisão \| \*pendente\*/.test(review);
+  const shown = /\{MORNING_CALL_REVIEW_NOTE\}/.test(component("morning-call"));
+  assert.equal(shown, unsigned, unsigned ? "review unsigned: the note must be shown" : "review signed: remove the note");
+  assert.doesNotMatch(MORNING_CALL_REVIEW_NOTE, /aprovad|conforme|validad/i, "the note never claims an approval");
 });

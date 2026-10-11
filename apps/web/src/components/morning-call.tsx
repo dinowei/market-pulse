@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { components } from "../generated/api";
-import { EDITORIAL_DISCLAIMER } from "../lib/disclaimers";
+import { EDITORIAL_DISCLAIMER, MORNING_CALL_REVIEW_NOTE } from "../lib/disclaimers";
 
 type EditorialPostResponse = components["schemas"]["EditorialPostResponse"];
 type EditorialPostListResponse = components["schemas"]["EditorialPostListResponse"];
@@ -81,6 +81,7 @@ export function MorningCallPanel() {
           {state.post.summary && <p className="muted">{state.post.summary}</p>}
           <div className="editorial-blocks">{state.post.blocks.map((block, index) => <Block key={`${block.content_type}-${index}`} block={block} />)}</div>
           <p className="editorial-disclaimer">{EDITORIAL_DISCLAIMER}</p>
+          <p className="muted editorial-review-note">{MORNING_CALL_REVIEW_NOTE}</p>
           {history.items.length > 1 && <details><summary>Histórico de versões publicadas ({history.items.length})</summary><ol>{history.items.map((version) => <li key={version.version}>v{version.version} · {formatBrt(version.published_at)}</li>)}</ol></details>}
         </>
       )}

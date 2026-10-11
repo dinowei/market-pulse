@@ -8,6 +8,10 @@
 - **Uso permitido até a assinatura:** somente uso pessoal no staging privado. Qualquer
   outro uso exige a assinatura da seção 5 (critério de pronto de H-13 no
   [handoff](../DAY29_HANDOFF.md)).
+- **Aviso na interface (2026-10-11):** o painel do Morning Call mostra "Revisão humana de
+  compliance pendente" (`MORNING_CALL_REVIEW_NOTE`). O teste `compliance-day35.test.ts`
+  exige o aviso enquanto a decisão da seção 5 estiver *pendente*, e exige removê-lo quando
+  ela for preenchida. O aviso não afirma aprovação.
 
 ## 1. O que foi corrigido no Dia 35
 
