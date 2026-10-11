@@ -58,9 +58,12 @@ class PostgresPortfolioDay27Service:
 
     @staticmethod
     def _ensure_owned(connection, user_id: str, portfolio_id: str) -> None:
-        if connection.execute(
-            "SELECT 1 FROM portfolios WHERE id=%s AND user_id=%s", (portfolio_id, user_id)
-        ).fetchone() is None:
+        if (
+            connection.execute(
+                "SELECT 1 FROM portfolios WHERE id=%s AND user_id=%s", (portfolio_id, user_id)
+            ).fetchone()
+            is None
+        ):
             raise PortfolioReadModelNotFound
 
     def income(self, user_id: str, portfolio_id: str) -> list[PortfolioIncomeResponse]:

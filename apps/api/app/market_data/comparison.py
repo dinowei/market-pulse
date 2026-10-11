@@ -14,8 +14,6 @@ def normalize_index_100(values: Sequence[Decimal | None]) -> list[Decimal | None
     return [
         None
         if value is None
-        else (value / base * Decimal("100")).quantize(
-            INDEX_QUANTUM, rounding=ROUND_HALF_UP
-        )
+        else (value / base * Decimal("100")).quantize(INDEX_QUANTUM, rounding=ROUND_HALF_UP)
         for value in values
     ]

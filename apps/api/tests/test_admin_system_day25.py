@@ -87,9 +87,7 @@ def test_admin_endpoint_propagates_supplied_request_id_for_admin(monkeypatch) ->
         ),
     )
     request_id = "00000000-0000-4000-8000-000000000042"
-    response = TestClient(app).get(
-        "/api/v1/admin/system", headers={"X-Request-ID": request_id}
-    )
+    response = TestClient(app).get("/api/v1/admin/system", headers={"X-Request-ID": request_id})
     assert response.status_code == 200
     assert response.headers["x-request-id"] == request_id
     assert response.json()["request_id"] == request_id

@@ -23,9 +23,7 @@ def derive_income_status(
     """Derive display state without changing ledger or performance mathematics."""
     if corporate_status in {"CANCELLED", "UNAVAILABLE"} and not has_ledger_receipt:
         return (
-            IncomeStatus.UNAVAILABLE
-            if corporate_status == "UNAVAILABLE"
-            else IncomeStatus.PENDING
+            IncomeStatus.UNAVAILABLE if corporate_status == "UNAVAILABLE" else IncomeStatus.PENDING
         )
     if has_ledger_receipt or (payment_date is not None and payment_date <= today):
         return IncomeStatus.APPLIED

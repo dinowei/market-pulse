@@ -62,9 +62,7 @@ def _postgres_status(checked_at: datetime) -> AdminHealthStatus:
             checked_at=checked_at,
         )
     except Exception:
-        return AdminHealthStatus(
-            status="down", latency_ms=None, checked_at=checked_at
-        )
+        return AdminHealthStatus(status="down", latency_ms=None, checked_at=checked_at)
 
 
 def _redis_client() -> Redis:

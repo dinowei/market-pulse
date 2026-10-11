@@ -41,9 +41,7 @@ def test_calendar_enforces_interval_and_timezone() -> None:
         },
     )
     assert response.status_code == 422
-    invalid_timezone = client.get(
-        "/api/v1/economic-calendar", params={"timezone": "Mars/Olympus"}
-    )
+    invalid_timezone = client.get("/api/v1/economic-calendar", params={"timezone": "Mars/Olympus"})
     assert invalid_timezone.status_code == 422
 
 
