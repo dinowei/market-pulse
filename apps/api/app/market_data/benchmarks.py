@@ -42,7 +42,9 @@ def benchmark_items() -> list[BenchmarkItem]:
             name=name,
             currency=currency,
             value=value,
-            change_percent=Decimal("0.00"),
+            # A synthetic level has no previous official value: the change is unknown,
+            # not zero (integrity policy: FLAT must never be invented).
+            change_percent=None,
             data_level=DataLevel.DEMO,
             freshness=Freshness.STALE,
             source="market-pulse-demo",
