@@ -1,4 +1,5 @@
 import json
+import logging
 import secrets
 from datetime import date, timedelta
 from uuid import uuid4
@@ -135,6 +136,7 @@ from app.watchlists.service import (
 )
 
 router = APIRouter(prefix="/api/v1")
+logger = logging.getLogger(__name__)
 
 
 def get_auth_service() -> AuthService:
@@ -238,8 +240,35 @@ def get_editorial_role(
         return EditorialRole.USER.value
 
 
-def _require_editorial_role(role: str, *allowed: EditorialRole) -> None:
+EDITORIAL_DENIED_ACTION = "editorial_permission_denied"
+
+
+def _record_editorial_denial(actor: AuthUserResponse, role: str, request: Request) -> None:
+    """Audit a refused editorial attempt (Day 41, H-25 follow-up).
+
+    Best effort: the 403 is returned even if the write fails. The metadata holds only the
+    role and the route template, never the payload or anything from the user's record.
+    """
+    route = request.scope.get("route")
+    metadata = {"role": role, "method": request.method, "route": getattr(route, "path", None)}
+    try:
+        with psycopg.connect(get_settings().database_url, connect_timeout=3) as conn:
+            conn.execute(
+                "INSERT INTO audit_logs (entity_type, action, actor_user_id, occurred_at, "
+                "metadata, resource, result, request_id) "
+                "VALUES ('editorial', %s, %s, now(), %s::jsonb, 'editorial-admin', 'DENIED', %s)",
+                (EDITORIAL_DENIED_ACTION, actor.id, json.dumps(metadata), request_id_for(request)),
+            )
+            conn.commit()
+    except Exception:
+        logger.warning("editorial denial audit unavailable", extra={"route": metadata["route"]})
+
+
+def _require_editorial_role(
+    role: str, *allowed: EditorialRole, actor: AuthUserResponse, request: Request
+) -> None:
     if role not in {item.value for item in allowed}:
+        _record_editorial_denial(actor, role, request)
         raise HTTPException(status_code=403, detail="Editorial permission required")
 
 
@@ -1234,11 +1263,19 @@ def _admin_response(post) -> EditorialAdminPostResponse:
     tags=["editorial-admin"],
 )
 def admin_list_editorial_posts(
+    request: Request,
     current_user: AuthUserResponse = Depends(get_current_user),
     role: str = Depends(get_editorial_role),
     service: InMemoryEditorialService = Depends(get_editorial_service),
 ) -> EditorialAdminPostListResponse:
-    _require_editorial_role(role, EditorialRole.EDITOR, EditorialRole.REVIEWER, EditorialRole.ADMIN)
+    _require_editorial_role(
+        role,
+        EditorialRole.EDITOR,
+        EditorialRole.REVIEWER,
+        EditorialRole.ADMIN,
+        actor=current_user,
+        request=request,
+    )
     return EditorialAdminPostListResponse(
         items=[_admin_response(post) for post in service.list_admin()]
     )
@@ -1257,7 +1294,9 @@ def admin_create_editorial_post(
     role: str = Depends(get_editorial_role),
     service: InMemoryEditorialService = Depends(get_editorial_service),
 ) -> EditorialAdminPostResponse:
-    _require_editorial_role(role, EditorialRole.EDITOR, EditorialRole.ADMIN)
+    _require_editorial_role(
+        role, EditorialRole.EDITOR, EditorialRole.ADMIN, actor=current_user, request=request
+    )
     try:
         return _admin_response(
             service.create_draft(
@@ -1280,11 +1319,19 @@ def admin_create_editorial_post(
 )
 def admin_get_editorial_post(
     post_id: str,
+    request: Request,
     current_user: AuthUserResponse = Depends(get_current_user),
     role: str = Depends(get_editorial_role),
     service: InMemoryEditorialService = Depends(get_editorial_service),
 ) -> EditorialAdminPostResponse:
-    _require_editorial_role(role, EditorialRole.EDITOR, EditorialRole.REVIEWER, EditorialRole.ADMIN)
+    _require_editorial_role(
+        role,
+        EditorialRole.EDITOR,
+        EditorialRole.REVIEWER,
+        EditorialRole.ADMIN,
+        actor=current_user,
+        request=request,
+    )
     try:
         return _admin_response(service.get_by_id(post_id))
     except KeyError as exc:
@@ -1300,11 +1347,14 @@ def admin_get_editorial_post(
 def admin_add_editorial_version(
     post_id: str,
     payload: EditorialVersionCreateRequest,
+    request: Request,
     current_user: AuthUserResponse = Depends(get_current_user),
     role: str = Depends(get_editorial_role),
     service: InMemoryEditorialService = Depends(get_editorial_service),
 ) -> EditorialAdminPostResponse:
-    _require_editorial_role(role, EditorialRole.EDITOR, EditorialRole.ADMIN)
+    _require_editorial_role(
+        role, EditorialRole.EDITOR, EditorialRole.ADMIN, actor=current_user, request=request
+    )
     try:
         return _admin_response(
             service.add_version(
@@ -1326,11 +1376,19 @@ def admin_add_editorial_version(
 )
 def admin_validate_editorial_post(
     post_id: str,
+    request: Request,
     current_user: AuthUserResponse = Depends(get_current_user),
     role: str = Depends(get_editorial_role),
     service: InMemoryEditorialService = Depends(get_editorial_service),
 ) -> EditorialValidationResponse:
-    _require_editorial_role(role, EditorialRole.EDITOR, EditorialRole.REVIEWER, EditorialRole.ADMIN)
+    _require_editorial_role(
+        role,
+        EditorialRole.EDITOR,
+        EditorialRole.REVIEWER,
+        EditorialRole.ADMIN,
+        actor=current_user,
+        request=request,
+    )
     try:
         post = service.get_by_id(post_id)
     except KeyError as exc:
@@ -1356,7 +1414,7 @@ def _admin_transition(
         EditorialStatus.PUBLISHED: (EditorialRole.REVIEWER, EditorialRole.ADMIN),
         EditorialStatus.ARCHIVED: (EditorialRole.REVIEWER, EditorialRole.ADMIN),
     }
-    _require_editorial_role(role, *allowed[target])
+    _require_editorial_role(role, *allowed[target], actor=current_user, request=request)
     try:
         return _admin_response(
             service.transition_by_id(
