@@ -284,6 +284,7 @@ def _history(
                         )
                     )
                 intraday.extend(hours)
+                volumes = [item.bar.volume for item in hours]
                 day_bar = replace(
                     day_bar,
                     bar=replace(
@@ -292,7 +293,10 @@ def _history(
                         close=hours[-1].bar.close,
                         high=max(item.bar.high for item in hours),
                         low=min(item.bar.low for item in hours),
-                        volume=sum((item.bar.volume for item in hours), Decimal("0")),
+                        # One hour without volume makes the day's volume unknown, not partial.
+                        volume=None
+                        if any(volume is None for volume in volumes)
+                        else sum(volumes, Decimal("0")),
                     ),
                 )
             daily.append(day_bar)
