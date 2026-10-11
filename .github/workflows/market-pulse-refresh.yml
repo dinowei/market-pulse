@@ -5,6 +5,9 @@ on:
     - cron: "*/15 * * * *"
   workflow_dispatch:
 
+# Only calls the API with its own secrets: the job needs no GITHUB_TOKEN scope.
+permissions: {}
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
