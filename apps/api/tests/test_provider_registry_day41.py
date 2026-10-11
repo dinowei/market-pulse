@@ -108,15 +108,11 @@ def test_serve_reports_why_nothing_served_while_providers_are_not_approved() -> 
     assert [attempt.outcome for attempt in trace.attempts] == ["DATASET_NOT_APPROVED"] * 2
 
 
-def test_serve_falls_back_once_and_keeps_the_trace(monkeypatch) -> None:
-    import app.providers.precedence as precedence
+def test_serve_falls_back_once_and_keeps_the_trace() -> None:
     from app.providers.registry import ActivationDecision
 
-    monkeypatch.setattr(
-        precedence,
-        "activation_decision",
-        lambda entry, environ=None: ActivationDecision(True, None),
-    )
+    def allow(entry, environ=None):
+        return ActivationDecision(True, None)
 
     def call(provider_id: str) -> str:
         if provider_id == "massive":
@@ -125,13 +121,15 @@ def test_serve_falls_back_once_and_keeps_the_trace(monkeypatch) -> None:
 
     breaker = CircuitBreaker(failure_threshold=1, cooldown_seconds=60, clock=lambda: 0.0)
     result, trace = serve(
-        ProviderCapability.LATEST_QUOTE, "US", call, breakers={"massive": breaker}
+        ProviderCapability.LATEST_QUOTE, "US", call, breakers={"massive": breaker}, decide=allow
     )
     assert result == "quote-from-twelve_data"
     assert (trace.primary, trace.served_by, trace.fallback_used) == ("massive", "twelve_data", True)
     assert [attempt.outcome for attempt in trace.attempts] == ["RATE_LIMITED", "SERVED"]
     assert breaker.state == CircuitBreaker.OPEN
-    _, again = serve(ProviderCapability.LATEST_QUOTE, "US", call, breakers={"massive": breaker})
+    _, again = serve(
+        ProviderCapability.LATEST_QUOTE, "US", call, breakers={"massive": breaker}, decide=allow
+    )
     assert again.attempts[0].outcome == "CIRCUIT_OPEN"
 
 

@@ -18,7 +18,7 @@ from decimal import Decimal
 from typing import Any
 
 from app.providers.canonical import NormalizationError, UnavailableReason
-from app.providers.registry import ProviderRegistryEntry, activation_decision
+from app.providers.registry import ActivationDecision, ProviderRegistryEntry, activation_decision
 from app.providers.resilience import parse_retry_after
 from app.providers.vendors import ProviderRequest, reason_for_status
 
@@ -50,15 +50,19 @@ class ProviderHttpTransport:
         timeout_seconds: float = 10.0,
         opener: Callable[..., Any] = urllib.request.urlopen,
         now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
+        authorize: Callable[
+            [ProviderRegistryEntry, Mapping[str, str]], ActivationDecision
+        ] = activation_decision,
     ) -> None:
         self.entry = entry
         self._environ = environ
         self.timeout_seconds = timeout_seconds
         self._opener = opener
         self._now = now
+        self._authorize = authorize
 
     def send(self, request: ProviderRequest) -> TransportResponse:
-        decision = activation_decision(self.entry, self._environ)
+        decision = self._authorize(self.entry, self._environ)
         if not decision.allowed:
             reason = decision.reason or UnavailableReason.LICENSE_BLOCKED
             raise NormalizationError(

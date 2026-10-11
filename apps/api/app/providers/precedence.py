@@ -12,7 +12,13 @@ from typing import TypeVar
 
 from app.providers.canonical import UnavailableReason
 from app.providers.models import ProviderCapability
-from app.providers.registry import PRECEDENCE, activation_decision, get_entry
+from app.providers.registry import (
+    PRECEDENCE,
+    ActivationDecision,
+    ProviderRegistryEntry,
+    activation_decision,
+    get_entry,
+)
 from app.providers.resilience import CircuitBreaker
 from app.providers.vendors import reason_for_error
 
@@ -57,16 +63,20 @@ def serve(
     *,
     environ: Mapping[str, str] | None = None,
     breakers: Mapping[str, CircuitBreaker] | None = None,
+    decide: Callable[
+        [ProviderRegistryEntry, Mapping[str, str] | None], ActivationDecision
+    ] = activation_decision,
+    order: tuple[str, ...] | None = None,
 ) -> tuple[T | None, FallbackTrace]:
     order = tuple(
         provider_id
-        for provider_id in PRECEDENCE.get((capability, market), ())
+        for provider_id in (order or PRECEDENCE.get((capability, market), ()))
         if capability in get_entry(provider_id).capabilities
     )
     attempts: list[Attempt] = []
     reasons: list[UnavailableReason] = []
     for provider_id in order:
-        decision = activation_decision(get_entry(provider_id), environ)
+        decision = decide(get_entry(provider_id), environ)
         if not decision.allowed:
             reason = decision.reason or UnavailableReason.LICENSE_BLOCKED
             attempts.append(Attempt(provider_id, reason.value))
