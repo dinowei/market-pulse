@@ -28,12 +28,22 @@ function drawingKey(series: PublicHistorySeries, kind: ChartKind): string {
   return `${series.canonical_id}|${series.period}|${series.mode}|${kind}|${series.timestamp_collected}`;
 }
 
+// Reference grid (presentation only): quarter lines of the plot box, with no value label,
+// so it never states a price the contract did not send.
+function ChartGrid({ top, bottom }: { top: number; bottom: number }) {
+  return <g className="chart-grid">{[1, 2, 3].map((step) => {
+    const y = top + ((bottom - top) * step) / 4;
+    return <line key={step} x1="0" y1={y} x2="100" y2={y} vectorEffect="non-scaling-stroke" />;
+  })}</g>;
+}
+
 function CandleChart({ series, layout }: { series: PublicHistorySeries; layout: CandleLayout }) {
   const { candles, volume, priceBottom } = layout;
   const label = `${series.symbol} candles OHLC ${series.period}; ${candles.length} barras${volume.length ? " com volume" : ""}; ${series.data_level} ${series.freshness}`;
   return (
     <figure className={`particle-chart${motionClass()}`}>
       <svg key={drawingKey(series, "candles")} viewBox="0 0 100 48" role="img" aria-label={label} preserveAspectRatio="none">
+        <ChartGrid top={2} bottom={priceBottom} />
         <line x1="0" y1="46" x2="100" y2="46" className="chart-axis" />
         {volume.length > 0 && <line x1="0" y1={(priceBottom + VOLUME_TOP) / 2} x2="100" y2={(priceBottom + VOLUME_TOP) / 2} className="chart-axis chart-axis-soft" />}
         {volume.map((bar, index) => <rect key={`v-${bar.key}`} x={bar.x} y={bar.y} width={bar.width} height={bar.height} className="chart-volume" style={{ "--i": index } as CSSProperties} />)}
@@ -107,9 +117,10 @@ export function ParticleChart({ series, kind = "line" }: { series: PublicHistory
   return (
     <figure className={`particle-chart${motionClass()}`}>
       <svg key={drawingKey(series, "line")} viewBox="0 0 100 48" role="img" aria-label={label} preserveAspectRatio="none">
+        <ChartGrid top={4} bottom={46} />
         <line x1="0" y1="46" x2="100" y2="46" className="chart-axis" />
         {pathD && <path d={pathD} className="chart-line chart-draw" fill="none" pathLength={1} />}
-        {values.map((value, index) => value === null ? null : <circle key={`${series.points[index].timestamp}-${index}`} cx={scaleX(index)} cy={scaleY(value)} r="1.1" className="chart-point" />)}
+        {values.map((value, index) => value === null ? null : <circle key={`${series.points[index].timestamp}-${index}`} cx={scaleX(index)} cy={scaleY(value)} r="1.1" className="chart-point" style={{ "--d": (index / Math.max(values.length - 1, 1)).toFixed(3) } as CSSProperties} />)}
       </svg>
       <figcaption>{MODE_NOTE[series.mode]} — {series.data_level}; valores contratuais preservados</figcaption>
     </figure>

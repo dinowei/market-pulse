@@ -48,6 +48,31 @@ test("reflow: no route scrolls sideways at 320 CSS px (WCAG 1.4.10)", async ({ p
   }
 });
 
+const KEY_ROUTES = ["/", "/assets?id=equity.br.b3.petr4", "/markets", "/compare", "/portfolios", "/account", "/atlas", "/heatmap"];
+
+// 375 (phone), 640 (a 1280 px window at 200% zoom), 768 and 1024 (tablet).
+test("responsive: key routes never scroll sideways from phone to tablet widths", async ({ page }) => {
+  test.setTimeout(KEY_ROUTES.length * 4 * 20_000);
+  for (const width of [375, 640, 768, 1024]) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const route of KEY_ROUTES) {
+      await settle(page, route);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, `${route} at ${width}px overflows by ${overflow}px`).toBeLessThanOrEqual(0);
+    }
+  }
+});
+
+// Directive §18: motion marks a transition and then stops; nothing keeps running.
+test("Particle Atlas motion stops after the transition", async ({ page }) => {
+  for (const route of ["/markets", "/assets?id=equity.br.b3.petr4"]) {
+    await settle(page, route);
+    await page.waitForTimeout(3_000);
+    const running = await page.evaluate(() => document.getAnimations().filter((animation) => animation.playState === "running").length);
+    expect(running, `${route} still animating`).toBe(0);
+  }
+});
+
 test("keyboard: every focusable control on the dashboard shows a visible focus indicator", async ({ page }) => {
   await settle(page, "/");
   const missing: string[] = [];

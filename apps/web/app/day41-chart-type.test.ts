@@ -45,3 +45,16 @@ test("ParticleChart draws candles only when allowed and keeps the line otherwise
   assert.ok("disabled" in buttons[1]);
   assert.match(toggle, /Candles exigem o modo PRICE\./);
 });
+
+test("the reference grid is presentation only and the points appear in series order", () => {
+  const series = historySeries([historyPoint("2026-09-01", "10"), historyPoint("2026-09-02", "12"), historyPoint("2026-09-03", "11")]);
+  const markup = renderToStaticMarkup(createElement(ParticleChart, { series }));
+  const grid = markup.match(/<g class="chart-grid">([\s\S]*?)<\/g>/)?.[1] ?? "";
+  const gridLines = elements(grid, "line");
+  assert.equal(gridLines.length, 3);
+  assert.deepEqual(gridLines.map((line) => Number(line.y1)), [14.5, 25, 35.5]);
+  assert.doesNotMatch(grid, /<text/, "no value label is invented");
+  assert.equal(elements(markup, "path").length, 1, "still one line for one series");
+  const delays = elements(markup, "circle").map((circle) => Number(/--d:([\d.]+)/.exec(circle.style ?? "")?.[1]));
+  assert.deepEqual(delays, [0, 0.5, 1]);
+});
