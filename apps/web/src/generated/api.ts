@@ -225,6 +225,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market-data/corporate-actions/{canonical_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Corporate Actions */
+        get: operations["public_corporate_actions_api_v1_market_data_corporate_actions__canonical_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market-data/history/{canonical_id}": {
         parameters: {
             query?: never;
@@ -598,6 +615,23 @@ export interface paths {
         };
         /** Portfolio Performance Decomposition */
         get: operations["portfolio_performance_decomposition_api_v1_portfolios__portfolio_id__performance_decomposition_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portfolios/{portfolio_id}/drawdown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portfolio Drawdown */
+        get: operations["portfolio_drawdown_api_v1_portfolios__portfolio_id__drawdown_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1583,6 +1617,57 @@ export interface components {
          * @enum {string}
          */
         HistoryPeriod: "1D" | "5D" | "1M" | "3M" | "6M" | "YTD" | "1A" | "5A" | "MAX";
+        /** InstrumentCorporateAction */
+        InstrumentCorporateAction: {
+            /** Action Type */
+            action_type: string;
+            /** Status */
+            status: string;
+            /** Ex Date */
+            ex_date?: string | null;
+            /** Payment Date */
+            payment_date?: string | null;
+            /** Effective Date */
+            effective_date?: string | null;
+            /** Gross Amount Per Share */
+            gross_amount_per_share?: string | null;
+            /** Net Amount Per Share */
+            net_amount_per_share?: string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Split Ratio From */
+            split_ratio_from?: string | null;
+            /** Split Ratio To */
+            split_ratio_to?: string | null;
+            provenance: components["schemas"]["PerformanceProvenance"];
+        };
+        /**
+         * InstrumentCorporateActionsResponse
+         * @description Proventos and corporate events of one instrument (Day 41).
+         *
+         *     Only licensed rows are returned; anything else keeps the response UNAVAILABLE with a
+         *     reason, never an empty list that would read as "no events".
+         */
+        InstrumentCorporateActionsResponse: {
+            /** Canonical Id */
+            canonical_id: string;
+            /**
+             * Availability
+             * @enum {string}
+             */
+            availability: "AVAILABLE" | "UNAVAILABLE";
+            /** Unavailable Reason */
+            unavailable_reason?: string | null;
+            /** Items */
+            items: components["schemas"]["InstrumentCorporateAction"][];
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
+            /** Request Id */
+            request_id: string;
+        };
         /** InstrumentList */
         InstrumentList: {
             /** Items */
@@ -1726,6 +1811,54 @@ export interface components {
             name: string;
             /** Base Currency */
             base_currency: string;
+        };
+        /** PortfolioDrawdownPointResponse */
+        PortfolioDrawdownPointResponse: {
+            /**
+             * Valuation Date
+             * Format: date
+             */
+            valuation_date: string;
+            /** Total Value Base */
+            total_value_base: string;
+            /** Peak Value Base */
+            peak_value_base: string;
+            /** Drawdown */
+            drawdown: string;
+        };
+        /**
+         * PortfolioDrawdownResponse
+         * @description Drop from the running peak of a cash-flow-neutral equity curve (Day 41).
+         *
+         *     Same preconditions as the TWR: without them a deposit or withdrawal would read as a
+         *     gain or a loss, so the answer stays UNAVAILABLE with the missing input.
+         */
+        PortfolioDrawdownResponse: {
+            /** Portfolio Id */
+            portfolio_id: string;
+            /** Base Currency */
+            base_currency: string;
+            status: components["schemas"]["PerformanceStatus"];
+            /** Max Drawdown */
+            max_drawdown?: string | null;
+            /** Peak Date */
+            peak_date?: string | null;
+            /** Trough Date */
+            trough_date?: string | null;
+            /** Points */
+            points: components["schemas"]["PortfolioDrawdownPointResponse"][];
+            /** Methodology */
+            methodology: string;
+            /**
+             * Missing Inputs
+             * @default []
+             */
+            missing_inputs: string[];
+            /**
+             * Provenance
+             * @default []
+             */
+            provenance: components["schemas"]["PerformanceProvenance"][];
         };
         /** PortfolioEventMarkerResponse */
         PortfolioEventMarkerResponse: {
@@ -1887,6 +2020,7 @@ export interface components {
             performance: components["schemas"]["PortfolioPerformanceResponse"];
             equity_curve: components["schemas"]["EquityCurveResponse"];
             decomposition: components["schemas"]["PerformanceDecompositionResponse"];
+            drawdown: components["schemas"]["PortfolioDrawdownResponse"];
             /** Income */
             income: components["schemas"]["PortfolioIncomeResponse"][];
             event_markers: components["schemas"]["PortfolioEventMarkersResponse"];
@@ -2772,6 +2906,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HeatmapResponse"];
+                };
+            };
+        };
+    };
+    public_corporate_actions_api_v1_market_data_corporate_actions__canonical_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canonical_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstrumentCorporateActionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3734,6 +3899,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PerformanceDecompositionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_drawdown_api_v1_portfolios__portfolio_id__drawdown_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                portfolio_id: string;
+            };
+            cookie?: {
+                market_pulse_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioDrawdownResponse"];
                 };
             };
             /** @description Validation Error */

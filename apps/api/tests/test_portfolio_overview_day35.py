@@ -1,4 +1,4 @@
-"""H-21: GET /portfolios/{id}/overview equals the eight separate endpoints in one request."""
+"""H-21: GET /portfolios/{id}/overview equals each separate endpoint in one request."""
 
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -27,6 +27,7 @@ PARTS = {
     "performance": "performance",
     "equity_curve": "equity-curve",
     "decomposition": "performance/decomposition",
+    "drawdown": "drawdown",
     "income": "income",
     "event_markers": "event-markers",
 }

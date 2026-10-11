@@ -659,6 +659,35 @@ class PerformanceProvenance(StrictModel):
     limitations: tuple[str, ...] = ()
 
 
+class InstrumentCorporateAction(StrictModel):
+    action_type: str
+    status: str
+    ex_date: date | None = None
+    payment_date: date | None = None
+    effective_date: date | None = None
+    gross_amount_per_share: Decimal | None = None
+    net_amount_per_share: Decimal | None = None
+    currency: str | None = Field(default=None, pattern="^[A-Z]{3}$")
+    split_ratio_from: Decimal | None = None
+    split_ratio_to: Decimal | None = None
+    provenance: PerformanceProvenance
+
+
+class InstrumentCorporateActionsResponse(StrictModel):
+    """Proventos and corporate events of one instrument (Day 41).
+
+    Only licensed rows are returned; anything else keeps the response UNAVAILABLE with a
+    reason, never an empty list that would read as "no events".
+    """
+
+    canonical_id: str
+    availability: Literal["AVAILABLE", "UNAVAILABLE"]
+    unavailable_reason: str | None = None
+    items: list[InstrumentCorporateAction]
+    limitations: tuple[str, ...] = ()
+    request_id: str
+
+
 class PortfolioIncomeType(StrEnum):
     DIVIDEND = "DIVIDEND"
     JCP = "JCP"
@@ -820,6 +849,32 @@ class PortfolioPerformanceResponse(StrictModel):
     provenance: tuple[PerformanceProvenance, ...] = ()
 
 
+class PortfolioDrawdownPointResponse(StrictModel):
+    valuation_date: date
+    total_value_base: Decimal
+    peak_value_base: Decimal
+    drawdown: Decimal
+
+
+class PortfolioDrawdownResponse(StrictModel):
+    """Drop from the running peak of a cash-flow-neutral equity curve (Day 41).
+
+    Same preconditions as the TWR: without them a deposit or withdrawal would read as a
+    gain or a loss, so the answer stays UNAVAILABLE with the missing input.
+    """
+
+    portfolio_id: str
+    base_currency: str = Field(pattern="^[A-Z]{3}$")
+    status: PerformanceStatus
+    max_drawdown: Decimal | None = None
+    peak_date: date | None = None
+    trough_date: date | None = None
+    points: list[PortfolioDrawdownPointResponse]
+    methodology: str
+    missing_inputs: tuple[str, ...] = ()
+    provenance: tuple[PerformanceProvenance, ...] = ()
+
+
 class PortfolioOverviewResponse(StrictModel):
     """H-21: the eight read models the portfolio page shows, in one round trip.
 
@@ -833,6 +888,7 @@ class PortfolioOverviewResponse(StrictModel):
     performance: PortfolioPerformanceResponse
     equity_curve: EquityCurveResponse
     decomposition: PerformanceDecompositionResponse
+    drawdown: PortfolioDrawdownResponse
     income: list[PortfolioIncomeResponse]
     event_markers: PortfolioEventMarkersResponse
 

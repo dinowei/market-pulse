@@ -47,6 +47,7 @@ from app.contracts import (
     EquityCurveResponse,
     HeatmapResponse,
     HistoryPeriod,
+    InstrumentCorporateActionsResponse,
     InstrumentList,
     InstrumentSummary,
     LoginRequest,
@@ -54,6 +55,7 @@ from app.contracts import (
     PerformanceDecompositionResponse,
     PortfolioCashBalanceResponse,
     PortfolioCreateRequest,
+    PortfolioDrawdownResponse,
     PortfolioEventMarkersResponse,
     PortfolioEventRequest,
     PortfolioEventResponse,
@@ -95,6 +97,7 @@ from app.instruments.catalog import (
     search_catalog,
 )
 from app.market_data.benchmarks import benchmark_items, benchmark_series
+from app.market_data.corporate_events import instrument_corporate_actions
 from app.market_data.downsampling import (
     MAX_MAX_POINTS,
     MIN_MAX_POINTS,
@@ -542,6 +545,20 @@ def public_benchmarks() -> BenchmarkListResponse:
 )
 def public_heatmap(request: Request) -> HeatmapResponse:
     return market_heatmap(request_id_for(request))
+
+
+@router.get(
+    "/market-data/corporate-actions/{canonical_id}",
+    response_model=InstrumentCorporateActionsResponse,
+    tags=["market-data"],
+)
+def public_corporate_actions(
+    canonical_id: str, request: Request
+) -> InstrumentCorporateActionsResponse:
+    try:
+        return instrument_corporate_actions(canonical_id, request_id_for(request))
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Instrument not found") from exc
 
 
 @router.get(
@@ -1109,6 +1126,22 @@ def portfolio_performance_decomposition(
 
 
 @router.get(
+    "/portfolios/{portfolio_id}/drawdown",
+    response_model=PortfolioDrawdownResponse,
+    tags=["portfolio-performance"],
+)
+def portfolio_drawdown(
+    portfolio_id: str,
+    current_user: AuthUserResponse = Depends(get_current_user),
+    service: PortfolioPerformanceService = Depends(get_portfolio_performance_service),
+) -> PortfolioDrawdownResponse:
+    try:
+        return service.drawdown_response(current_user.id, portfolio_id)
+    except PortfolioNotFound as exc:
+        raise _portfolio_error(exc) from exc
+
+
+@router.get(
     "/portfolios/{portfolio_id}/income",
     response_model=list[PortfolioIncomeResponse],
     tags=["portfolio-income"],
@@ -1160,6 +1193,7 @@ def portfolio_overview(
         performance=portfolio_performance(portfolio_id, current_user, performance),
         equity_curve=portfolio_equity_curve(portfolio_id, current_user, performance),
         decomposition=portfolio_performance_decomposition(portfolio_id, current_user, performance),
+        drawdown=portfolio_drawdown(portfolio_id, current_user, performance),
         income=portfolio_income(portfolio_id, current_user, read_models),
         event_markers=portfolio_event_markers(portfolio_id, current_user, read_models),
     )
