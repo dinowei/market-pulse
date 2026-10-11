@@ -112,6 +112,8 @@ button, a, input, select, textarea, summary, [tabindex] { outline-offset: 3px; }
 nav { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
 nav a { color: var(--pa-text-secondary); font-size: .78rem; text-decoration: none; }
 nav a:hover { color: var(--pa-text-primary); }
+nav button { background: transparent; border: 0; color: var(--pa-text-secondary); cursor: pointer; font-size: .78rem; padding: 0; }
+nav button:hover { color: var(--pa-text-primary); }
 .theme-toggle, .control { border: 1px solid var(--pa-border-hairline); border-radius: var(--pa-radius); background: transparent; color: var(--pa-text-primary); cursor: pointer; padding: .5rem .65rem; }
 .theme-toggle { white-space: nowrap; font-size: .75rem; }
 .display-toggles { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; min-width: 0; }
@@ -335,7 +337,10 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .pulse-orbit { fill: var(--pa-bg-elevated); fill-opacity: .55; stroke: var(--pa-border-hairline); stroke-dasharray: 1.5 2.5; transition: stroke .3s ease, opacity .3s ease; }
 .pulse-cluster.active .pulse-orbit { stroke: var(--pa-border-control); }
 .pulse-cluster:not(.active) { opacity: .45; }
-.pulse-label { fill: var(--pa-text-secondary); font-size: 6.5px; letter-spacing: .06em; }
+.pulse-labels { color: var(--pa-text-secondary); display: grid; font-size: .66rem; letter-spacing: .1em; list-style: none; margin: .25rem 0 0; padding: 0; text-align: center; text-transform: uppercase; }
+.pulse-labels li { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pulse-labels li.active { color: var(--pa-text-primary); }
+.pulse-labels span { font-variant-numeric: tabular-nums; margin-left: .35em; opacity: .7; }
 .pulse-particle { transition: fill-opacity .3s ease, stroke-opacity .3s ease; }
 .pulse-particle.dim { fill-opacity: .25; stroke-opacity: .3; }
 .pulse-up { fill: var(--pa-market-up); }
@@ -370,7 +375,7 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .markets-unavailable li { align-items: baseline; border: 1px dashed var(--pa-border-hairline); border-radius: var(--pa-radius); display: flex; flex-wrap: wrap; gap: .4rem 1rem; padding: .65rem .8rem; }
 .markets-unavailable li span:not(.state-label) { color: var(--pa-text-secondary); font-size: .74rem; }
 .markets-unavailable .state-label { margin-left: auto; }
-@media (max-width: 520px) { .pulse-label { display: none; } }
+@media (max-width: 520px) { .pulse-labels { display: none; } }
 @media (max-width: 700px) { .markets-panel .section-heading { display: block; } .markets-actions { justify-content: flex-start; margin-bottom: .8rem; } .markets-tab { padding: .5rem .55rem; } }
 /* One-shot transitions; they replay only when the drawing remounts (new key). */
 @keyframes atlas-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
@@ -383,3 +388,6 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .atlas-motion .chart-candle, .atlas-motion .chart-volume { animation: atlas-rise .5s cubic-bezier(.3, .6, .2, 1) both; animation-delay: calc(min(var(--i), 60) * 8ms); transform-box: fill-box; transform-origin: 50% 100%; }
 .atlas-motion .pulse-particle { animation: atlas-gather .8s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(min(var(--i), 40) * 22ms); transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: reduce) { .atlas-motion *, .atlas-motion *::before, .atlas-motion *::after { animation: none !important; transition: none !important; } }
+/* Phone header (matrix of Day 41): the grid item is .search-wrap, not the inner label, so
+   brand, full-width search, display toggles and menu stack in reading order. */
+@media (max-width: 700px) { .topbar .search-wrap { grid-column: 1 / -1; grid-row: 2; } .topbar .display-toggles { grid-column: 1 / -1; grid-row: 3; justify-content: flex-start; } .topbar nav { grid-row: 4; } }

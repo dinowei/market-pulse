@@ -110,3 +110,13 @@ test("catalog coverage is shown in words and benchmarks never borrow the currenc
   assert.equal(cdi.unitDeclared, false, "H-30: no unit is declared for benchmark levels");
   assert.match(cdi.coverage, /sintética/);
 });
+
+test("pulse labels are HTML columns, one per family, and the drawing carries no text", () => {
+  const rows = [rowFromBenchmark(benchmark("index.br.b3.ibovespa", "1")), rowFromBenchmark(benchmark("rate.br.cdi"))];
+  const markup = renderToStaticMarkup(createElement(MarketPulseField, { rows, activeTab: "indices", refreshKey: 0 }));
+  const svg = markup.match(/<svg[\s\S]*?<\/svg>/)?.[0] ?? "";
+  assert.doesNotMatch(svg, /<text/);
+  const labels = [...markup.matchAll(/<li( class="active")?>([^<]+)<span>(\d+)<\/span><\/li>/g)].map((match) => [match[2], match[3], Boolean(match[1])]);
+  assert.deepEqual(labels, [["Índices", "1", true], ["Juros", "1", false]]);
+  assert.match(markup, /grid-template-columns:repeat\(2, minmax\(0, 1fr\)\)/);
+});

@@ -226,7 +226,7 @@ export function pulseSentence(summary: PulseSummary): string {
 // Positions are deterministic (sunflower spiral), sizes are equal: the art encodes only
 // family membership and direction, never magnitude, price or a relation between rows.
 export type PulseParticle = { key: string; tab: MarketTabId; x: number; y: number; dx: number; dy: number; direction: PriceDirection | null; order: number };
-export type PulseCluster = { tab: MarketTabId; label: string; cx: number; cy: number; radius: number; labelY: number; count: number };
+export type PulseCluster = { tab: MarketTabId; label: string; cx: number; cy: number; radius: number; count: number };
 
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
@@ -236,17 +236,15 @@ export function pulseLayout(rows: readonly MarketRow[], width = 320): { clusters
   const step = width / Math.max(ordered.length, 1);
   const radius = Math.min(step * 0.4, 30);
   const cy = radius + 6;
-  const labelY = cy + radius + 10;
-  // Narrow clusters alternate their labels between two lines so they never collide.
-  const stagger = step < 52;
-  const height = labelY + (stagger ? 12 : 4);
+  // Labels live in HTML under the drawing (equal columns), so text never scales with it.
+  const height = 2 * cy;
   const clusters: PulseCluster[] = [];
   const particles: PulseParticle[] = [];
   let order = 0;
   ordered.forEach((tab, index) => {
     const members = groups.get(tab.id) ?? [];
     const cx = step * (index + 0.5);
-    clusters.push({ tab: tab.id, label: tab.short, cx, cy, radius, labelY: stagger && index % 2 === 1 ? labelY + 9 : labelY, count: members.length });
+    clusters.push({ tab: tab.id, label: tab.short, cx, cy, radius, count: members.length });
     members.forEach((row, position) => {
       const r = members.length === 1 ? 0 : radius * 0.78 * Math.sqrt((position + 0.5) / members.length);
       const angle = position * GOLDEN_ANGLE;

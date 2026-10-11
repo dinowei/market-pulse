@@ -28,7 +28,6 @@ export function MarketPulseField({ rows, activeTab, refreshKey }: { rows: readon
           const active = activeTab === "overview" || activeTab === cluster.tab;
           return <g key={cluster.tab} className={active ? "pulse-cluster active" : "pulse-cluster"}>
             <circle cx={cluster.cx} cy={cluster.cy} r={cluster.radius} className="pulse-orbit" />
-            <text x={cluster.cx} y={cluster.labelY} textAnchor="middle" className="pulse-label">{cluster.label}</text>
           </g>;
         })}
         {particles.map((particle) => {
@@ -40,6 +39,9 @@ export function MarketPulseField({ rows, activeTab, refreshKey }: { rows: readon
             : <circle key={particle.key} cx={particle.x} cy={particle.y} r={SIZE * 0.8} className={`pulse-particle pulse-unknown${active ? "" : " dim"}`} style={style} />;
         })}
       </svg>
+      <ol className="pulse-labels" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${Math.max(clusters.length, 1)}, minmax(0, 1fr))` }}>
+        {clusters.map((cluster) => <li key={cluster.tab} className={activeTab === "overview" || activeTab === cluster.tab ? "active" : undefined}>{cluster.label}<span>{cluster.count}</span></li>)}
+      </ol>
       <figcaption>
         <span>{pulseSentence(summary)}</span>
         <span className="pulse-legend">

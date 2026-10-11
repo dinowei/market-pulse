@@ -74,3 +74,24 @@ teste.
    ADR, medição de desempenho e equivalente acessível.
 3. **Distribuições, arcos de fluxo e KPIs de mercado:** exigem provider aprovado na
    [matriz de licenças](../DATA_PROVIDER_LICENSE_MATRIX.md).
+
+## Revisão sobre o staging publicado (2026-10-11)
+
+Revisão feita no staging (`c3e77c0` na Vercel) em 1280 px e 375 px, nos temas claro e
+escuro. Corrigi só o que a matriz justifica: hierarquia, microtexto e responsividade.
+
+| Elemento | Estado antes | Alteração | Estado depois | Teste |
+| --- | --- | --- | --- | --- |
+| Algarismos nas tabelas (R4) | Proporcionais fora de preço e carteira | `tabular-nums` em `table` | Colunas alinhadas | E2E axe e reflow (`day36-wcag.spec.ts`) |
+| Grade do gráfico (R4) | Só o eixo | Três linhas pontilhadas, sem rótulo | Referência visual, nenhum valor novo | `day41-chart-type.test.ts` (3 linhas, nenhum `<text>`, uma série = uma linha) |
+| Pontos durante o traço (R1, R4) | Surgiam juntos depois do traço | `--d` por ponto, na ordem da série | Pontos acompanham a linha, uma vez | `day41-chart-type.test.ts` (ordem 0 → 1) e E2E "motion stops" |
+| Textura do pulso (R5, R6) | Gradiente liso | Grade de pontos em token de borda | Desliga com a arte | Revisão visual; E2E axe |
+| Rótulos do pulso (R1, R5: microtexto) | Texto no SVG, escalado com o desenho (~21 px a 1280 px) e alternado em duas linhas | Rótulos em HTML, uma coluna por família, `.66rem` em caixa alta, com a contagem | Tamanho fixo e alinhado a cada família | `day41-markets.test.ts` (sem `<text>` no SVG, uma coluna por família) |
+| Botão "Sair" do menu (R6: cabeçalho) | Estilo padrão do navegador, maior que os links | Mesmo estilo dos links do menu | Menu uniforme | E2E teclado e axe |
+| Cabeçalho no celular (R6) | A regra móvel mirava `.search` (o `label`), não o item da grade; busca espremida e botões no meio | Marca, busca em largura total, botões e menu, nessa ordem | Ordem de leitura | E2E reflow em 320, 375 e 640 px |
+
+### Diferença que não é de design
+
+No staging publicado, o pulso mostrava "7 estáveis" e o catálogo tinha 5 itens. A causa é
+a API do Render ainda em `1747184`, com o FLAT inventado já corrigido em `6879f37`. O
+problema some com o deploy da API, sem mudança visual.
