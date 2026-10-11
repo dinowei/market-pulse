@@ -313,3 +313,23 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .importance-low { border-left: 3px solid var(--pa-market-flat); }
 @media (max-width: 700px) { .editorial-admin-header, .editorial-admin-card { display: block; } .editorial-admin-header button, .editorial-admin-actions { margin-top: .7rem; } .editorial-admin-form { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .portfolios-header { display: block; } .portfolios-back { display: inline-block; margin-top: .5rem; } .portfolios-toolbar, .portfolio-summary-grid { grid-template-columns: 1fr; } .portfolio-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* ADR-023: chart type and Particle Atlas motion (P1, NEXT_PUBLIC_ATLAS_MOTION). */
+.control:disabled { cursor: not-allowed; opacity: .45; }
+.control-note { color: var(--pa-text-secondary); font-size: .7rem; margin: .4rem 0 0; max-width: 22rem; }
+.chart-axis-soft { stroke-dasharray: .6 .8; }
+.chart-wick { stroke: var(--pa-text-secondary); stroke-width: 1; }
+.chart-candle .chart-body { stroke-width: 1; }
+.chart-candle-up .chart-body { fill: var(--pa-bg-canvas); stroke: var(--pa-market-up); }
+.chart-candle-up .chart-wick { stroke: var(--pa-market-up); }
+.chart-candle-down .chart-body { fill: var(--pa-market-down); stroke: var(--pa-market-down); }
+.chart-candle-down .chart-wick { stroke: var(--pa-market-down); }
+.chart-candle-flat .chart-body, .chart-candle-flat .chart-wick { stroke: var(--pa-market-flat); }
+.chart-volume { fill: var(--pa-border-control); opacity: .55; }
+/* One-shot transitions; they replay only when the drawing remounts (new key). */
+@keyframes atlas-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes atlas-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes atlas-rise { from { opacity: 0; transform: scaleY(.15); } to { opacity: 1; transform: none; } }
+.atlas-motion .chart-draw { animation: atlas-draw .9s cubic-bezier(.3, .6, .2, 1) both; stroke-dasharray: 1; }
+.atlas-motion .chart-point { animation: atlas-fade .45s ease-out .55s both; }
+.atlas-motion .chart-candle, .atlas-motion .chart-volume { animation: atlas-rise .5s cubic-bezier(.3, .6, .2, 1) both; animation-delay: calc(min(var(--i), 60) * 8ms); transform-box: fill-box; transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: reduce) { .atlas-motion *, .atlas-motion *::before, .atlas-motion *::after { animation: none !important; transition: none !important; } }

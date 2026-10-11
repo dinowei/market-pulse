@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ParticleChart } from "./particle-chart";
+import { ChartTypeToggle, effectiveChartKind } from "./chart-type-toggle";
+import { candleAvailability, type ChartKind } from "../lib/chart-geometry";
 import { MorningCallPanel } from "./morning-call";
 import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-note";
 import { ThemeToggle } from "./theme-toggle";
@@ -108,10 +110,11 @@ export function SeriesModeToggle({ value, onChange }: { value: SeriesMode; onCha
   return <fieldset className="control-group"><legend>Modo de comparação</legend><div className="control-row">{modes.map((mode) => <button type="button" className={mode === value ? "control active" : "control"} aria-pressed={mode === value} key={mode} onClick={() => onChange(mode)}>{mode}</button>)}</div></fieldset>;
 }
 
-export function AccessibleDataTable({ points, reducedFrom }: { points: PublicHistoryPoint[]; reducedFrom?: number }) {
+export function AccessibleDataTable({ points, reducedFrom, ohlc = false }: { points: PublicHistoryPoint[]; reducedFrom?: number; ohlc?: boolean }) {
   const caption = reducedFrom ? `Fallback tabular da série histórica (${points.length} de ${reducedFrom} pontos, redução M4 declarada)` : "Fallback tabular da série histórica";
+  // With candles on screen, the equivalent table carries the same OHLC and volume.
   return (
-    <div className="table-wrap"><table><caption>{caption}</caption><thead><tr><th scope="col">Sessão</th><th scope="col">Fechamento</th><th scope="col">Índice 100</th><th scope="col">Gap</th></tr></thead><tbody>{points.map((point) => <tr key={`${point.timestamp}-${point.session_date}`}><th scope="row">{point.session_date}</th><td>{point.close ?? "—"}</td><td>{point.index_100 ?? "—"}</td><td>{point.is_gap ? "Sim" : "Não"}</td></tr>)}</tbody></table></div>
+    <div className="table-wrap"><table><caption>{caption}</caption><thead><tr><th scope="col">Sessão</th>{ohlc && <><th scope="col">Abertura</th><th scope="col">Máxima</th><th scope="col">Mínima</th></>}<th scope="col">Fechamento</th>{ohlc && <th scope="col">Volume</th>}<th scope="col">Índice 100</th><th scope="col">Gap</th></tr></thead><tbody>{points.map((point) => <tr key={`${point.timestamp}-${point.session_date}`}><th scope="row">{point.session_date}</th>{ohlc && <><td>{point.open ?? "—"}</td><td>{point.high ?? "—"}</td><td>{point.low ?? "—"}</td></>}<td>{point.close ?? "—"}</td>{ohlc && <td>{point.volume ?? "—"}</td>}<td>{point.index_100 ?? "—"}</td><td>{point.is_gap ? "Sim" : "Não"}</td></tr>)}</tbody></table></div>
   );
 }
 
@@ -140,6 +143,7 @@ export function TerminalShell() {
   const router = useRouter();
   const [period, setPeriod] = useState<HistoryPeriod>("1M");
   const [mode, setMode] = useState<SeriesMode>("PRICE");
+  const [chartKind, setChartKind] = useState<ChartKind>("line");
   const [selectedCanonicalId, setSelectedCanonicalId] = useState("");
   const [sessionError, setSessionError] = useState("");
   const [quoteState, setQuoteState] = useState<{ key: string; data?: PublicQuote; error?: string }>({ key: "" });
@@ -192,7 +196,7 @@ export function TerminalShell() {
     {sessionError && <p role="alert">{sessionError}</p>}
     <div className="terminal-grid">
       <aside className="left-rail" aria-label="Contexto operacional"><MorningCallPanel /><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE · DEMO</span></section></aside>
-      <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} /></div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <>{downsamplingSummary(history.downsampling) && <p className="muted" role="note">{downsamplingSummary(history.downsampling)}</p>}<ParticleChart series={history} /><AccessibleDataTable points={history.points} reducedFrom={history.downsampling?.original_points} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}{selectedCanonicalId && <p className="comparison-note"><Link href={`/compare?ids=${encodeURIComponent(`${selectedCanonicalId},${DEFAULT_BENCHMARK_ID}`)}`}>Comparar com o Ibovespa</Link> em INDEX_100, com tabela equivalente.</p>}</section></main>
+      <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} />{history && <ChartTypeToggle value={chartKind} onChange={setChartKind} availability={candleAvailability(history)} />}</div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <>{downsamplingSummary(history.downsampling) && <p className="muted" role="note">{downsamplingSummary(history.downsampling)}</p>}<ParticleChart series={history} kind={effectiveChartKind(chartKind, candleAvailability(history))} /><AccessibleDataTable points={history.points} reducedFrom={history.downsampling?.original_points} ohlc={effectiveChartKind(chartKind, candleAvailability(history)) === "candles"} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}{selectedCanonicalId && <p className="comparison-note"><Link href={`/compare?ids=${encodeURIComponent(`${selectedCanonicalId},${DEFAULT_BENCHMARK_ID}`)}`}>Comparar com o Ibovespa</Link> em INDEX_100, com tabela equivalente.</p>}</section></main>
       <AssetContextPanel quote={quote} loading={quoteLoading} error={quoteError} selectedId={selectedCanonicalId} />
     </div>
     <footer><MarketStatusBar data={history ?? quote} /><span>{FINANCIAL_DISCLAIMER}</span></footer>

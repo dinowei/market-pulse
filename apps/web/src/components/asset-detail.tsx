@@ -13,6 +13,8 @@ import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-not
 import { AssetEvents } from "./asset-events";
 import { AccessibleDataTable, DataStateBadge, PeriodSelector, PriceChange, ProvenancePanel, SeriesModeToggle } from "./market-data";
 import { ParticleChart } from "./particle-chart";
+import { ChartTypeToggle, effectiveChartKind } from "./chart-type-toggle";
+import { candleAvailability, type ChartKind } from "../lib/chart-geometry";
 
 type PublicQuote = components["schemas"]["PublicQuote"];
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
@@ -132,6 +134,7 @@ function WatchlistActions({ canonicalId, servable }: { canonicalId: string; serv
 export function AssetDetail({ canonicalId }: { canonicalId: string }) {
   const [period, setPeriod] = useState<HistoryPeriod>("1M");
   const [mode, setMode] = useState<SeriesMode>("PRICE");
+  const [chartKind, setChartKind] = useState<ChartKind>("line");
   const { instrument, quote, history } = useAssetData(canonicalId, period, mode);
   const servable = Boolean(instrument && !UNSERVED.has(instrument.support_state));
 
@@ -165,13 +168,13 @@ export function AssetDetail({ canonicalId }: { canonicalId: string }) {
       <div className="asset-page-grid">
         <section className="series-panel" aria-labelledby="asset-series-title">
           <div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="asset-series-title">{instrument?.display_symbol ?? canonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div>
-          <div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} /></div>
+          <div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} />{history?.value && <ChartTypeToggle value={chartKind} onChange={setChartKind} availability={candleAvailability(history.value)} />}</div>
           {!history && <p className="loading-state">Carregando série tipada…</p>}
           {history?.error && <p className="state-note" role="alert">Série indisponível: {history.error}</p>}
           {history?.value && <>
             {downsamplingSummary(history.value.downsampling) && <p className="muted" role="note">{downsamplingSummary(history.value.downsampling)}</p>}
-            <ParticleChart series={history.value} />
-            <AccessibleDataTable points={history.value.points} reducedFrom={history.value.downsampling?.original_points} />
+            <ParticleChart series={history.value} kind={effectiveChartKind(chartKind, candleAvailability(history.value))} />
+            <AccessibleDataTable points={history.value.points} reducedFrom={history.value.downsampling?.original_points} ohlc={effectiveChartKind(chartKind, candleAvailability(history.value)) === "candles"} />
           </>}
           <p className="muted"><Link href={`/compare?ids=${encodeURIComponent(`${canonicalId},${DEFAULT_BENCHMARK_ID}`)}`}>Comparar com o Ibovespa</Link> em INDEX_100.</p>
         </section>
