@@ -37,6 +37,29 @@ def test_catalog_has_unique_canonical_ids_even_when_symbols_can_repeat() -> None
     assert len(ids) == len(set(ids))
 
 
+def test_no_catalog_entry_is_priced_without_an_approved_dataset() -> None:
+    # H-31: a price appears only for the operational universe, and even there it is DEMO
+    # (no provider is approved). Every other entry stays UNAVAILABLE, never tradable.
+    assert not any(
+        entry.data_support_status is DataSupportStatus.DATA_AVAILABLE_APPROVED
+        for entry in MASTER_CATALOG
+    )
+    for entry in MASTER_CATALOG:
+        quote = client.get(f"/api/v1/market-data/quotes/{entry.canonical_id}").json()
+        if entry.canonical_id in P0_OPERATIONAL_UNIVERSE:
+            assert quote["data_level"] == "DEMO", entry.canonical_id
+        else:
+            assert (quote["freshness"], quote["price"]) == ("UNAVAILABLE", None), entry.symbol
+        summary = client.get("/api/v1/instruments/search", params={"q": entry.symbol}).json()
+        states = {item["support_state"] for item in summary["items"]}
+        expected = (
+            "P0_OPERATIONAL"
+            if entry.canonical_id in P0_OPERATIONAL_UNIVERSE
+            else "CANDIDATE_FUTURE"
+        )
+        assert expected in states, entry.symbol
+
+
 @pytest.mark.parametrize("canonical_id", ["equity.br.b3.vale3", "equity.br.b3.cmin3"])
 def test_named_b3_equities_are_metadata_only_and_never_priced(canonical_id: str) -> None:
     entry = next(item for item in MASTER_CATALOG if item.canonical_id == canonical_id)

@@ -112,7 +112,31 @@ export type MarketRow = {
   officialAt: string | null;
   reason: string | null;
   limitations: readonly string[];
+  /** Catalog coverage in words (H-31); benchmarks are synthetic references. */
+  coverage: string;
+  /** H-30: the contract declares no unit for benchmark levels. */
+  unitDeclared: boolean;
 };
+
+const SUPPORT_LABEL: Record<string, string> = {
+  P0_OPERATIONAL: "Universo operacional",
+  CANDIDATE_FUTURE: "Candidato",
+  UNSUPPORTED: "Sem suporte de dados",
+  BLOCKED_SCOPE: "Fora do escopo",
+};
+
+const DATA_SUPPORT_LABEL: Record<string, string> = {
+  METADATA_ONLY: "só metadados",
+  PROVIDER_PENDING: "provider pendente",
+  LICENSE_PENDING: "licença pendente",
+  DATA_AVAILABLE_APPROVED: "dado aprovado",
+  UNAVAILABLE: "sem dado",
+};
+
+/** Unknown states are shown as they come, never mapped to a friendlier one. */
+export function coverageLabel(item: Pick<InstrumentSummary, "support_state" | "data_support_status">): string {
+  return `${SUPPORT_LABEL[item.support_state] ?? item.support_state} · ${DATA_SUPPORT_LABEL[item.data_support_status] ?? item.data_support_status}`;
+}
 
 export function rowFromInstrument(item: InstrumentSummary, quote: PublicQuote | undefined): MarketRow {
   return {
@@ -131,6 +155,8 @@ export function rowFromInstrument(item: InstrumentSummary, quote: PublicQuote | 
     officialAt: quote?.timestamp_official ?? null,
     reason: quote ? quote.unavailable_reason ?? null : "QUOTE_NOT_LOADED",
     limitations: quote?.limitations ?? [],
+    coverage: coverageLabel(item),
+    unitDeclared: true,
   };
 }
 
@@ -151,6 +177,8 @@ export function rowFromBenchmark(item: BenchmarkItem): MarketRow {
     officialAt: item.timestamp_official ?? null,
     reason: item.unavailable_reason ?? null,
     limitations: item.limitations,
+    coverage: "Referência sintética · DEMO",
+    unitDeclared: false,
   };
 }
 

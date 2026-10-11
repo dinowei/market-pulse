@@ -285,12 +285,20 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Fato:** `BenchmarkItem` traz `value` e `currency`, mas não diz se o valor é taxa ao ano (CDI), variação ou número-índice (IPCA), nível de índice (IBOV) ou cotação (USD/BRL). A aba Juros e inflação avisa que nenhuma unidade é presumida.
 - **Critério de pronto:** campo de unidade no contrato (nova versão do OpenAPI e cliente gerado) definido junto com o provider que substituir os benchmarks sintéticos.
 - **Classe:** C para abrir o produto.
+- **Mitigado em 2026-10-11, decisão pendente:** cada benchmark declara "Unidade não declarada" nas limitações, e a tela de mercados não usa mais a moeda como unidade. As opções estão na [ADR-024](adr/024-benchmark-units-pending.md) (Proposed).
 
 ### H-31 Catálogo documentado maior que o catálogo no código
 - **Origem:** verificação de 2026-10-11.
 - **Fato:** o [catálogo documentado](instruments/MASTER_INSTRUMENT_CATALOG.md) descreve uma importação de 727 linhas; `MASTER_CATALOG` tem 7 entradas (VALE3 e CMIN3 incluídas no Dia 41 só com metadados).
 - **Critério de pronto:** decisão do usuário entre importar o catálogo (só metadados, com testes de identidade) ou reescrever o documento para o universo real.
 - **Classe:** C.
+- **Resolvido em 2026-10-11:**
+  - o documento separa o catálogo operacional (7 entradas, no código) do planejado (727 linhas, não importado);
+  - uma tabela mostra como cada estado aparece;
+  - a tela de mercados mostra a cobertura de cada linha;
+  - o teste `test_no_catalog_entry_is_priced_without_an_approved_dataset` impede preço sem dado aprovado.
+
+  Importar o planejado continua sendo decisão do usuário, porque não há fonte aprovada.
 
 ### H-32 Avisos de segurança no `next` 16.3.3
 - **Origem:** `pnpm audit --prod` em 2026-10-11, com o mesmo lockfile do staging.

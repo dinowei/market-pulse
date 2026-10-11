@@ -1,6 +1,18 @@
 # MASTER_INSTRUMENT_CATALOG
 
-Catálogo estático amplo, normalizado a partir da lista inicial fornecida para o Dia 8. A importação de referência contém 727 linhas de instrumentos; duplicatas foram tratadas por categoria e símbolo. Nenhum registro contém preço, volume, variação ou histórico.
+> **Dois catálogos, conferidos em 2026-10-11 (H-31).**
+>
+> - **Operacional:** o que a API serve, em `apps/api/app/instruments/catalog.py`. Tem
+>   **7 entradas**, listadas em "Catálogo operacional" abaixo.
+> - **Planejado:** a lista de referência do Dia 8, com 727 linhas. **Não foi importada**:
+>   nenhuma linha dela existe na API nem na interface.
+>
+> Importar o planejado exige fonte confiável, decisão do usuário e testes de identidade.
+> Até lá, nenhum número deste documento descreve o produto em funcionamento.
+
+## Catálogo planejado (referência do Dia 8, não importado)
+
+Catálogo estático amplo, normalizado a partir da lista inicial fornecida para o Dia 8. A lista de referência tinha 727 linhas de instrumentos; duplicatas seriam tratadas por categoria e símbolo. Nenhum registro contém preço, volume, variação ou histórico.
 
 Existir neste catálogo significa somente possuir metadados. Não implica provider, licença, cobertura ou dado real. Os registros importados começam como `CANDIDATE`, `FUTURE_REVIEW` e `METADATA_ONLY` até aprovação explícita.
 
@@ -19,10 +31,9 @@ Existir neste catálogo significa somente possuir metadados. Não implica provid
 
 Cada instrumento deve persistir `canonical_id`, `symbol`, `display_symbol`, `name`, `instrument_type`, `exchange`/`venue`, `country`/`region`, `currency`, timezone IANA, `aliases`, `catalog_status`, `coverage_tier`, `data_support_status` e `notes`. O ticker isolado nunca é identidade principal; exemplos de IDs estáveis: `equity.br.b3.petr4`, `equity.us.nasdaq.aapl`, `etf.br.b3.ivvb11`, `fx.global.usd-brl`.
 
-## Estado no código (conferido em 2026-10-11)
+## Catálogo operacional (código, conferido em 2026-10-11)
 
-A importação de 727 linhas descrita acima **não existe no código**. `MASTER_CATALOG`, em
-`apps/api/app/instruments/catalog.py`, tem 7 entradas:
+`MASTER_CATALOG`, em `apps/api/app/instruments/catalog.py`, tem 7 entradas:
 
 | canonical_id | catalog_status | coverage_tier | data_support_status |
 | --- | --- | --- | --- |
@@ -39,5 +50,21 @@ VALE3 e CMIN3 entraram no Dia 41 por pedido do usuário, somente com metadados
 não estava nos exemplos da tabela acima. Os benchmarks (IBOV, IFIX, S&P 500, NASDAQ, CDI,
 IPCA e USD/BRL) não são instrumentos do catálogo: vêm de `/market-data/benchmarks`,
 sintéticos e `DEMO`. Importar o restante exige decisão e o gate de licença por provider.
+
+### Como cada estado aparece
+
+| Estado | Campos do contrato | O que a interface mostra |
+| --- | --- | --- |
+| Disponível com dado aprovado | `data_support_status=DATA_AVAILABLE_APPROVED` | Nenhum hoje: nenhum provider passou no gate de licença |
+| Operacional com dado sintético | `support_state=P0_OPERATIONAL`, cotação `data_level=DEMO` | Valor com selo DEMO (PETR4, AAPL) |
+| Candidato só com metadados | `support_state=CANDIDATE_FUTURE`, `METADATA_ONLY` | "Indisponível" e "Candidato · só metadados" |
+| Bloqueado por licença | `LICENSE_PENDING` | "Indisponível" e "licença pendente" (MXRF11) |
+| Sem cotação | Cotação `freshness=UNAVAILABLE` com `unavailable_reason` | "Indisponível" e o motivo |
+| DEMO local | Catálogo do Dia 24 (`exchange=DEMO`), só com DEMO ligado | Nomes fictícios com selo DEMO |
+| Fora do escopo | `catalog_status=OUT_OF_SCOPE` (`support_state=BLOCKED_SCOPE`) | Nenhum hoje; `MUTUAL_FUND` só pode existir assim |
+
+O teste `test_no_catalog_entry_is_priced_without_an_approved_dataset` garante duas coisas:
+nenhuma entrada fora do universo operacional recebe preço, e o preço do universo
+operacional é sempre `DEMO`.
 
 Fundos tradicionais permanecem P1 condicionado a fonte licenciada. A API e o frontend devem exibir o nível de suporte e nunca transformar `METADATA_ONLY` em cotação.

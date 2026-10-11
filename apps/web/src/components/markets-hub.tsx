@@ -10,7 +10,7 @@ import { MAX_COMPARED_SERIES } from "../lib/comparison-defaults";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import {
   chunk, compareHref, displayValue, formatUtc, groupByTab, MARKET_TABS, parseMarketTab, pulseSentence, pulseSummary,
-  rowDirection, rowFromBenchmark, rowFromInstrument, type MarketRow, type MarketTab, type MarketTabId,
+  rowFromBenchmark, rowFromInstrument, type MarketRow, type MarketTab, type MarketTabId,
 } from "../lib/markets";
 import { describeChange } from "../lib/price-direction";
 import { DataStateBadge } from "./market-data";
@@ -55,7 +55,7 @@ function ChangeCell({ row }: { row: MarketRow }) {
 
 function StateCell({ row }: { row: MarketRow }) {
   if (!row.dataLevel || !row.freshness) return <span className="muted">Cotação não carregada</span>;
-  return <><DataStateBadge dataLevel={row.dataLevel} freshness={row.freshness} />{row.reason && <small className="row-reason">{row.reason}</small>}</>;
+  return <><DataStateBadge dataLevel={row.dataLevel} freshness={row.freshness} />{row.reason && <small className="row-reason">{row.reason}</small>}<small className="row-reason">{row.coverage}</small></>;
 }
 
 function MarketTable({ tab, rows, selected, onToggle }: { tab: MarketTab; rows: MarketRow[]; selected: ReadonlySet<string>; onToggle: (id: string) => void }) {
@@ -72,7 +72,7 @@ function MarketTable({ tab, rows, selected, onToggle }: { tab: MarketTab; rows: 
           <th scope="row">{row.kind === "instrument"
             ? <Link href={`/assets?id=${encodeURIComponent(row.canonicalId)}`}>{row.symbol}</Link>
             : <Link href={compareHref([row.canonicalId])}>{row.symbol}</Link>}<br /><small>{row.name}{row.kind === "benchmark" && " · referência"}</small></th>
-          <td className="numeric">{value === null ? <span className="muted">Indisponível</span> : <>{value} <small>{row.currency}</small></>}</td>
+          <td className="numeric">{value === null ? <span className="muted">Indisponível</span> : <>{value} <small>{row.unitDeclared ? row.currency : "unidade não declarada"}</small></>}</td>
           <td><ChangeCell row={row} /></td>
           <td><StateCell row={row} /></td>
           <td>{formatUtc(row.officialAt)}</td>
@@ -193,9 +193,8 @@ export function MarketsHub({ initialTab = "overview" }: { initialTab?: MarketTab
         {!current.unavailable && current.id !== "overview" && state && (tabRows.length > 0
           ? <MarketTable tab={current} rows={tabRows} selected={selected} onToggle={toggle} />
           : <p className="muted">Nenhum instrumento desta família no catálogo atual.</p>)}
-        {current.id === "juros-inflacao" && tabRows.some((row) => row.kind === "benchmark") && <p className="limitation-note">CDI e IPCA aparecem como nível sintético DEMO. O contrato não declara a unidade (taxa ao ano ou número-índice), por isso nenhuma unidade é presumida.</p>}
+        {current.id !== "overview" && tabRows.some((row) => row.kind === "benchmark") && <p className="limitation-note">Referências sintéticas DEMO. O contrato não declara a unidade (taxa ao ano, pontos de índice ou cotação), por isso nenhuma é presumida; sem valor anterior oficial, a variação fica desconhecida, nunca zero (H-30).</p>}
       </div>
-      {tabRows.some((row) => rowDirection(row) === null && row.kind === "benchmark") && current.id !== "overview" && <p className="muted" role="note">Benchmarks sintéticos não têm valor anterior oficial: a variação fica desconhecida, nunca zero.</p>}
       <p className="financial-disclaimer">{FINANCIAL_DISCLAIMER}</p>
     </section>
   );

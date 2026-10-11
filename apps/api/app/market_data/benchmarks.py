@@ -18,6 +18,13 @@ from app.market_data.comparison import normalize_index_100
 
 UTC = timezone.utc
 
+# H-30: the synthetic levels have no declared unit (annual rate, index points or a
+# quote). The contract carries no unit field yet, so the limitation says it in words
+# and no reader may infer one from `currency`.
+UNIT_UNDECLARED = (
+    "Unidade não declarada: o valor não deve ser lido como taxa, pontos de índice ou cotação."
+)
+
 _BENCHMARKS: tuple[tuple[str, str, str, str, Decimal], ...] = (
     ("index.br.b3.ibovespa", "IBOV", "Ibovespa", "BRL", Decimal("100000")),
     ("rate.br.cdi", "CDI", "CDI", "BRL", Decimal("10.50")),
@@ -51,7 +58,10 @@ def benchmark_items() -> list[BenchmarkItem]:
             dataset="demo-benchmarks",
             timestamp_official=collected - timedelta(days=1),
             timestamp_collected=collected,
-            limitations=("Benchmark sintético DEMO; provider e licença permanecem bloqueados.",),
+            limitations=(
+                "Benchmark sintético DEMO; provider e licença permanecem bloqueados.",
+                UNIT_UNDECLARED,
+            ),
         )
         for canonical_id, symbol, name, currency, value in _BENCHMARKS
     ]
@@ -95,7 +105,10 @@ def benchmark_series(
         timestamp_official=timestamps[-1],
         timestamp_collected=collected,
         latency_ms=0,
-        limitations=("Benchmark sintético DEMO; não representa índice ou cotação oficial.",),
+        limitations=(
+            "Benchmark sintético DEMO; não representa índice ou cotação oficial.",
+            UNIT_UNDECLARED,
+        ),
         points=points,
         tabular_fallback=True,
         accessibility={"reduced_motion": True, "smoothed": False},

@@ -32,6 +32,7 @@
 | [021](021-optional-color-vision-palette.md) | Paleta opcional para daltonismo | Accepted | Sim, desligada por padrão; revisão de Cláudio pendente | Não |
 | [022](022-day-41-frontend-integration.md) | Integração do Dia 41 | Accepted | Sim, em `feature/dia-41-sync` | Não |
 | [023](023-markets-hub-chart-type-and-motion.md) | Hub de mercados, linha/candles e movimento do Atlas | Accepted | Sim, em `feature/dia-41-sync`; movimento desligável por `NEXT_PUBLIC_ATLAS_MOTION=off` | Não |
+| [024](024-benchmark-units-pending.md) | Unidade dos benchmarks | **Proposed** | Mitigação: limitação "Unidade não declarada" na API e na tela | Não |
 
 Alternativas que não viraram decisão estão em
 [DISCARDED_ALTERNATIVES.md](../engineering/DISCARDED_ALTERNATIVES.md).

@@ -81,6 +81,11 @@ def test_benchmarks_are_fixed_demo_universe() -> None:
     assert all(item["data_level"] == "DEMO" for item in response.json()["items"])
     # No previous official value exists for a synthetic level: unknown, never FLAT.
     assert all(item["change_percent"] is None for item in response.json()["items"])
+    # H-30: no unit is declared, so every item says so instead of implying one.
+    assert all(
+        any(text.startswith("Unidade não declarada") for text in item["limitations"])
+        for item in response.json()["items"]
+    )
 
 
 def test_batch_history_has_explicit_series_limit_and_decimal_index() -> None:

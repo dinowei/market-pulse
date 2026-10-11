@@ -6,13 +6,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MarketPulseField } from "../src/components/market-pulse-field";
 import { MarketsHub } from "../src/components/markets-hub";
 import {
-  chunk, compareHref, displayValue, formatUtc, MARKET_TABS, parseMarketTab, pulseLayout, pulseSentence, pulseSummary,
+  chunk, compareHref, coverageLabel, displayValue, formatUtc, MARKET_TABS, parseMarketTab, pulseLayout, pulseSentence, pulseSummary,
   rowDirection, rowFromBenchmark, rowFromInstrument, tabForBenchmark, tabForInstrument, type MarketRow,
 } from "../src/lib/markets";
 import { elements } from "../test-support/chart-fixtures";
 
 function instrument(canonical_id: string, instrument_type: string, country: string | null) {
-  return { id: canonical_id, canonical_id, symbol: canonical_id.split(".").at(-1)!.toUpperCase(), display_symbol: canonical_id.split(".").at(-1)!.toUpperCase(), name: canonical_id, instrument_type, currency: "BRL", aliases: [], catalog_status: "CANDIDATE", coverage_tier: "FUTURE_REVIEW", data_support_status: "METADATA_ONLY", support_state: "METADATA_ONLY", country, region: country, exchange: null, timezone: null } as unknown as Parameters<typeof rowFromInstrument>[0];
+  return { id: canonical_id, canonical_id, symbol: canonical_id.split(".").at(-1)!.toUpperCase(), display_symbol: canonical_id.split(".").at(-1)!.toUpperCase(), name: canonical_id, instrument_type, currency: "BRL", aliases: [], catalog_status: "CANDIDATE", coverage_tier: "FUTURE_REVIEW", data_support_status: "METADATA_ONLY", support_state: "CANDIDATE_FUTURE", country, region: country, exchange: null, timezone: null } as unknown as Parameters<typeof rowFromInstrument>[0];
 }
 
 function benchmark(canonical_id: string, change_percent: string | null = null) {
@@ -97,4 +97,16 @@ test("the markets hub renders accessible tabs before any data arrives", () => {
   assert.equal(elements(markup, "div").find((div) => div.role === "tabpanel")?.["aria-labelledby"], "markets-tab-tesouro");
   assert.match(markup, /Tesouro IPCA\+ \(NTN-B\)/);
   assert.doesNotMatch(markup, /\d+,\d{2} BRL/, "no value is shown for an unavailable family");
+});
+
+test("catalog coverage is shown in words and benchmarks never borrow the currency as a unit", () => {
+  assert.equal(coverageLabel({ support_state: "CANDIDATE_FUTURE", data_support_status: "METADATA_ONLY" }), "Candidato · só metadados");
+  assert.equal(coverageLabel({ support_state: "P0_OPERATIONAL", data_support_status: "PROVIDER_PENDING" }), "Universo operacional · provider pendente");
+  assert.equal(coverageLabel({ support_state: "NEW_STATE", data_support_status: "NEW_STATUS" }), "NEW_STATE · NEW_STATUS", "unknown states pass through unchanged");
+  const equity = rowFromInstrument(instrument("equity.br.b3.vale3", "EQUITY", "BR"), undefined);
+  assert.equal(equity.coverage, "Candidato · só metadados");
+  assert.equal(equity.unitDeclared, true);
+  const cdi = rowFromBenchmark(benchmark("rate.br.cdi"));
+  assert.equal(cdi.unitDeclared, false, "H-30: no unit is declared for benchmark levels");
+  assert.match(cdi.coverage, /sintética/);
 });
