@@ -157,6 +157,17 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     - E2E com 36 de 36;
     - maior bundle com 189,7 KB;
     - `pnpm audit` sem avisos.
+  - **Arquitetura de providers (ADR-025), só no código:**
+    - registro com ciclo de vida de 11 estados e fontes oficiais conferidas em 2026-10-11;
+    - normalizadores de brapi, Twelve Data, Alpha Vantage, Open Exchange Rates e Massive;
+    - transporte fail-closed, `Retry-After` e circuit breaker;
+    - precedência com rastro, ainda só proposta;
+    - motivos de indisponibilidade explicados na tela;
+    - registro no painel interno;
+    - correção: volume ausente não vira zero.
+
+    **Nenhum provider está ativo.** Detalhes no
+    [relatório](docs/providers/PROVIDER_INTEGRATION_REPORT_DAY_41.md).
   - **Banco do staging expira em 2026-11-05 (H-29).**
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do

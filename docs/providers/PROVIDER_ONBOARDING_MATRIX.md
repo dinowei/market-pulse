@@ -100,3 +100,37 @@ O fluxo é `web → cliente gerado → /api/v1 → catálogo/gateway → licensi
 - B3 pode exigir mTLS, certificados e contrato institucional.
 - Massive/Polygon mudou de marca; endpoints antigos e termos devem ser reconciliados.
 - Decidir provider P0 somente após matriz preenchida e aprovação documental.
+
+## Verificação nas fontes oficiais (2026-10-11)
+
+Feita só com leitura de páginas públicas, sem chave, sem cadastro e sem aceitar termos.
+O resultado está em código no registro (`apps/api/app/providers/registry.py`, ADR-025).
+Nenhum provider está ativo, e a licença de todos continua `UNREVIEWED`.
+
+| Provider | Status no registro | Confirmado | Não declarado pela fonte |
+| --- | --- | --- | --- |
+| brapi | `DOCUMENTED` | Bearer token; `GET /api/v2/stocks/quote?symbols=` com `results[].data` (`currency`, `regularMarketPrice`, `regularMarketChange`, `regularMarketChangePercent`, `regularMarketVolume`, `regularMarketTime`); histórico por `range`/`interval`; `dividends=true`; 429 com `Retry-After`; 403 = fora do plano; planos com 15k, 150k e 500k req/mês | Formato de `regularMarketTime`; campos do histórico; redistribuição, armazenamento e atribuição |
+| HG Brasil | `CANDIDATE` | `key` na query; `/finance` com moedas (`buy`, `sell`, `variation`), índices (`points`, `variation`) e taxas; atualização de 15 a 45 min no pregão | Horário por moeda ou índice; limites; termos |
+| Twelve Data | `DOCUMENTED` | `Authorization: apikey`; `/quote` e `/time_series` (1 crédito por símbolo); erro `{code,message,status}`; 429; Basic com 8 créditos/min e 800/dia, uso "personal, internal, non-commercial" e "Internal non-display usage" | Cobertura de B3 no Basic; redistribuição |
+| Alpha Vantage | `DOCUMENTED` | `apikey` na query; `GLOBAL_QUOTE` com campos `01.` a `10.` (sem moeda nem horário); atualização no fim de cada pregão; 25 req/dia no gratuito | Formato do erro de limite; suporte a B3; termos de uso (link existe, não revisado) |
+| Open Exchange Rates | `DOCUMENTED` | `app_id` na query; `latest.json` com `timestamp` (s), `base`, `rates`; Free com 1.000 req/mês, horária e base USD; 401 missing/invalid_app_id; **429 `not_allowed` = sem permissão**; 403 `access_restricted` | Termos de cache, redistribuição e atribuição (a página de licença remete aos termos de uso) |
+| Massive | `DOCUMENTED` | Bearer ou `apiKey`; `/v2/aggs/ticker/{t}/range/{m}/{span}/{from}/{to}` com `o,h,l,c,v,vw,t,n`, `t` em ms e `adjusted=true` por padrão; `/prev`, dividendos e splits; Basic com 5 chamadas/min, EOD e 2 anos; planos pagos rotulados "Individual use" | Formato do erro de limite; exigência de plano Business para exibir dados |
+| B3 for Developers | `BLOCKED` | Catálogo de 114 APIs, só B2B, OAuth 2.0; **nenhuma API de cotação ou histórico de preços listada** | Preço e condições de contrato |
+
+### Divergências em relação à pesquisa de 2026-08-31
+
+- **brapi:** a cotação passou para `/api/v2/stocks/quote`; o histórico e os dividendos
+  seguem em `/api/quote/<tickers>`. PETR4, MGLU3, VALE3 e ITUB4 respondem sem chave, mas
+  acesso livre não é licença.
+- **Massive:** a matriz anterior afirmava que exibir dados exige plano Business. A página
+  de preços lida não diz isso; fica pendente na revisão de licença.
+- **Open Exchange Rates:** o 429 não é limite de requisições, e sim falta de permissão.
+  O normalizador mapeia para `LICENSE_BLOCKED`.
+- **B3 for Developers:** a matriz anterior previa "cotação sob contrato". O catálogo
+  público não lista API de cotação, então o provider ficou `BLOCKED` para dados de
+  mercado, com o motivo registrado.
+
+### Material de referência do usuário
+
+O prompt de 2026-10-11 citava um material anexado sobre providers que não chegou a esta
+sessão. Nada dele foi usado: todas as afirmações acima vêm das URLs oficiais do registro.

@@ -95,3 +95,18 @@ escuro. Corrigi só o que a matriz justifica: hierarquia, microtexto e responsiv
 No staging publicado, o pulso mostrava "7 estáveis" e o catálogo tinha 5 itens. A causa é
 a API do Render ainda em `1747184`, com o FLAT inventado já corrigido em `6879f37`. O
 problema some com o deploy da API, sem mudança visual.
+
+## Dados e providers (ADR-025)
+
+Elementos das referências que só podem existir com dado real. Até um provider passar no
+gate de licença, todos aparecem como indisponíveis, com o motivo, ou ficam fora da tela.
+
+| Elemento da imagem | Existe? | Local no código | Diferença | Dados necessários | Provider necessário | Ação |
+| --- | --- | --- | --- | --- | --- | --- |
+| Leitura numérica grande (R4) | Sim | `.asset-price` | Valor DEMO no staging | Cotação com horário | brapi (BR) ou Massive (EUA), aprovados | Esperar a ativação |
+| Histogramas de volume (R4) | Sim, nos candles | `particle-chart.tsx` | Só com volume completo | Volume por barra | Twelve Data, Massive ou brapi | Esperar a ativação |
+| Muitas séries sobrepostas (R2) | Sim | `/compare` | Benchmarks sintéticos | Séries reais por instrumento | Um provider por série, sem costura | Esperar a ativação |
+| Montanha de partículas, distribuição (R4) | Não | — | — | Distribuição de retornos com fonte | Qualquer provider de histórico aprovado | Plano técnico depois da ativação |
+| Arcos de fluxo e globo (R6) | Não | Atlas em tabela | P1 | Relações verificáveis entre bolsas | Nenhum dos sete fornece | Fora do escopo atual |
+| KPIs de mercado (R6) | Não | Visão geral de `/markets` com contagens | Sem KPI de mercado | Altas, quedas e volume do pregão | Exige licença de exibição | Fora até haver licença |
+| Câmbio ao vivo (R6) | Parcial | Aba Câmbio, sintética | Sem fonte | USD/BRL com horário | Open Exchange Rates (horária) | Primeiro candidato da revisão de licença |
