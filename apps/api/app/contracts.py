@@ -942,8 +942,30 @@ class AdminProviderStatus(StrictModel):
     access: str = Field(pattern="^(allowed|denied)$")
 
 
+class AdminProviderRegistryItem(StrictModel):
+    """One registry entry (ADR-025). Credentials appear as presence only, never values."""
+
+    provider_id: str
+    display_name: str
+    status: str
+    markets: list[str]
+    capabilities: list[str]
+    license_status: str
+    credentials: dict[str, bool]
+    activation: str
+    rate_limits: str
+    commercial_use: str | None = None
+    redistribution: str | None = None
+    storage: str | None = None
+    attribution: str | None = None
+    verified_on: date
+    evidence: list[str]
+    blocked_reason: str | None = None
+
+
 class AdminProviderGovernanceStatus(StrictModel):
     items: list[AdminProviderStatus] = Field(default_factory=list)
+    registry: list[AdminProviderRegistryItem] = Field(default_factory=list)
     checked_at: datetime
 
 

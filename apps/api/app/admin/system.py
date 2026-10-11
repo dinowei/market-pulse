@@ -16,6 +16,7 @@ from app.contracts import (
     AdminLocksStatus,
     AdminLockStatus,
     AdminProviderGovernanceStatus,
+    AdminProviderRegistryItem,
     AdminProviderStatus,
     AdminQuarantineStatus,
     AdminStructuredError,
@@ -23,6 +24,7 @@ from app.contracts import (
     AdminVolumetricStatus,
 )
 from app.core.config import get_settings
+from app.providers.registry import REGISTRY, activation_decision, credential_presence
 
 _SECRET_RE = re.compile(
     r"(?i)(?:password|token|secret|api[_-]?key|authorization|cookie)\s*[:=]\s*[^\s,;]+"
@@ -155,7 +157,36 @@ def _providers(checked_at: datetime) -> AdminProviderGovernanceStatus:
                 else "denied",
             )
         )
-    return AdminProviderGovernanceStatus(items=items, checked_at=checked_at)
+    return AdminProviderGovernanceStatus(
+        items=items, registry=_provider_registry(), checked_at=checked_at
+    )
+
+
+def _provider_registry() -> list[AdminProviderRegistryItem]:
+    items = []
+    for entry in REGISTRY:
+        decision = activation_decision(entry)
+        items.append(
+            AdminProviderRegistryItem(
+                provider_id=entry.provider_id,
+                display_name=entry.display_name,
+                status=entry.status.value,
+                markets=list(entry.markets),
+                capabilities=sorted(capability.value for capability in entry.capabilities),
+                license_status=entry.license_status,
+                credentials=credential_presence(entry),
+                activation="ACTIVE" if decision.allowed else decision.reason.value,
+                rate_limits=entry.rate_limits,
+                commercial_use=entry.commercial_use,
+                redistribution=entry.redistribution,
+                storage=entry.storage,
+                attribution=entry.attribution,
+                verified_on=entry.verified_on,
+                evidence=list(entry.evidence),
+                blocked_reason=entry.blocked_reason,
+            )
+        )
+    return items
 
 
 def _quarantine(checked_at: datetime) -> AdminQuarantineStatus:

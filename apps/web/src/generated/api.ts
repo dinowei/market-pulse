@@ -1133,11 +1133,56 @@ export interface components {
         AdminProviderGovernanceStatus: {
             /** Items */
             items?: components["schemas"]["AdminProviderStatus"][];
+            /** Registry */
+            registry?: components["schemas"]["AdminProviderRegistryItem"][];
             /**
              * Checked At
              * Format: date-time
              */
             checked_at: string;
+        };
+        /**
+         * AdminProviderRegistryItem
+         * @description One registry entry (ADR-025). Credentials appear as presence only, never values.
+         */
+        AdminProviderRegistryItem: {
+            /** Provider Id */
+            provider_id: string;
+            /** Display Name */
+            display_name: string;
+            /** Status */
+            status: string;
+            /** Markets */
+            markets: string[];
+            /** Capabilities */
+            capabilities: string[];
+            /** License Status */
+            license_status: string;
+            /** Credentials */
+            credentials: {
+                [key: string]: boolean;
+            };
+            /** Activation */
+            activation: string;
+            /** Rate Limits */
+            rate_limits: string;
+            /** Commercial Use */
+            commercial_use?: string | null;
+            /** Redistribution */
+            redistribution?: string | null;
+            /** Storage */
+            storage?: string | null;
+            /** Attribution */
+            attribution?: string | null;
+            /**
+             * Verified On
+             * Format: date
+             */
+            verified_on: string;
+            /** Evidence */
+            evidence: string[];
+            /** Blocked Reason */
+            blocked_reason?: string | null;
         };
         /** AdminProviderStatus */
         AdminProviderStatus: {
