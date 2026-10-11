@@ -114,6 +114,15 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
   [handoff final](docs/FINAL_HANDOFF_DAY_40.md). O convite da ADR-011 **não foi
   implementado** (exige verificação em Postgres) e segue obrigatório antes de abrir o
   produto.
+- **Dia 41 (sincronização com o NotebookLM), 2026-10-11:** local na branch
+  `feature/dia-41-sync`, sem push nem deploy.
+  - **Entregue:** página de ativo, conta, comparação livre, filtros por classe, proventos
+    por ativo, drawdown, paleta para daltonismo e auditoria de negação editorial
+    (ADR-021 e ADR-022).
+  - **Medido:** backend com 431 passed; frontend com 92 testes; WCAG com 33 de 33.
+  - **Staging misturado (H-28):** a web está nos Dias 30–40 e a API no Dia 29, o que quebra
+    carteira, comparação, heatmap e Atlas até o deploy manual da API no Render.
+  - **Banco do staging expira em 2026-11-05 (H-29).**
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia
@@ -141,13 +150,16 @@ ficam como reserva.
 A Fase 2 terminou no Dia 40 com gates abertos. A ordem das próximas ações está na seção 3
 do [handoff final](docs/FINAL_HANDOFF_DAY_40.md):
 
-1. O usuário desbloqueia a cobrança do GitHub (H-05), o que libera o CI e as rodadas
+1. **Urgente:** o usuário faz o deploy manual da API no Render (H-28) para o staging voltar
+   a funcionar inteiro.
+2. Decidir o banco do staging antes de 2026-11-05 (H-29).
+3. O usuário desbloqueia a cobrança do GitHub (H-05), o que libera o CI e as rodadas
    oficiais (`release-gate.yml`).
-2. O usuário autoriza o deploy dos Dias 30 a 40 no staging; depois, repetir a medição do
-   Dia 38 e medir a cadeia de proxies (H-23).
-3. Assinatura de compliance do Morning Call (H-13) e ADR do fluxo editorial (H-25).
-4. Decisão dos planos: Redis persistente, Vercel e API sem hibernação (H-27).
-5. Antes de abrir o produto: implementar o convite (ADR-011) com verificação em Postgres.
+4. Depois do CI, levar `feature/dia-41-sync` ao staging com autorização; repetir a medição
+   do Dia 38 e medir a cadeia de proxies (H-23).
+5. Assinatura de compliance do Morning Call (H-13) e ADR do fluxo editorial (H-25).
+6. Decisão dos planos: Redis persistente, Vercel e API sem hibernação (H-27).
+7. Antes de abrir o produto: implementar o convite (ADR-011) com verificação em Postgres.
 
 O GitHub Actions agendado continua bloqueado (H-05, decisão C4). Pendências em
 [DAY29_HANDOFF.md](docs/DAY29_HANDOFF.md). Push, deploy, login externo e merge na `main`

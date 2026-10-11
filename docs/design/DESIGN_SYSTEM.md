@@ -69,6 +69,8 @@ uma escala sugerida.
 Uma escala de espaçamento em tokens seria uma mudança visual, que fica para a revisão de
 Cláudio; ela não foi criada para não alterar a interface sem decisão.
 
+**Paleta opcional para daltonismo** (`<html data-palette="cvd">`, [ADR-021](../adr/021-optional-color-vision-palette.md)): escuro `UP #bddbb6`, `DOWN #c4685a`, `FLAT #3f82f0`; claro `UP #007d1e`, `DOWN #5e3532`, `FLAT #173f81`. Mesmas famílias de cor, separadas pela luminosidade.
+
 ## 2. Semântica obrigatória
 
 | Situação | Cor | Pista não cromática |
@@ -98,6 +100,11 @@ epsilon e sem converter para ponto flutuante. Os dígitos não são arredondados
 | Global Atlas | `global-atlas.tsx` | Tabela por região, sem preço |
 | Tema | `theme-toggle.tsx` e `src/lib/theme.ts` | Escolha salva, sistema e escuro, aplicado antes da hidratação |
 | Aviso de limite | `rate-limit-notice.tsx` | 429 acessível, com espera quando informada |
+| Página de ativo | `asset-detail.tsx` (`/assets?id=`) | Componentes do dashboard e só ações com endpoint |
+| Proventos do ativo | `asset-events.tsx` | `UNAVAILABLE` com motivo; tabela com origem |
+| Filtro por classe | `asset-class-filter.tsx` e `src/lib/asset-classes.ts` | Classes vindas da API; Fundos e Renda fixa indisponíveis com motivo |
+| Paleta para daltonismo | `palette-toggle.tsx` e `src/lib/theme.ts` | Opcional, desligada por padrão ([ADR-021](../adr/021-optional-color-vision-palette.md)) |
+| Conta | `account-panel.tsx` | Exportação; exclusão com confirmação digitada |
 
 ## 4. Regras de interação e acessibilidade
 

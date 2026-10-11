@@ -13,7 +13,7 @@
 | Controle | Norma | Prova | Estado |
 | --- | --- | --- | --- |
 | Produto informativo, sem recomendação, sinal ou preço-alvo | [Política de conteúdo](policies/FINANCIAL_CONTENT_POLICY.md) §1–§3 | Validador editorial `PRESCRIPTIVE_LANGUAGE` (`apps/api/app/editorial/validator.py`) | Implementado; no staging |
-| Avisos legais com o texto literal do §11 | Política §11 | `apps/web/src/lib/disclaimers.ts`; `compliance-day35.test.ts` compara com a política | Implementado; **não** no staging |
+| Avisos legais com o texto literal do §11 | Política §11 | `apps/web/src/lib/disclaimers.ts`; `compliance-day35.test.ts` compara com a política | Implementado; na web do staging desde o push de `1747184` |
 | Fontes obrigatórias em fato, consenso, cenário e risco | Política §4–§5 | Códigos `FACT_SOURCE_REQUIRED`, `CONSENSUS_*`, `SCENARIO_*` e `RISK_SOURCE_REQUIRED` | Implementado; cobertura parcial mapeada no pacote abaixo |
 | Revisão humana do Morning Call | Política §9–§10 | [Pacote de revisão](editorial/MORNING_CALL_COMPLIANCE_REVIEW.md) | **Pendente: assinatura** (H-13) |
 | Fluxo editorial igual ao da política | Política §9 | Divergências D-1 e D-3 no pacote; D-5 corrigida no Dia 39 | **Pendente: ADR** (H-25) |
@@ -35,7 +35,7 @@
 | Sessão opaca em cookie `HttpOnly`, `Secure` em staging, `SameSite=lax` | PROJECT_SPEC.md; [ADR-008](adr/008-same-origin-api-proxy.md) | `routers.py` (cookie); `render.yaml`; `SameSite=none` recusado no boot | Implementado; no staging |
 | Exclusão de conta por anonimização, com revogação de sessões e auditoria na mesma transação | [Runbook do Dia 28](operations/PRODUCTION_RUNBOOK_DAY_28.md) | `DELETE /api/v1/account`; `test_account_anonymization_day28.py` | Implementado; no staging |
 | Anulação da nota livre dos eventos da carteira na anonimização | [ADR-010](adr/010-portfolio-event-note-erasure.md) | Migration `20261005_0012` | Implementado; **não** no staging |
-| Exportação dos dados do usuário | Runbook do Dia 28 | `GET /api/v1/account/data-export` | Implementado; no staging |
+| Exportação dos dados do usuário | Runbook do Dia 28 | `GET /api/v1/account/data-export`; tela em `/account` desde o Dia 41 | API no staging; tela **não** no staging |
 | Retenção: expurgo de quarentenas, payloads brutos e telemetria após 90 dias; `audit_logs` nunca expurgado | Runbook do Dia 28 | `app/retention.py` (`PURGE_PLAN`); `python -m app.cli.retention` (dry-run por padrão) | Implementado; execução agendada inexistente |
 | Telemetria sem dado pessoal, só agregados diários | Runbook do Dia 28 | `TelemetryPIIError` e `web_vital_metrics` (`app/telemetry.py`) | Implementado; no staging |
 | **Aviso de privacidade e termos de uso para o usuário** | — | Nenhum documento publicado | **Lacuna:** exige avaliação jurídica antes de abrir o produto a outras pessoas |
@@ -62,6 +62,7 @@
 | Transições editoriais (quem, de que estado, para qual, quando) | `editorial_review_events` | Implementado; no staging |
 | Versões editoriais imutáveis | Trigger `editorial_versions_append_only` (migration 0008) | Implementado; no staging |
 | Anonimização de conta | `audit_logs`, na mesma transação | Implementado; no staging |
+| Tentativas editoriais negadas | `audit_logs` (`editorial_permission_denied`, `DENIED`), só com papel e rota | Implementado no Dia 41; **não** no staging |
 | Seed e reset do DEMO local | `audit_logs` (`entity_type='demo_seed'`) | Implementado (somente local) |
 
 ## 6. Acessibilidade

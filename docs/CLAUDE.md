@@ -123,6 +123,7 @@ A baseline enterprise é o documento canônico de engenharia. Se a implementaç�
 - Índice de ADRs com estado de implementação: [adr/README.md](adr/README.md)
 - Checklist de compliance: [COMPLIANCE_CHECKLIST.md](COMPLIANCE_CHECKLIST.md)
 - Promoção dos Dias 30 a 40 para o staging: [STAGING_PROMOTION_DAYS_30_40.md](operations/STAGING_PROMOTION_DAYS_30_40.md)
+- Banco do staging e expiração (H-29): [STAGING_DATABASE_EXPIRY.md](operations/STAGING_DATABASE_EXPIRY.md)
 - Decisões históricas aceitas: [ADRs](adr/)
 
 Arquivos equivalentes na raiz marcados como históricos servem apenas à rastreabilidade e não competem com as fontes acima.

@@ -252,6 +252,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Classe:** C. Obrigatório antes de qualquer Morning Call sair do uso pessoal.
 - **Prova hoje:** leitura de código (`editorial/service.py`, `routers.py:_admin_transition`).
 - **Dia 39 (2026-10-07):** D-5 corrigido com teste (`test_editorial_archive_time_day39.py`). D-1 e D-3 continuam esperando ADR.
+- **Dia 41 (2026-10-11):** toda tentativa editorial negada passa a gravar linha em `audit_logs` ([ADR-022](adr/022-day-41-frontend-integration.md)). Isso dá rastreabilidade, mas não resolve D-3: um `ADMIN` ainda pode publicar sozinho.
 
 ### H-26 Telemetria de campo sem percentil
 - **Origem:** medição do Dia 38 ([relatório](engineering/PERFORMANCE_DAY_38.md), P-3).
@@ -265,6 +266,18 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** decisão do usuário sobre o plano da API, junto com Redis persistente e plano Vercel (Dia 39).
 - **Classe:** C para abrir o produto; aceitável no staging de um usuário.
 - **Prova hoje:** medido com `curl` em 2026-10-07 04:16 UTC.
+
+### H-28 Staging misturado: web dos Dias 30–40 com a API do Dia 29
+- **Origem:** verificação de 2026-10-11, só com leituras.
+- **Fato:** o push de `1747184` em `feature/dia-29-staging` atualizou a web na Vercel, mas o Render não implantou a API; o último deploy dela é de `60df9ca`, mesmo com deploy automático por commit. Hipótese não verificada: o Render só avalia o último commit do push, e esse commit mexia só em documentação (`rootDir: apps/api`).
+- **Impacto medido:** `/portfolios/{id}/overview` responde 404, o lote da comparação com `max_points` responde 422, `/market-data/heatmap` responde 404 e `/instruments` vem vazio. Dashboard, watchlists e login funcionam.
+- **Critério de pronto:** deploy manual da API no painel do Render com o último commit da branch, migration 0012 aplicada e smoke do [runbook de promoção](operations/STAGING_PROMOTION_DAYS_30_40.md).
+- **Classe:** A para o staging. A trava de segurança da sessão bloqueou o deploy pelo agente; o usuário executa.
+
+### H-29 Banco do staging expira em 2026-11-05
+- **Origem:** API do Render, consultada em 2026-10-10 (`expiresAt` da instância grátis).
+- **Critério de pronto:** decisão entre plano pago, Neon ou recriação, conforme as [opções documentadas](operations/STAGING_DATABASE_EXPIRY.md), executada antes da data.
+- **Classe:** A para o staging.
 
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 

@@ -347,6 +347,42 @@ outras, cada uma com fonte e condição para reabrir) e
 abertos pelos motivos registrados em cada dia; nenhum foi declarado aprovado sem
 evidência.
 
+## Fase 3 — Dias 41 a 50 (reconciliação de 2026-10-11)
+
+O plano dos Dias 41 a 50 foi escrito no README em 2026-10-08, a pedido do usuário. Esta
+seção o traz para o roadmap canônico, sem mudar o conteúdo: Dia 41, isolamento de ambientes;
+Dia 42, infraestrutura de staging; Dias 43–44, segurança operacional; Dias 45–47, jurídico e
+compliance; Dias 48–49, governança de dados e retenção; Dia 50, fechamento e promoção. O
+detalhe e o estado de cada um estão no README, seção "Roadmap final — Dias 41 a 50".
+
+**Sincronização com o NotebookLM em 2026-10-11** (18 fontes lidas; autorizada pelo
+usuário como T1 a T8):
+
+- **Divergências registradas:**
+  - nenhuma fonte do NotebookLM cobre os Dias 41 a 50;
+  - o PDF de infraestrutura previa a branch `production` do Neon para o staging, mas o
+    staging usa o Postgres do Render, que expira em 2026-11-05 (H-29);
+  - as fontes de Rust, gRPC, FDC3 e WebSocket foram superadas pela orientação pós-Dia 30.
+- **Integrado no código**, em `feature/dia-41-sync`, sem deploy
+  ([ADR-021](adr/021-optional-color-vision-palette.md),
+  [ADR-022](adr/022-day-41-frontend-integration.md)):
+  - página de ativo com favoritar, watchlist e carteira;
+  - página de conta com exportação e exclusão;
+  - comparação com até 10 séries escolhidas;
+  - filtros por classe, com Fundos e Renda fixa indisponíveis;
+  - proventos por ativo atrás da barreira de licença;
+  - drawdown da carteira;
+  - paleta opcional para daltonismo;
+  - auditoria das tentativas editoriais negadas.
+- **Medido localmente:** backend com 431 passed, 10 skipped e 0 failed; frontend com 92
+  testes, lint, typecheck e build OK; gate de desempenho OK; gate WCAG com 15 rotas, 33 de
+  33.
+- **Fica com o usuário:**
+  - deploy manual da API no Render (H-28);
+  - decisão sobre o banco do staging (H-29,
+    [opções](operations/STAGING_DATABASE_EXPIRY.md));
+  - revisão visual de Cláudio para a paleta opcional.
+
 ### Adendo operacional do Dia 23
 
 O Dia 23 executado corresponde ao CMS administrativo mínimo e ao versionamento

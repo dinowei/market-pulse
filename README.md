@@ -16,10 +16,10 @@ e nos relatórios ligados na [Fase 2 do roadmap](docs/ROADMAP_30_DAYS.md).
 | --- | --- | --- |
 | Implementado no código | Dias 31–39; CSP Report-Only do frontend e limites de segurança do CLI de retenção foram acrescentados localmente nesta rodada | Código na branch não significa gate fechado nem implantação |
 | Testado localmente | Nesta rodada: API 52 testes direcionados passaram; web 81/81; lint, typecheck, build, OpenAPI e Ruff passaram. A API completa e o E2E não foram executados | Dois testes que exigem Redis/banco descartável foram excluídos; os testes de retenção usaram conexão simulada; não equivale a CI oficial |
-| Enviado para GitHub | `origin/feature/dia-31-34` e `origin/feature/dia-29-staging` continuam em `17471845c9a22719d2a84b1b7df4cf6ed7d288f7`; `e967b36` e esta integração são locais e não foram enviados | Referência Git não comprova deploy |
+| Enviado para GitHub | Conferido em 2026-10-11: `origin/feature/dia-31-34` em `a77e72a` (inclui os commits de 08/10) e `origin/feature/dia-29-staging` em `1747184`. A integração do Dia 41 está na branch local `feature/dia-41-sync`, sem push | Referência Git não comprova deploy |
 | Deploy automático configurado | `render.yaml` configura deploy do serviço da API por commit na branch `feature/dia-29-staging`; documentos do staging registram a Vercel ligada a essa mesma branch | O projeto e os controles atuais dos painéis Vercel/Render não foram revalidados nesta auditoria |
-| Deploy confirmado | O runbook registra o staging com código do Dia 29, commit `60df9ca`, URLs e smoke | Não há evidência de deploy do HEAD local nem consulta atual ao painel |
-| Staging validado | Smoke e sessão foram medidos para o código do Dia 29 (`60df9ca`) | Dias 30–40 ainda não foram promovidos/validados nesse ambiente |
+| Deploy confirmado | Conferido em 2026-10-11, só com leituras: a **web** na Vercel serve o código dos Dias 30–40 (`/heatmap` e `/atlas` respondem); a **API** no Render continua no deploy de `60df9ca` (Dia 29), segundo o histórico de deploys do serviço | O staging está misturado e quebra carteira, comparação, heatmap e Atlas (H-28) até a API ser implantada |
+| Staging validado | Smoke e sessão medidos só para o código do Dia 29 (`60df9ca`) | Nada dos Dias 30–41 foi validado no ambiente; ver H-28 |
 | Produção validada | Nenhuma validação de produção com commit, URL e smoke foi encontrada | Estado do deployment atual da Vercel não foi consultado; não presumir que esteja inalterado |
 | Bloqueadores externos | Billing do GitHub, serviços/planos e variáveis em painéis, aprovação de deploy e licença de dados | H-05 é reportado nos documentos, mas seu estado atual não foi conferido no painel e não é o único bloqueador |
 | Pendências humanas | Assinatura H-13, decisões editoriais, revisão visual e de acessibilidade, revisão jurídica e aprovação manual | Não substituídas por documentação ou testes automáticos |
@@ -149,11 +149,10 @@ e precisa ser verificado/resolvido antes de qualquer push ou promoção.
 
 > O push para `feature/dia-29-staging` foi realizado anteriormente, mas push não equivale a deploy concluído. O deploy só deve ser considerado confirmado com evidência do provedor, commit implantado, URL e smoke test.
 
-O HEAD local (`e967b36` mais esta integração) está à frente dos refs remotos, que continuam
-em `17471845c9a22719d2a84b1b7df4cf6ed7d288f7`. Isso não confirma qual commit está
-implantado. Como o runbook identifica `feature/dia-29-staging` como branch de produção da
-Vercel, nenhum novo push deve ser feito para ela até que a topologia e a aprovação manual
-sejam confirmadas.
+**Atualização de 2026-10-11:** o push de `1747184` em `feature/dia-29-staging` atualizou a
+web na Vercel, mas o Render não implantou a API (último deploy: `60df9ca`). A correção é um
+deploy manual da API no painel do Render (H-28). Enquanto a topologia e a aprovação manual
+não forem confirmadas, nenhum novo push deve ir para essa branch.
 
 #### Próxima validação de staging (não executada)
 
@@ -208,6 +207,7 @@ no [runbook do staging](docs/operations/STAGING_RUNBOOK_DAY_29.md), no
 | Dia 30 | RC do staging privado: ADR-009, ADR-010 e decisão de convite | Gate aberto; sem deploy |
 | Dias 31 a 39 | Downsampling, tokens OKLCH, tema, limite por usuário, overview da carteira, avisos legais, WCAG 2.2 AA, Global Atlas e heatmap, Web Vitals, regressão | Implementações no Git; gates conforme a tabela de auditoria, staging não validado para o código atual |
 | Dia 40 | Documentação e handoff | Fechado |
+| Dia 41 (sincronização) | Página de ativo, conta, comparação livre, filtros por classe, proventos por ativo, drawdown, paleta para daltonismo e auditoria de negação editorial | Local em `feature/dia-41-sync`, testes verdes; sem push nem deploy ([ADR-021](docs/adr/021-optional-color-vision-palette.md), [ADR-022](docs/adr/022-day-41-frontend-integration.md)) |
 | Dias 41–42 | Isolamento e staging | Dependem de configuração e validação externa |
 | Dias 43–44 | Segurança operacional | CSP Report-Only local; observação e proxy em staging pendentes |
 | Dias 45–47 | Privacidade e Morning Call | Controles de código existentes; jurídico, assinatura humana e ADR pendentes |
