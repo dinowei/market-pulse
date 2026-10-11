@@ -101,3 +101,25 @@ para os dois serviços e rollback por deployment.
 - **Render:** "Rollback" para o deploy `dep-db5dmgdckfvc739rhfrg` (`1747184`).
 - **Git:** não reescrever `feature/dia-29-staging`. Se for preciso voltar o código, usar um
   commit de reversão, também com autorização.
+
+## 6. Execução da opção B (2026-10-11, autorizada pelo usuário)
+
+| Passo | Resultado medido |
+| --- | --- |
+| Verificações antes do push | `1747184` é ancestral de `c3e77c0`; 19 commits sem merge; nenhum arquivo removido ou renomeado; nenhuma migration nova; testes não diminuíram (backend 311 → 334 funções, web 72 → 94, E2E 7 → 10); diff revisado, incluindo a retenção com limites (`4726b60`) |
+| Push | `1747184..c3e77c0` em `feature/dia-29-staging`, avanço rápido, sem `--force`; `main` intacta em `9cfb5c9` |
+| Vercel | Deployment de produção `dpl_DEzTYLsjnThoYGfWvrRamUCtMMrh`, log "Branch: feature/dia-29-staging, Commit: c3e77c0"; `/markets` respondeu 200 em 40 s |
+| Render | **Não disparou.** Depois de 12 minutos, o deploy vivo continua `dep-db5dmgdckfvc739rhfrg` (`1747184`), e a rota de proventos ainda dá 404. O histórico de eventos do serviço não mostra build, deploy nem "commit ignored" para este push nem para o de 2026-10-07; os deploys desde 07/10 foram manuais ou por API (H-33) |
+| Decisão | Promoção parada no Render, como o usuário pediu: sem deploy manual e sem a validação final enquanto web e API estiverem em commits diferentes |
+
+**Estado resultante:** Vercel em `c3e77c0` e Render em `1747184`. A web nova degrada sem
+quebrar. Os sinais visíveis da API antiga no staging:
+
+- proventos e drawdown aparecem como indisponíveis;
+- o catálogo tem 5 itens;
+- os benchmarks mostram 0,00% ("estável"), o FLAT inventado já corrigido no código.
+
+**Para alinhar (exige autorização):** "Manual Deploy → Deploy latest commit" no serviço
+`market-pulse-staging-api`. Hoje esse botão representa `feature/dia-29-staging` em
+`c3e77c0`; confira o SHA no deploy criado. Se o usuário autorizar antes a promoção de um SHA
+mais novo, o mesmo botão passa a representar esse SHA.

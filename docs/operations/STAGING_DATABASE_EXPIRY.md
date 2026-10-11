@@ -8,6 +8,25 @@
   dos planos pagos. Confira na documentação e na página de preços oficiais antes de decidir.
 - **Este documento não autoriza** contratação, mudança de painel nem deploy.
 
+## Conferido em 2026-10-11 (somente leitura)
+
+| Item | Resultado | Fonte |
+| --- | --- | --- |
+| Instância em uso | `market-pulse-staging-db` (`dpg-db267vjbc2fs73fdfl0g-a`), Postgres 16, plano grátis, Oregon, status `available`, sem réplica | API do Render |
+| Expiração | `2026-11-05T02:59:10Z`, sem mudança | API do Render |
+| Ligação com a API | `MARKET_PULSE_DATABASE_URL` por referência (`fromDatabase`) no `render.yaml`; `/health/ready` com `database: ok` e `cache: ok` | `render.yaml` e `curl` |
+| Migration | `20261005_0012` aplicada em 2026-10-11 00:42:34 UTC | Log do Render |
+| Dados de teste | Não consultados: o IP allowlist vazio bloqueia a consulta externa, e abri-lo está fora do escopo. Evidência indireta: a conta única e a watchlist criadas no smoke de 2026-10-07 | Runbook do Dia 29 |
+| Backup | Nenhum: o plano grátis não oferece backup (comentário do `render.yaml`, com link para a página do plano). A cópia possível é a exportação da conta em `/account` | `render.yaml` |
+
+### Impacto estimado de cada opção
+
+| Opção | Interrupção | Dados preservados | Trabalho do usuário |
+| --- | --- | --- | --- |
+| A | Nenhuma, se feita antes de 2026-11-05 | Todos | Mudar o plano no painel |
+| B | Minutos (troca de variável e deploy) | Nenhum; recriar a conta | Criar a string no Neon, revisar a mudança no `render.yaml`, recriar a conta |
+| C | Do momento da expiração até a sincronização do Blueprint | Nenhum; só a exportação da conta | Sincronizar o Blueprint e recriar a conta |
+
 ## O que está em jogo
 
 O staging guarda uma conta, as watchlists e as carteiras de teste do responsável, além das

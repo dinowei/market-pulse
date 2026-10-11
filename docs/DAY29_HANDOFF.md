@@ -76,6 +76,11 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Critério de pronto:** causa confirmada na fonte (configuração de cobrança do GitHub); uma execução do `ci.yml` concluída com sucesso, com saída vista; os workflows com `schedule` só habilitados depois disso.
 - **Prova hoje:** os `startup_failure` e a contagem foram **medidos** (`gh run list`). A causa (cobrança) é **informada pelo usuário**; confirmar exigiria escopo `user` no token, o que implicaria novo login e não foi feito.
 - **Atualização de 2026-10-01 (decisão do usuário):** o workflow agendado `market-pulse-refresh` (cron a cada 15 min) é desabilitado pelo usuário **pela interface do GitHub**, sem mudança de código. Só deve ser reativado depois de uma execução do `ci.yml` concluída com sucesso. A desabilitação é **informada pelo usuário**, não verificada por Claude Code.
+- **Medido em 2026-10-11:** os jobs de `c3e77c0` terminam com 0 passos e a anotação "The job was not started because your account is locked due to a billing issue", o que confirma a causa na fonte. Separado disso, os comandos dos workflows tinham dois defeitos de código, corrigidos em `c49320c`:
+  - o `pytest` puro não importava `app` (51 erros de coleta);
+  - o `ruff` do `ci.yml` apontava caminhos inexistentes.
+
+  Com `20391fb`, o Ruff fica limpo em `app` e `tests`. O CI continua **não executado** até a cobrança ser liberada.
 - **Decisão do usuário (2026-10-01), cron do staging:** opção C4, **sem cron no staging**. O refresh é disparado manualmente, e o `market-pulse-refresh` continua desabilitado. Motivos: sem provider `PUBLIC_APPROVED` (H-12) o refresh só roda em `DRY_RUN` sobre DEMO; as alternativas pesquisadas no H-07 têm restrições (Vercel Hobby uma vez por dia, Render Cron pago, Cloudflare Free com 10 ms de CPU). Além disso, um cron frequente manteria a API grátis do Render acordada e consumiria a cota mensal de horas.
 
 ### H-06 Custo do `EXISTS` por requisição autenticada na cota do Upstash
@@ -305,6 +310,19 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Fato:** são 9 avisos: 1 crítico (RCE em `next/og` `ImageResponse`), 3 altos (SSRF na otimização de imagens do `next`, `sharp` e `source-map-js`), 4 moderados e 1 baixo. O código não importa `next/og` nem `next/image`, mas o endpoint padrão `/_next/image` existe mesmo sem uso.
 - **Critério de pronto:** atualização autorizada para `next` ≥ 16.3.8 (e transitivas corrigidas), com lockfile, build, bundle e E2E de novo.
 - **Classe:** A antes de abrir o produto; alta prioridade no staging.
+- **Corrigido no código em 2026-10-11 (`2d850fe`):**
+  - `next` e `eslint-config-next` 16.3.8, `sharp` 0.35.5 e `source-map-js` 1.2.2, dentro das faixas do próprio `next`, sem override;
+  - `pnpm audit --prod` sem avisos;
+  - testes, build, bundle (189,7 KB) e E2E verdes.
+
+  **Ainda não está no staging,** que roda `c3e77c0` com o `next` 16.3.3.
+
+### H-33 O deploy automático do Render não dispara
+- **Origem:** promoção de 2026-10-11 ([relatório](operations/STAGING_SYNC_DAY_41.md), seção 6).
+- **Fato:** o serviço declara deploy automático por commit em `feature/dia-29-staging`. Porém os pushes de `1747184` (2026-10-07) e `c3e77c0` (2026-10-11) não geraram build, deploy nem evento "commit ignored". Os deploys desde 07/10 foram manuais ou por API. Causa não verificada; hipóteses: integração do GitHub sem webhook para este serviço, ou filtro de build pelo `rootDir`.
+- **Efeito:** cada promoção deixa web e API em commits diferentes até um deploy manual (o H-28 se repetiu).
+- **Critério de pronto:** o usuário confere no painel do Render ("Auto-Deploy" e "Build Filters" do serviço, e o acesso do app do Render ao repositório). Também serve adotar o deploy manual como passo fixo do runbook.
+- **Classe:** A para o staging.
 
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 

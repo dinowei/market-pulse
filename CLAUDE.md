@@ -135,12 +135,28 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     com quatro ajustes de apresentação implementados.
   - **Novas pendências:** H-30 (benchmark sem unidade) e H-31 (catálogo documentado maior
     que o do código).
-  - **Staging alinhado em `1747184` (2026-10-11, H-28 encerrado):** web e API no mesmo
-    commit depois do deploy manual da API; migration 0012 aplicada. O código do Dia 41 está
-    só no preview protegido da Vercel
-    ([relatório de sincronização](docs/operations/STAGING_SYNC_DAY_41.md)).
-  - **H-32:** o `next` 16.3.3 tem avisos de segurança (um crítico em `next/og`, que o código
-    não usa); a atualização depende de autorização.
+  - **Promoção de 2026-10-11 (opção B, autorizada):**
+    - `feature/dia-29-staging` = `c3e77c0`;
+    - a Vercel implantou `c3e77c0`;
+    - o Render **não disparou** (H-33) e continua em `1747184`.
+
+    Web e API estão em commits diferentes até o deploy manual da API, que exige
+    autorização. Detalhes no
+    [relatório de sincronização](docs/operations/STAGING_SYNC_DAY_41.md).
+  - **Depois da promoção, só no código** (`feature/dia-41-sync`):
+    - H-30 mitigado (ADR-024 Proposed);
+    - H-31 resolvido;
+    - H-32 corrigido (`next` 16.3.8);
+    - H-13 com aviso de revisão pendente;
+    - CI executável quando a cobrança for liberada (H-05);
+    - revisão visual do staging publicado.
+
+    **Medido no SHA final:**
+    - backend com 434 passed e 10 skipped (opt-in de banco), com `pytest` puro;
+    - frontend com 105 testes, lint, typecheck e build;
+    - E2E com 36 de 36;
+    - maior bundle com 189,7 KB;
+    - `pnpm audit` sem avisos.
   - **Banco do staging expira em 2026-11-05 (H-29).**
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
@@ -169,9 +185,9 @@ ficam como reserva.
 A Fase 2 terminou no Dia 40 com gates abertos. A ordem das próximas ações está na seção 3
 do [handoff final](docs/FINAL_HANDOFF_DAY_40.md):
 
-1. Autorizar ou não a promoção de `feature/dia-41-sync` ao staging (opção B do
-   [relatório de sincronização](docs/operations/STAGING_SYNC_DAY_41.md)) e a atualização do
-   `next` (H-32).
+1. Autorizar a promoção do SHA final de `feature/dia-41-sync` para `feature/dia-29-staging`
+   e o deploy manual da API no Render (H-33), para alinhar web e API no mesmo commit
+   ([relatório de sincronização](docs/operations/STAGING_SYNC_DAY_41.md), seção 6).
 2. Decidir o banco do staging antes de 2026-11-05 (H-29).
 3. O usuário desbloqueia a cobrança do GitHub (H-05), o que libera o CI e as rodadas
    oficiais (`release-gate.yml`).
