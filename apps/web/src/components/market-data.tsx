@@ -13,6 +13,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { PaletteToggle } from "./palette-toggle";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { describeChange } from "../lib/price-direction";
+import { formatReason } from "../lib/unavailable-reasons";
 import { DEFAULT_BENCHMARK_ID } from "../lib/comparison-defaults";
 
 type PublicQuote = components["schemas"]["PublicQuote"];
@@ -52,7 +53,7 @@ export function ProvenancePanel({ data }: { data: PublicQuote | PublicHistorySer
         <div><dt>Latência</dt><dd>{data.latency_ms == null ? "Indisponível" : `${data.latency_ms} ms`}</dd></div>
       </dl>
       {data.limitations.length > 0 && <p className="limitation-note">Limitações: {data.limitations.join("; ")}</p>}
-      {data.unavailable_reason && <p className="state-note">Motivo: {data.unavailable_reason}</p>}
+      {data.unavailable_reason && <p className="state-note">Motivo: {formatReason(data.unavailable_reason)}</p>}
     </section>
   );
 }

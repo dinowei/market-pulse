@@ -13,6 +13,7 @@ import {
   rowFromBenchmark, rowFromInstrument, type MarketRow, type MarketTab, type MarketTabId,
 } from "../lib/markets";
 import { describeChange } from "../lib/price-direction";
+import { formatReason } from "../lib/unavailable-reasons";
 import { DataStateBadge } from "./market-data";
 import { MarketPulseField } from "./market-pulse-field";
 
@@ -55,7 +56,7 @@ function ChangeCell({ row }: { row: MarketRow }) {
 
 function StateCell({ row }: { row: MarketRow }) {
   if (!row.dataLevel || !row.freshness) return <span className="muted">Cotação não carregada</span>;
-  return <><DataStateBadge dataLevel={row.dataLevel} freshness={row.freshness} />{row.reason && <small className="row-reason">{row.reason}</small>}<small className="row-reason">{row.coverage}</small></>;
+  return <><DataStateBadge dataLevel={row.dataLevel} freshness={row.freshness} />{row.reason && <small className="row-reason">{formatReason(row.reason)}</small>}<small className="row-reason">{row.coverage}</small></>;
 }
 
 function MarketTable({ tab, rows, selected, onToggle }: { tab: MarketTab; rows: MarketRow[]; selected: ReadonlySet<string>; onToggle: (id: string) => void }) {

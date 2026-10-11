@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import type { components } from "../generated/api";
 import { apiRequest, isAbort } from "../lib/api-client";
+import { formatReason } from "../lib/unavailable-reasons";
 
 type CorporateActions = components["schemas"]["InstrumentCorporateActionsResponse"];
 
@@ -34,7 +35,7 @@ export function AssetEvents({ canonicalId }: { canonicalId: string }) {
       <div className="section-heading"><p className="eyebrow">PROVENTOS E EVENTOS</p><h2 id="asset-events-title">Proventos e eventos corporativos</h2></div>
       {!current && <p className="loading-state">Carregando eventos…</p>}
       {current?.error && <p className="state-note" role="alert">Eventos indisponíveis: {current.error}</p>}
-      {data?.availability === "UNAVAILABLE" && <p className="muted">Indisponível ({data.unavailable_reason}). {data.limitations.join(" ")}</p>}
+      {data?.availability === "UNAVAILABLE" && <p className="muted">Indisponível: {formatReason(data.unavailable_reason)} {data.limitations.join(" ")}</p>}
       {data?.availability === "AVAILABLE" && data.items.length === 0 && <p className="muted">Nenhum evento no dataset aprovado para este ativo.</p>}
       {data?.availability === "AVAILABLE" && data.items.length > 0 && (
         <div className="table-wrap"><table><caption>Proventos e eventos corporativos do ativo, com origem</caption>

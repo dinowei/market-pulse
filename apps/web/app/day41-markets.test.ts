@@ -53,6 +53,7 @@ test("an unavailable quote shows no value and no direction, and a missing quote 
   assert.equal(displayValue(row), null);
   assert.equal(rowDirection(row), null);
   assert.equal(row.reason, "DATASET_NOT_APPROVED");
+  assert.equal(row.source, null, "a missing source is not shown as \"none · none\"");
   assert.equal(rowFromInstrument(instrument("equity.br.b3.cmin3", "EQUITY", "BR"), undefined).reason, "QUOTE_NOT_LOADED");
 });
 

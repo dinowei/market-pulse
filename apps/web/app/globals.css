@@ -391,3 +391,8 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 /* Phone header (matrix of Day 41): the grid item is .search-wrap, not the inner label, so
    brand, full-width search, display toggles and menu stack in reading order. */
 @media (max-width: 700px) { .topbar .search-wrap { grid-column: 1 / -1; grid-row: 2; } .topbar .display-toggles { grid-column: 1 / -1; grid-row: 3; justify-content: flex-start; } .topbar nav { grid-row: 4; } }
+/* ADR-025: provider registry in the internal panel. */
+.admin-provider-registry { margin: 1.5rem 0 0; }
+.admin-provider-registry h2 { font-size: 1rem; }
+.admin-provider-registry td, .admin-provider-registry th { text-align: left; vertical-align: top; }
+.admin-credential { display: block; font-size: .7rem; overflow-wrap: anywhere; }

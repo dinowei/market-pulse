@@ -151,7 +151,8 @@ export function rowFromInstrument(item: InstrumentSummary, quote: PublicQuote | 
     changePercent: quote?.change_percent ?? null,
     dataLevel: quote?.data_level ?? null,
     freshness: quote?.freshness ?? null,
-    source: quote ? `${quote.provider} · ${quote.dataset}` : null,
+    // The API names a missing source "none"; that is the absence of a source, shown as "—".
+    source: quote && quote.provider !== "none" ? `${quote.provider} · ${quote.dataset}` : null,
     officialAt: quote?.timestamp_official ?? null,
     reason: quote ? quote.unavailable_reason ?? null : "QUOTE_NOT_LOADED",
     limitations: quote?.limitations ?? [],

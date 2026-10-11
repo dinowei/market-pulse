@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 
 import type { components } from "../generated/api";
+import { formatReason } from "../lib/unavailable-reasons";
 
 type AdminSystem = components["schemas"]["AdminSystemResponse"];
+type RegistryItem = components["schemas"]["AdminProviderRegistryItem"];
 type Section = {
   key: string;
   label: string;
@@ -123,9 +125,35 @@ export function AdminSystemPanel() {
               </article>
             ))}
           </section>
+          {(payload.providers.registry ?? []).length > 0 && <ProviderRegistry items={payload.providers.registry ?? []} />}
           <p className="admin-system-note">Diagnósticos são agregados e mascarados. Provider, dataset e licença permanecem default deny até aprovação documental.</p>
         </>
       )}
     </main>
+  );
+}
+
+// ADR-025: the code registry, read-only. Credentials show only as present or absent, and
+// "Uso agora" is the fail-closed decision: nothing is used before ACTIVE + license + key.
+export function ProviderRegistry({ items }: { items: RegistryItem[] }) {
+  return (
+    <section className="admin-provider-registry" aria-labelledby="provider-registry-title">
+      <h2 id="provider-registry-title">Registro de providers</h2>
+      <p className="muted">Um provider só é usado com status ACTIVE, licença aprovada e credencial presente. Ter a chave não ativa nada.</p>
+      <div className="table-wrap"><table>
+        <caption>Providers preparados, status, credenciais e motivo de bloqueio</caption>
+        <thead><tr><th scope="col">Provider</th><th scope="col">Status</th><th scope="col">Mercados e capacidades</th><th scope="col">Licença</th><th scope="col">Credenciais</th><th scope="col">Uso agora</th><th scope="col">Limites documentados</th><th scope="col">Verificado em</th></tr></thead>
+        <tbody>{items.map((item) => <tr key={item.provider_id}>
+          <th scope="row">{item.display_name}<br /><small>{item.provider_id}</small></th>
+          <td>{item.status}</td>
+          <td>{item.markets.join(", ")}<br /><small>{item.capabilities.join(", ") || "nenhuma"}</small></td>
+          <td>{item.license_status}</td>
+          <td>{Object.entries(item.credentials).map(([name, present]) => <span key={name} className="admin-credential">{name}: {present ? "presente" : "ausente"}</span>)}</td>
+          <td>{item.activation === "ACTIVE" ? "Ativo" : formatReason(item.activation)}{item.blocked_reason && <><br /><small>{item.blocked_reason}</small></>}</td>
+          <td><small>{item.rate_limits}</small></td>
+          <td>{item.verified_on}</td>
+        </tr>)}</tbody>
+      </table></div>
+    </section>
   );
 }
