@@ -18,8 +18,8 @@ e nos relatórios ligados na [Fase 2 do roadmap](docs/ROADMAP_30_DAYS.md).
 | Testado localmente | Nesta rodada: API 52 testes direcionados passaram; web 81/81; lint, typecheck, build, OpenAPI e Ruff passaram. A API completa e o E2E não foram executados | Dois testes que exigem Redis/banco descartável foram excluídos; os testes de retenção usaram conexão simulada; não equivale a CI oficial |
 | Enviado para GitHub | Conferido em 2026-10-11: `origin/feature/dia-31-34` em `a77e72a` (inclui os commits de 08/10) e `origin/feature/dia-29-staging` em `1747184`. A integração do Dia 41 está em `origin/feature/dia-41-sync`, sem deploy | Referência Git não comprova deploy |
 | Deploy automático configurado | `render.yaml` configura deploy do serviço da API por commit na branch `feature/dia-29-staging`; documentos do staging registram a Vercel ligada a essa mesma branch | O projeto e os controles atuais dos painéis Vercel/Render não foram revalidados nesta auditoria |
-| Deploy confirmado | Conferido em 2026-10-11, só com leituras: a **web** na Vercel serve o código dos Dias 30–40 (`/heatmap` e `/atlas` respondem); a **API** no Render continua no deploy de `60df9ca` (Dia 29), segundo o histórico de deploys do serviço | O staging está misturado e quebra carteira, comparação, heatmap e Atlas (H-28) até a API ser implantada |
-| Staging validado | Smoke e sessão medidos só para o código do Dia 29 (`60df9ca`) | Nada dos Dias 30–41 foi validado no ambiente; ver H-28 |
+| Deploy confirmado | Conferido em 2026-10-11, só com leituras: web (Vercel, produção) e API (Render, deploy manual de 00:41 UTC) no **mesmo commit `1747184`**, com a migration 0012 aplicada ([relatório de sincronização](docs/operations/STAGING_SYNC_DAY_41.md)) | O código do Dia 41 em diante está só no preview protegido da Vercel; promover exige autorização |
+| Staging validado | Smoke público de `1747184` em 2026-10-11: health, catálogo e heatmap 200 | Login, watchlist e carteira não foram medidos de novo depois do deploy de `1747184` |
 | Produção validada | Nenhuma validação de produção com commit, URL e smoke foi encontrada | Estado do deployment atual da Vercel não foi consultado; não presumir que esteja inalterado |
 | Bloqueadores externos | Billing do GitHub, serviços/planos e variáveis em painéis, aprovação de deploy e licença de dados | H-05 é reportado nos documentos, mas seu estado atual não foi conferido no painel e não é o único bloqueador |
 | Pendências humanas | Assinatura H-13, decisões editoriais, revisão visual e de acessibilidade, revisão jurídica e aprovação manual | Não substituídas por documentação ou testes automáticos |
@@ -150,9 +150,9 @@ e precisa ser verificado/resolvido antes de qualquer push ou promoção.
 > O push para `feature/dia-29-staging` foi realizado anteriormente, mas push não equivale a deploy concluído. O deploy só deve ser considerado confirmado com evidência do provedor, commit implantado, URL e smoke test.
 
 **Atualização de 2026-10-11:** o push de `1747184` em `feature/dia-29-staging` atualizou a
-web na Vercel, mas o Render não implantou a API (último deploy: `60df9ca`). A correção é um
-deploy manual da API no painel do Render (H-28). Enquanto a topologia e a aprovação manual
-não forem confirmadas, nenhum novo push deve ir para essa branch.
+web na Vercel, mas o Render não implantou a API sozinho. O usuário fez o deploy manual às
+00:41 UTC, e web e API voltaram ao mesmo commit (H-28 encerrado). O plano para levar
+`feature/dia-41-sync` ao staging está no [relatório de sincronização](docs/operations/STAGING_SYNC_DAY_41.md) e exige autorização.
 
 #### Próxima validação de staging (não executada)
 

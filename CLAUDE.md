@@ -126,12 +126,21 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     - movimento do Particle Atlas desligável;
     - VALE3 e CMIN3 só com metadados;
     - benchmark sem variação inventada.
-  - **Medido:** backend com 433 passed; frontend com 101 testes; WCAG com 34 de 34;
-    bundle de `/markets` com 189,1 KB gzip.
+  - **Medido:**
+    - backend com 433 passed;
+    - frontend com 102 testes;
+    - WCAG com 36 de 36, incluindo reflow de 320 a 1024 px e o movimento que para;
+    - bundle de `/markets` com 189,3 KB gzip.
+  - **Referências visuais:** [matriz do Dia 41](docs/design/DESIGN_REFERENCE_MATRIX_DAY_41.md),
+    com quatro ajustes de apresentação implementados.
   - **Novas pendências:** H-30 (benchmark sem unidade) e H-31 (catálogo documentado maior
     que o do código).
-  - **Staging misturado (H-28):** a web está nos Dias 30–40 e a API no Dia 29, o que quebra
-    carteira, comparação, heatmap e Atlas até o deploy manual da API no Render.
+  - **Staging alinhado em `1747184` (2026-10-11, H-28 encerrado):** web e API no mesmo
+    commit depois do deploy manual da API; migration 0012 aplicada. O código do Dia 41 está
+    só no preview protegido da Vercel
+    ([relatório de sincronização](docs/operations/STAGING_SYNC_DAY_41.md)).
+  - **H-32:** o `next` 16.3.3 tem avisos de segurança (um crítico em `next/og`, que o código
+    não usa); a atualização depende de autorização.
   - **Banco do staging expira em 2026-11-05 (H-29).**
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
@@ -160,8 +169,9 @@ ficam como reserva.
 A Fase 2 terminou no Dia 40 com gates abertos. A ordem das próximas ações está na seção 3
 do [handoff final](docs/FINAL_HANDOFF_DAY_40.md):
 
-1. **Urgente:** o usuário faz o deploy manual da API no Render (H-28) para o staging voltar
-   a funcionar inteiro.
+1. Autorizar ou não a promoção de `feature/dia-41-sync` ao staging (opção B do
+   [relatório de sincronização](docs/operations/STAGING_SYNC_DAY_41.md)) e a atualização do
+   `next` (H-32).
 2. Decidir o banco do staging antes de 2026-11-05 (H-29).
 3. O usuário desbloqueia a cobrança do GitHub (H-05), o que libera o CI e as rodadas
    oficiais (`release-gate.yml`).

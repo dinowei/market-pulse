@@ -273,6 +273,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Impacto medido:** `/portfolios/{id}/overview` responde 404, o lote da comparação com `max_points` responde 422, `/market-data/heatmap` responde 404 e `/instruments` vem vazio. Dashboard, watchlists e login funcionam.
 - **Critério de pronto:** deploy manual da API no painel do Render com o último commit da branch, migration 0012 aplicada e smoke do [runbook de promoção](operations/STAGING_PROMOTION_DAYS_30_40.md).
 - **Classe:** A para o staging. A trava de segurança da sessão bloqueou o deploy pelo agente; o usuário executa.
+- **Encerrado em 2026-10-11:** o usuário fez o deploy manual de `1747184` às 00:41 UTC; o log do Render mostra a migration `0011 → 0012`, e o smoke público deu health, catálogo e heatmap 200 ([relatório](operations/STAGING_SYNC_DAY_41.md)). Login, watchlist e carteira ainda não foram medidos de novo.
 
 ### H-29 Banco do staging expira em 2026-11-05
 - **Origem:** API do Render, consultada em 2026-10-10 (`expiresAt` da instância grátis).
@@ -290,6 +291,12 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Fato:** o [catálogo documentado](instruments/MASTER_INSTRUMENT_CATALOG.md) descreve uma importação de 727 linhas; `MASTER_CATALOG` tem 7 entradas (VALE3 e CMIN3 incluídas no Dia 41 só com metadados).
 - **Critério de pronto:** decisão do usuário entre importar o catálogo (só metadados, com testes de identidade) ou reescrever o documento para o universo real.
 - **Classe:** C.
+
+### H-32 Avisos de segurança no `next` 16.3.3
+- **Origem:** `pnpm audit --prod` em 2026-10-11, com o mesmo lockfile do staging.
+- **Fato:** são 9 avisos: 1 crítico (RCE em `next/og` `ImageResponse`), 3 altos (SSRF na otimização de imagens do `next`, `sharp` e `source-map-js`), 4 moderados e 1 baixo. O código não importa `next/og` nem `next/image`, mas o endpoint padrão `/_next/image` existe mesmo sem uso.
+- **Critério de pronto:** atualização autorizada para `next` ≥ 16.3.8 (e transitivas corrigidas), com lockfile, build, bundle e E2E de novo.
+- **Classe:** A antes de abrir o produto; alta prioridade no staging.
 
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 

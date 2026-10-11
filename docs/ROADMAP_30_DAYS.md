@@ -382,7 +382,7 @@ usuário como T1 a T8):
   - VALE3 e CMIN3 só com metadados;
   - benchmark sem variação inventada.
 
-  **Medido:** backend com 433 passed; frontend com 101 testes; WCAG com 34 de 34.
+  **Medido:** backend com 433 passed; frontend com 102 testes; WCAG com 36 de 36.
 - **Medido localmente:** backend com 431 passed, 10 skipped e 0 failed; frontend com 92
   testes, lint, typecheck e build OK; gate de desempenho OK; gate WCAG com 15 rotas, 33 de
   33.
