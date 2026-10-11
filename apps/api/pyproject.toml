@@ -24,6 +24,8 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Plain `pytest` (CI release gate) must import `app` like `python -m pytest` does.
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100

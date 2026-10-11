@@ -54,7 +54,7 @@ jobs:
           MARKET_PULSE_REDIS_URL: redis://127.0.0.1:6379/0
           PYTHONPATH: apps/api
         run: |
-          uv run --directory apps/api ruff check apps/api/app apps/api/tests
+          uv run --directory apps/api ruff check app tests
           uv run --directory apps/api alembic upgrade head
           uv run --directory apps/api alembic downgrade base
           uv run --directory apps/api alembic upgrade head
