@@ -323,6 +323,7 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
 - **Efeito:** cada promoção deixa web e API em commits diferentes até um deploy manual (o H-28 se repetiu).
 - **Critério de pronto:** o usuário confere no painel do Render ("Auto-Deploy" e "Build Filters" do serviço, e o acesso do app do Render ao repositório). Também serve adotar o deploy manual como passo fixo do runbook.
 - **Classe:** A para o staging.
+- **Medido de novo em 2026-10-11:** o push de `fa6a95c` também não disparou. O usuário fez o deploy manual, que ficou no ar às 14:10 UTC. O deploy manual é o procedimento até a configuração ser revista.
 
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 

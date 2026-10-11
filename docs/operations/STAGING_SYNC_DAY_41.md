@@ -123,3 +123,36 @@ quebrar. Os sinais visíveis da API antiga no staging:
 `market-pulse-staging-api`. Hoje esse botão representa `feature/dia-29-staging` em
 `c3e77c0`; confira o SHA no deploy criado. Se o usuário autorizar antes a promoção de um SHA
 mais novo, o mesmo botão passa a representar esse SHA.
+
+## 7. Alinhamento em `fa6a95c` (2026-10-11, autorizado pelo usuário)
+
+| Passo | Resultado medido |
+| --- | --- |
+| Verificações | `c3e77c0` é ancestral de `fa6a95c`; 7 commits sem merge; nenhum arquivo removido; nenhuma migration; `render.yaml`, configuração e `uv.lock` sem mudança |
+| Push | `c3e77c0..fa6a95c` em `feature/dia-29-staging`, avanço rápido; `main` intacta |
+| Render | O deploy automático não disparou (H-33). O usuário fez o deploy manual; a trava da sessão bloqueou o disparo pelo agente. Ficou no ar o deploy `dep-db5ph459fdbs73dm6040`, commit `fa6a95c`, às 14:10 UTC |
+| Vercel | O deployment automático de produção (`dpl_9U1croGRo7hb27xEuESkNFj7voFU`) falhou em 3 s com "Git information retrieval failed for this deployment" (falha entre Vercel e GitHub, sem build). O usuário fez Redeploy em Production. Ficou no ar `dpl_3ZUYgcWrQGFjmSJibJri1EoZq27j`, com o log "Branch: feature/dia-29-staging, Commit: fa6a95c" |
+
+**Validação remota (sem login, só leituras e uma requisição recusada):**
+
+- **Health:** `/health/live`, `/health` (`environment: staging`) e `/health/ready` (`database: ok`, `cache: ok`) com 200; `/docs` com 404.
+- **Páginas:** `/`, `/markets`, `/markets?tab=indices`, `/assets?id=equity.br.b3.petr4`, `/compare`, `/portfolios`, `/account`, `/atlas`, `/heatmap`, `/watchlists` e `/login` com 200.
+- **API pelo proxy:**
+  - catálogo com 7 itens;
+  - benchmarks `DEMO`, com `change_percent` nulo e "Unidade não declarada";
+  - VALE3 `UNAVAILABLE` com `DATASET_NOT_APPROVED`;
+  - PETR4 `DEMO`/`STALE` com preço;
+  - proventos `UNAVAILABLE` com `DATASET_NOT_APPROVED`;
+  - histórico com `max_points` (antes 422), heatmap e lotes de cotação e histórico com 200.
+- **Proteção:** sem sessão, `auth/me`, `GET` e `POST /watchlists` respondem 401; `POST` com origem estranha recebe 403 (CSRF).
+- **Logs do Render desde 14:09 UTC:** nenhum 5xx. Os únicos avisos são do `uv` sobre `VIRTUAL_ENV`, inofensivos e anteriores.
+- **Tela `/markets`:** 14 séries, nenhuma "estável" inventada, CMIN3, PETR4 e VALE3 na aba de ações.
+
+**Não validado pelo agente:**
+
+- login, logout, watchlist, carteira, drawdown e proventos com sessão, porque exigem a senha do usuário;
+- CI (H-05) e os 10 testes opt-in de banco dedicado.
+
+**Procedimento a partir de agora:** a cada promoção, conferir as duas plataformas. No
+Render, o deploy é manual (H-33). Na Vercel, se aparecer "Git information retrieval
+failed", usar Redeploy em Production.

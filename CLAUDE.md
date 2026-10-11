@@ -135,13 +135,13 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     com quatro ajustes de apresentação implementados.
   - **Novas pendências:** H-30 (benchmark sem unidade) e H-31 (catálogo documentado maior
     que o do código).
-  - **Promoção de 2026-10-11 (opção B, autorizada):**
-    - `feature/dia-29-staging` = `c3e77c0`;
-    - a Vercel implantou `c3e77c0`;
-    - o Render **não disparou** (H-33) e continua em `1747184`.
+  - **Staging alinhado em `fa6a95c` (2026-10-11 14:22 UTC, autorizado):**
+    - Vercel (`dpl_3ZUYgcWr…`) e Render (`dep-db5ph459…`) no mesmo commit;
+    - o Render só implanta com deploy manual (H-33);
+    - a Vercel precisou de Redeploy depois de "Git information retrieval failed";
+    - validação remota sem login aprovada (health, 11 páginas, API, CSRF e zero 5xx).
 
-    Web e API estão em commits diferentes até o deploy manual da API, que exige
-    autorização. Detalhes no
+    Faltam o smoke com login e o CI. Detalhes na seção 7 do
     [relatório de sincronização](docs/operations/STAGING_SYNC_DAY_41.md).
   - **Depois da promoção, só no código** (`feature/dia-41-sync`):
     - H-30 mitigado (ADR-024 Proposed);
@@ -185,9 +185,8 @@ ficam como reserva.
 A Fase 2 terminou no Dia 40 com gates abertos. A ordem das próximas ações está na seção 3
 do [handoff final](docs/FINAL_HANDOFF_DAY_40.md):
 
-1. Autorizar a promoção do SHA final de `feature/dia-41-sync` para `feature/dia-29-staging`
-   e o deploy manual da API no Render (H-33), para alinhar web e API no mesmo commit
-   ([relatório de sincronização](docs/operations/STAGING_SYNC_DAY_41.md), seção 6).
+1. O usuário faz o smoke com login no staging (`fa6a95c`): login, watchlist, carteira,
+   drawdown e logout. Depois, decide o que fazer com o deploy automático do Render (H-33).
 2. Decidir o banco do staging antes de 2026-11-05 (H-29).
 3. O usuário desbloqueia a cobrança do GitHub (H-05), o que libera o CI e as rodadas
    oficiais (`release-gate.yml`).
