@@ -8,6 +8,7 @@ import { ParticleChart } from "./particle-chart";
 import { MorningCallPanel } from "./morning-call";
 import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-note";
 import { ThemeToggle } from "./theme-toggle";
+import { PaletteToggle } from "./palette-toggle";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { describeChange } from "../lib/price-direction";
 import { DEFAULT_BENCHMARK_ID } from "../lib/comparison-defaults";
@@ -187,7 +188,7 @@ export function TerminalShell() {
   }, [historyKey, apiBase, mode, period, selectedCanonicalId]);
 
   return <div className="terminal-root">
-    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/compare">Comparar</Link><Link href="/calendar">Calendário</Link><Link href="/heatmap">Heatmap</Link><Link href="/atlas">Global Atlas</Link><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/account">Conta</Link><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><ThemeToggle /></header>
+    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/compare">Comparar</Link><Link href="/calendar">Calendário</Link><Link href="/heatmap">Heatmap</Link><Link href="/atlas">Global Atlas</Link><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/account">Conta</Link><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><div className="display-toggles"><ThemeToggle /><PaletteToggle /></div></header>
     {sessionError && <p role="alert">{sessionError}</p>}
     <div className="terminal-grid">
       <aside className="left-rail" aria-label="Contexto operacional"><MorningCallPanel /><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE · DEMO</span></section></aside>

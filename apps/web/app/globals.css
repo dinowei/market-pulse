@@ -114,6 +114,7 @@ nav a { color: var(--pa-text-secondary); font-size: .78rem; text-decoration: non
 nav a:hover { color: var(--pa-text-primary); }
 .theme-toggle, .control { border: 1px solid var(--pa-border-hairline); border-radius: var(--pa-radius); background: transparent; color: var(--pa-text-primary); cursor: pointer; padding: .5rem .65rem; }
 .theme-toggle { white-space: nowrap; font-size: .75rem; }
+.display-toggles { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; min-width: 0; }
 .terminal-grid { display: grid; grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr) minmax(17rem, 22rem); gap: 1px; min-height: calc(100vh - 8rem); background: var(--pa-border-hairline); }
 .left-rail, .main-panel, .asset-context { min-width: 0; background: var(--pa-bg-surface); padding: 1.2rem; }
 .left-rail { display: grid; align-content: start; gap: 2rem; }
@@ -302,6 +303,10 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .account-ack { align-items: center; display: flex; gap: .5rem; }
 .account-danger ul { line-height: 1.6; padding-left: 1.2rem; }
 @media (max-width: 1050px) { .asset-page-grid { grid-template-columns: 1fr; } }
+/* ADR-021: optional color-vision palette. Same green/red/blue families, separated by
+   lightness; values measured for AA contrast and protan/deutan/tritan distance. */
+:root[data-palette="cvd"] { --pa-market-up: #bddbb6; --pa-market-down: #c4685a; --pa-market-flat: #3f82f0; }
+[data-theme="light"][data-palette="cvd"] { --pa-market-up: #007d1e; --pa-market-down: #5e3532; --pa-market-flat: #173f81; }
 .importance { border: 1px solid var(--pa-border-hairline); display: inline-block; font-size: .68rem; padding: .2rem .35rem; }
 .importance-high { border-left: 3px solid var(--pa-market-down); }
 .importance-medium { border-left: 3px solid var(--pa-state-stale); }

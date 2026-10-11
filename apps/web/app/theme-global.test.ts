@@ -58,5 +58,6 @@ test("no page pins its own theme and only the theme module touches browser stora
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/^\s*\/\/.*$/gm, "");
   assert.doesNotMatch(themeCode, /sessionStorage|document\.cookie|token|session/i);
-  assert.equal((themeCode.match(/localStorage\.setItem\(/g) ?? []).length, 1, "only the theme preference is written");
+  assert.equal((themeCode.match(/localStorage\.setItem\(/g) ?? []).length, 1, "a single write path for preferences");
+  assert.match(themeCode, /key: typeof THEME_STORAGE_KEY \| typeof PALETTE_STORAGE_KEY/, "only the theme and palette keys can be written");
 });
