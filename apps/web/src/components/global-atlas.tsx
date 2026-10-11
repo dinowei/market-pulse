@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import type { components } from "../generated/api";
+import { presentClasses } from "../lib/asset-classes";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
+import { AssetClassFilter } from "./asset-class-filter";
 
 type InstrumentList = components["schemas"]["InstrumentList"];
 type InstrumentSummary = components["schemas"]["InstrumentSummary"];
@@ -25,6 +28,7 @@ function byRegion(items: InstrumentSummary[]): [string, InstrumentSummary[]][] {
 export function GlobalAtlas() {
   const [payload, setPayload] = useState<InstrumentList | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [assetClass, setAssetClass] = useState<string | null>(null);
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
   useEffect(() => {
@@ -43,10 +47,11 @@ export function GlobalAtlas() {
       {error && <p className="state-note" role="alert">Global Atlas indisponível: {error}</p>}
       {!error && !payload && <p className="loading-state">Carregando catálogo…</p>}
       {payload && payload.items.length === 0 && <p className="muted">Catálogo vazio.</p>}
+      {payload && payload.items.length > 0 && <AssetClassFilter classes={presentClasses(payload.items.map((item) => item.instrument_type))} value={assetClass} onChange={setAssetClass} />}
       {payload && payload.items.length > 0 && <div className="table-wrap"><table><caption>Global Atlas em tabela: instrumentos agrupados por região</caption><thead><tr><th scope="col">Instrumento</th><th scope="col">Tipo</th><th scope="col">País</th><th scope="col">Bolsa</th><th scope="col">Moeda</th><th scope="col">Fuso</th><th scope="col">Cobertura</th><th scope="col">Estado do dado</th></tr></thead>
-        {byRegion(payload.items).map(([region, items]) => <tbody key={region}>
+        {byRegion(payload.items.filter((item) => assetClass === null || item.instrument_type.toUpperCase() === assetClass)).map(([region, items]) => <tbody key={region}>
           <tr className="atlas-region"><th scope="rowgroup" colSpan={COLUMNS}>Região {region} · {items.length} {items.length === 1 ? "instrumento" : "instrumentos"}</th></tr>
-          {items.map((item) => <tr key={item.canonical_id}><th scope="row">{item.symbol}<br /><small>{item.name}</small></th><td>{item.instrument_type}</td><td>{item.country ?? "—"}</td><td>{item.exchange ?? "—"}</td><td>{item.currency}</td><td>{item.timezone ?? "—"}</td><td>{item.coverage_tier}<br /><small>{item.catalog_status}</small></td><td>{item.support_state}<br /><small>{item.data_support_status}</small></td></tr>)}
+          {items.map((item) => <tr key={item.canonical_id}><th scope="row"><Link href={`/assets?id=${encodeURIComponent(item.canonical_id)}`}>{item.symbol}</Link><br /><small>{item.name}</small></th><td>{item.instrument_type}</td><td>{item.country ?? "—"}</td><td>{item.exchange ?? "—"}</td><td>{item.currency}</td><td>{item.timezone ?? "—"}</td><td>{item.coverage_tier}<br /><small>{item.catalog_status}</small></td><td>{item.support_state}<br /><small>{item.data_support_status}</small></td></tr>)}
         </tbody>)}
       </table></div>}
       {payload?.meta.next_offset != null && <p className="muted" role="note">Mostrando os primeiros {ATLAS_LIMIT} instrumentos do catálogo.</p>}

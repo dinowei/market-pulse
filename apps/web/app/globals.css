@@ -281,6 +281,27 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .heatmap-tile-flat { border-top-color: var(--pa-market-flat); }
 .heatmap-tile-unknown, .heatmap-tile-unavailable { border-style: dashed; color: var(--pa-text-secondary); }
 .heatmap-limitations { color: var(--pa-text-secondary); font-size: .74rem; line-height: 1.5; margin: 1rem 0; padding-left: 1rem; }
+.asset-page-panel, .asset-events, .account-panel { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); margin: 0 auto 1rem; max-width: 74rem; padding: 1rem; }
+.asset-page-panel h1 { font-size: clamp(1.25rem, 2.5vw, 1.8rem); margin-bottom: 1rem; }
+.asset-page-grid { display: grid; gap: 1px; grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem); margin: 0 auto 1rem; max-width: 74rem; background: var(--pa-border-hairline); }
+.asset-page-grid > .series-panel { background: var(--pa-bg-surface); min-width: 0; padding: 1.2rem; }
+.asset-page .financial-disclaimer { margin: 0 auto; max-width: 74rem; }
+.asset-actions { display: grid; gap: .6rem; }
+.asset-watchlist-form { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.asset-events td, .asset-events th { vertical-align: top; }
+.asset-events small { color: var(--pa-text-secondary); font-size: .68rem; }
+.compare-picker { margin-top: 1rem; }
+.compare-chips { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; margin: 0 0 .6rem; padding: 0; }
+.compare-chips li { align-items: center; border: 1px solid var(--pa-border-hairline); display: inline-flex; gap: .5rem; padding: .25rem .25rem .25rem .6rem; font-size: .78rem; }
+.compare-add { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; }
+.class-filter { margin: .8rem 0; }
+.class-unavailable { color: var(--pa-text-secondary); font-size: .72rem; line-height: 1.5; margin: .5rem 0 0; padding-left: 1rem; }
+.account-panel section { border-top: 1px solid var(--pa-border-hairline); margin-top: 1.2rem; padding-top: 1rem; }
+.account-panel form { display: grid; gap: .6rem; max-width: 28rem; }
+.account-panel input:not([type="checkbox"]) { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-control); color: var(--pa-text-primary); padding: .55rem .6rem; }
+.account-ack { align-items: center; display: flex; gap: .5rem; }
+.account-danger ul { line-height: 1.6; padding-left: 1.2rem; }
+@media (max-width: 1050px) { .asset-page-grid { grid-template-columns: 1fr; } }
 .importance { border: 1px solid var(--pa-border-hairline); display: inline-block; font-size: .68rem; padding: .2rem .35rem; }
 .importance-high { border-left: 3px solid var(--pa-market-down); }
 .importance-medium { border-left: 3px solid var(--pa-state-stale); }

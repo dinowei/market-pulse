@@ -10,6 +10,7 @@ import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-not
 import { ThemeToggle } from "./theme-toggle";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { describeChange } from "../lib/price-direction";
+import { DEFAULT_BENCHMARK_ID } from "../lib/comparison-defaults";
 
 type PublicQuote = components["schemas"]["PublicQuote"];
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
@@ -63,7 +64,7 @@ export function MarketStatusBar({ data }: { data?: PublicQuote | PublicHistorySe
   );
 }
 
-function PriceChange({ quote }: { quote: PublicQuote }) {
+export function PriceChange({ quote }: { quote: PublicQuote }) {
   const change = describeChange(quote.change, quote.change_percent, quote.currency);
   if (!change) return <p className="asset-change">Variação indisponível</p>;
   const { cue } = change;
@@ -90,6 +91,7 @@ export function AssetContextPanel({ quote, loading, error, selectedId }: { quote
             <div><dt>Bolsa</dt><dd>{quote.exchange ?? "Indisponível"}</dd></div>
           </dl>
           <ProvenancePanel data={quote} />
+          <p><Link href={`/assets?id=${encodeURIComponent(quote.canonical_id)}`}>Abrir página do ativo</Link></p>
         </>
       )}
       {!loading && !error && !quote && <p className="muted">Nenhum dado disponível.</p>}
@@ -185,11 +187,11 @@ export function TerminalShell() {
   }, [historyKey, apiBase, mode, period, selectedCanonicalId]);
 
   return <div className="terminal-root">
-    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/compare">Comparar</Link><Link href="/calendar">Calendário</Link><Link href="/heatmap">Heatmap</Link><Link href="/atlas">Global Atlas</Link><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><ThemeToggle /></header>
+    <header className="topbar"><a className="brand" href="#main-content">MARKET PULSE <span>BETA</span></a><InstrumentSearch onSelect={setSelectedCanonicalId} /><nav aria-label="Navegação principal"><a href="#main-content">Dashboard</a><Link href="/compare">Comparar</Link><Link href="/calendar">Calendário</Link><Link href="/heatmap">Heatmap</Link><Link href="/atlas">Global Atlas</Link><Link href="/watchlists">Watchlists</Link><Link href="/portfolios">Carteiras</Link><a href="#morning-call">Morning Call</a><Link href="/account">Conta</Link><Link href="/login">Login</Link><button type="button" aria-label="Sair" onClick={() => void logout()}>Sair</button></nav><ThemeToggle /></header>
     {sessionError && <p role="alert">{sessionError}</p>}
     <div className="terminal-grid">
       <aside className="left-rail" aria-label="Contexto operacional"><MorningCallPanel /><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE · DEMO</span></section></aside>
-      <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} /></div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <>{downsamplingSummary(history.downsampling) && <p className="muted" role="note">{downsamplingSummary(history.downsampling)}</p>}<ParticleChart series={history} /><AccessibleDataTable points={history.points} reducedFrom={history.downsampling?.original_points} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}<p className="comparison-note">Comparação multissérie aguardando contrato com benchmark; nenhuma série foi inventada.</p></section></main>
+      <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} /></div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <>{downsamplingSummary(history.downsampling) && <p className="muted" role="note">{downsamplingSummary(history.downsampling)}</p>}<ParticleChart series={history} /><AccessibleDataTable points={history.points} reducedFrom={history.downsampling?.original_points} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}{selectedCanonicalId && <p className="comparison-note"><Link href={`/compare?ids=${encodeURIComponent(`${selectedCanonicalId},${DEFAULT_BENCHMARK_ID}`)}`}>Comparar com o Ibovespa</Link> em INDEX_100, com tabela equivalente.</p>}</section></main>
       <AssetContextPanel quote={quote} loading={quoteLoading} error={quoteError} selectedId={selectedCanonicalId} />
     </div>
     <footer><MarketStatusBar data={history ?? quote} /><span>{FINANCIAL_DISCLAIMER}</span></footer>

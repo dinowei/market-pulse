@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 // Day 36: automated WCAG 2.2 AA gate on every route and both themes. Axe does not replace
 // the manual review (directive section 20); the report lists what was checked by hand.
-const ROUTES = ["/", "/login", "/register", "/watchlists", "/portfolios", "/compare", "/calendar", "/heatmap", "/atlas", "/editorial/admin", "/admin/system"];
+const ROUTES = ["/", "/login", "/register", "/watchlists", "/portfolios", "/compare", "/calendar", "/heatmap", "/atlas", "/assets?id=equity.br.b3.petr4", "/account", "/editorial/admin", "/admin/system"];
 const THEMES = ["dark", "light"] as const;
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
@@ -39,6 +39,7 @@ for (const theme of THEMES) {
 }
 
 test("reflow: no route scrolls sideways at 320 CSS px (WCAG 1.4.10)", async ({ page }) => {
+  test.setTimeout(ROUTES.length * 20_000); // one page load per route, run in sequence
   await page.setViewportSize({ width: 320, height: 640 });
   for (const route of ROUTES) {
     await settle(page, route);

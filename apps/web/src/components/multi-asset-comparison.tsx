@@ -1,10 +1,13 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import type { components } from "../generated/api";
-import { defaultComparisonIds } from "../lib/comparison-defaults";
+import { defaultComparisonIds, MAX_COMPARED_SERIES } from "../lib/comparison-defaults";
+import { CANONICAL_ID } from "../lib/canonical-id";
 import { comparisonRows } from "../lib/comparison-table";
+import { InstrumentSearch } from "./market-data";
 import { DISPLAY_MAX_POINTS } from "../lib/downsampling-note";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { seriesRole, seriesRoleLabel } from "../lib/series-role";
@@ -13,6 +16,7 @@ type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
 type BatchHistoryResponse = components["schemas"]["BatchHistoryResponse"];
 type SeriesMode = components["schemas"]["SeriesMode"];
 type InstrumentList = components["schemas"]["InstrumentList"];
+type BenchmarkList = components["schemas"]["BenchmarkListResponse"];
 
 // Declares the auto-fitted vertical scale, so a tiny move is not read as a large one.
 const AXIS_FORMAT = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 4 });
@@ -46,10 +50,32 @@ function linePath(series: PublicHistorySeries, mode: SeriesMode, minTime: number
 export function MultiAssetComparison({ initialIds }: { initialIds?: string[] }) {
   const [mode, setMode] = useState<SeriesMode>("INDEX_100");
   const [catalogIds, setCatalogIds] = useState<string[] | null>(null);
+  const [chosen, setChosen] = useState<string[] | null>(null);
+  const [benchmarks, setBenchmarks] = useState<BenchmarkList["items"]>([]);
   const [series, setSeries] = useState<PublicHistorySeries[]>([]);
   const [error, setError] = useState<string | null>(null);
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-  const ids = initialIds ?? catalogIds;
+  const ids = chosen ?? initialIds ?? catalogIds;
+
+  function choose(next: string[]) {
+    setError(null);
+    setChosen(next);
+  }
+  const addSeries = (canonicalId: string) => {
+    if (ids && !ids.includes(canonicalId) && ids.length < MAX_COMPARED_SERIES) choose([...ids, canonicalId]);
+  };
+  const removeSeries = (canonicalId: string) => {
+    if (ids && ids.length > 1) choose(ids.filter((id) => id !== canonicalId));
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${apiBase}/api/v1/market-data/benchmarks`, { headers: { Accept: "application/json" }, signal: controller.signal })
+      .then(async (response) => (response.ok ? ((await response.json()) as BenchmarkList).items : []))
+      .then(setBenchmarks)
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [apiBase]);
 
   useEffect(() => {
     if (initialIds) return undefined;
@@ -110,6 +136,14 @@ export function MultiAssetComparison({ initialIds }: { initialIds?: string[] }) 
           {(["PRICE", "INDEX_100"] as const).map((candidate) => <button type="button" className={mode === candidate ? "control active" : "control"} aria-pressed={mode === candidate} key={candidate} onClick={() => setMode(candidate)}>{candidate}</button>)}
         </div>
       </div>
+      {ids && <fieldset className="control-group compare-picker">
+        <legend>Séries comparadas ({ids.length} de {MAX_COMPARED_SERIES})</legend>
+        <ul className="compare-chips">{ids.map((id) => <li key={id}><span>{series.find((item) => item.canonical_id === id)?.symbol ?? id}</span><button type="button" className="control" aria-label={`Remover ${id} da comparação`} disabled={ids.length === 1} onClick={() => removeSeries(id)}>Remover</button></li>)}</ul>
+        {ids.length < MAX_COMPARED_SERIES && <div className="compare-add">
+          <InstrumentSearch onSelect={addSeries} />
+          {benchmarks.length > 0 && <label>Referência <select value="" onChange={(event) => { if (event.target.value) addSeries(event.target.value); }}><option value="">Adicionar benchmark</option>{benchmarks.filter((item) => !ids.includes(item.canonical_id)).map((item) => <option key={item.canonical_id} value={item.canonical_id}>{item.symbol} · {item.name}</option>)}</select></label>}
+        </div>}
+      </fieldset>}
       {error && <p className="state-note" role="alert">Comparação indisponível: {error}</p>}
       {!error && series.length === 0 && <p className="loading-state">Carregando séries…</p>}
       {series.length > 0 && <>
@@ -134,4 +168,11 @@ export function MultiAssetComparison({ initialIds }: { initialIds?: string[] }) 
       <p className="financial-disclaimer">{FINANCIAL_DISCLAIMER}</p>
     </section>
   );
+}
+
+// Static page (ADR-005): `?ids=` is read on the client, inside the page's Suspense boundary.
+export function CompareFromQuery() {
+  const raw = useSearchParams().get("ids") ?? "";
+  const ids = [...new Set(raw.split(",").filter((id) => CANONICAL_ID.test(id)))].slice(0, MAX_COMPARED_SERIES);
+  return <MultiAssetComparison initialIds={ids.length ? ids : undefined} />;
 }

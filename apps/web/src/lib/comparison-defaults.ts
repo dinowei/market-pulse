@@ -6,6 +6,8 @@ import type { components } from "../generated/api";
 type InstrumentSummary = components["schemas"]["InstrumentSummary"];
 
 export const DEFAULT_BENCHMARK_ID = "index.br.b3.ibovespa";
+// The batch contract accepts at most ten series per comparison.
+export const MAX_COMPARED_SERIES = 10;
 const COMPARABLE_TYPES = new Set(["EQUITY", "ETF", "FII", "BDR"]);
 const UNSERVED_STATES = new Set(["BLOCKED_SCOPE", "UNSUPPORTED"]);
 

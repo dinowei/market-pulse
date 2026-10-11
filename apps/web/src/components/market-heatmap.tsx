@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 
 import type { components } from "../generated/api";
+import { classLabel } from "../lib/asset-classes";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
+import { AssetClassFilter } from "./asset-class-filter";
 import { describeChange } from "../lib/price-direction";
 
 type HeatmapResponse = components["schemas"]["HeatmapResponse"];
@@ -11,7 +13,6 @@ type PublicQuote = components["schemas"]["PublicQuote"];
 
 // Basic P0 heatmap (ADR-019): equal-area tiles grouped as the API declares, color by
 // direction only, and an equivalent table with every tile's provenance.
-const GROUP_LABEL: Record<string, string> = { EQUITY: "Ações", ETF: "ETFs", FII: "Fundos imobiliários", BDR: "BDRs" };
 const METHOD_LABEL: Record<string, string> = {
   INSTRUMENT_TYPE: "agrupamento por tipo de instrumento",
   EQUAL_AREA: "blocos de mesma área",
@@ -36,6 +37,7 @@ function Tile({ quote }: { quote: PublicQuote }) {
 export function MarketHeatmap() {
   const [payload, setPayload] = useState<HeatmapResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [assetClass, setAssetClass] = useState<string | null>(null);
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
   useEffect(() => {
@@ -47,7 +49,8 @@ export function MarketHeatmap() {
     return () => controller.abort();
   }, [apiBase]);
 
-  const tiles = payload?.groups.flatMap((group) => group.tiles.map((quote) => ({ group: group.group, quote }))) ?? [];
+  const groups = payload?.groups.filter((group) => assetClass === null || group.group === assetClass) ?? [];
+  const tiles = groups.flatMap((group) => group.tiles.map((quote) => ({ group: group.group, quote })));
   return (
     <section className="heatmap-panel" aria-labelledby="heatmap-title">
       <div className="section-heading"><div><p className="eyebrow">MERCADO / HEATMAP</p><h2 id="heatmap-title">Heatmap básico</h2></div><span className="state-label">INFORMATIVO</span></div>
@@ -56,9 +59,10 @@ export function MarketHeatmap() {
       {payload && <>
         <p className="muted">Método: {[payload.grouping, payload.sizing, payload.color_basis].map((key) => METHOD_LABEL[key] ?? key).join("; ")}.</p>
         {payload.groups.length === 0 && <p className="muted">Nenhum instrumento elegível no catálogo.</p>}
-        {payload.groups.map((group) => (
+        {payload.groups.length > 0 && <AssetClassFilter classes={payload.groups.map((group) => group.group)} value={assetClass} onChange={setAssetClass} />}
+        {groups.map((group) => (
           <section key={group.group} className="heatmap-group" aria-labelledby={`heatmap-${group.group}`}>
-            <h3 id={`heatmap-${group.group}`}>{GROUP_LABEL[group.group] ?? group.group} <small>({group.group})</small></h3>
+            <h3 id={`heatmap-${group.group}`}>{classLabel(group.group)} <small>({group.group})</small></h3>
             <ul className="heatmap-grid">{group.tiles.map((quote) => <Tile key={quote.canonical_id} quote={quote} />)}</ul>
           </section>
         ))}

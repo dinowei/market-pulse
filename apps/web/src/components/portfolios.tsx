@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { components } from "../generated/api";
+import { CANONICAL_ID } from "../lib/canonical-id";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { EquityChart } from "./equity-chart";
 import { DataStateBadge } from "./market-data";
@@ -13,6 +15,7 @@ type PortfolioList = components["schemas"]["PortfolioListResponse"];
 type PortfolioEvent = components["schemas"]["PortfolioEventResponse"];
 type PortfolioEventRequest = components["schemas"]["PortfolioEventRequest"];
 type PortfolioEventType = components["schemas"]["PortfolioEventType"];
+type PortfolioDrawdown = components["schemas"]["PortfolioDrawdownResponse"];
 type PortfolioSummary = components["schemas"]["PortfolioSummaryResponse"];
 type PortfolioValuation = components["schemas"]["PortfolioValuationResponse"];
 type PortfolioPerformance = components["schemas"]["PortfolioPerformanceResponse"];
@@ -47,7 +50,7 @@ function isSignedOut(error: unknown): boolean {
   return error instanceof Error && (error as Error & { status?: number }).status === 401;
 }
 
-export function PortfoliosPanel() {
+export function PortfoliosPanel({ initialCanonicalId = "" }: { initialCanonicalId?: string }) {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [summary, setSummary] = useState<PortfolioSummary>();
@@ -60,9 +63,10 @@ export function PortfoliosPanel() {
   const [markers, setMarkers] = useState<PortfolioEventMarkers>();
   const [name, setName] = useState("");
   const [baseCurrency, setBaseCurrency] = useState("BRL");
-  const [eventType, setEventType] = useState<PortfolioEventType>("CASH_DEPOSIT");
+  const [eventType, setEventType] = useState<PortfolioEventType>(initialCanonicalId ? "BUY" : "CASH_DEPOSIT");
   const [currency, setCurrency] = useState("BRL");
-  const [canonicalId, setCanonicalId] = useState("");
+  const [canonicalId, setCanonicalId] = useState(initialCanonicalId);
+  const [drawdown, setDrawdown] = useState<PortfolioDrawdown>();
   const [quantity, setQuantity] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
   const [grossAmount, setGrossAmount] = useState("");
@@ -79,6 +83,7 @@ export function PortfoliosPanel() {
     setPerformance(overview.performance);
     setEquityCurve(overview.equity_curve);
     setDecomposition(overview.decomposition);
+    setDrawdown(overview.drawdown);
     setIncome(overview.income);
     setMarkers(overview.event_markers);
   }, []);
@@ -188,6 +193,12 @@ export function PortfoliosPanel() {
       <p className="muted">Cada marcador referencia um evento persistido do ledger ou uma ação corporativa homologada.</p>
       <table><caption>Proventos e eventos corporativos</caption><thead><tr><th scope="col">Data ex</th><th scope="col">Tipo</th><th scope="col">Ativo</th><th scope="col">Status</th><th scope="col">Pagamento</th><th scope="col">Valor</th><th scope="col">Fonte</th></tr></thead><tbody>{income.map((item) => <tr key={`${item.source_type}-${item.source_id}`}><th scope="row">{item.ex_date ?? "UNAVAILABLE"}</th><td>{item.event_type}</td><td>{item.canonical_id}</td><td>{item.status}</td><td>{item.payment_date ?? "UNAVAILABLE"}</td><td>{item.gross_amount_per_unit ?? item.split_ratio_to ?? "UNAVAILABLE"} {item.currency ?? ""}</td><td>{item.provenance.data_level}/{item.provenance.freshness} · {item.payer}</td></tr>)}</tbody></table>
       <table><caption>Fallback tabular dos marcadores</caption><thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Ativo</th><th scope="col">Origem</th><th scope="col">Fonte</th></tr></thead><tbody>{(markers?.items ?? []).map((marker) => <tr key={`${marker.source_type}-${marker.source_id}`}><th scope="row">{marker.occurred_at}</th><td>{marker.event_type}</td><td>{marker.canonical_id}</td><td>{marker.source_type} · {marker.source_id}</td><td>{marker.provenance.data_level}/{marker.provenance.freshness}</td></tr>)}</tbody></table>
-      <table><caption>Fallback tabular da equity curve</caption><thead><tr><th scope="col">Data</th><th scope="col">Patrimônio</th><th scope="col">Estado</th><th scope="col">Dados ausentes</th></tr></thead><tbody>{(equityCurve?.points ?? []).map((point) => <tr key={point.valuation_date}><th scope="row">{point.valuation_date}</th><td>{point.total_value_base ?? "UNAVAILABLE"}</td><td>{point.valuation_status} / {point.freshness}</td><td>{point.missing_inputs.join(", ") || "—"}</td></tr>)}</tbody></table></section><section className="portfolio-summary-grid"><div className="portfolios-card"><h2>Posições atuais</h2><table><caption>Quantidade, custo médio, valor e P&amp;L</caption><thead><tr><th scope="col">Ativo</th><th scope="col">Quantidade</th><th scope="col">Custo médio</th><th scope="col">Valor atual</th><th scope="col">P&amp;L</th></tr></thead><tbody>{(valuation?.positions ?? []).map((position) => <tr key={position.canonical_id}><th scope="row">{position.canonical_id}</th><td>{position.quantity}</td><td>{position.weighted_average_cost}</td><td>{position.market_value_base ?? "UNAVAILABLE"}</td><td>{position.unrealized_pnl ?? "UNAVAILABLE"}</td></tr>)}</tbody></table></div><div className="portfolios-card"><h2>Decomposição de impactos</h2><dl className="portfolio-metrics"><div><dt>Preço</dt><dd>{decomposition?.price_effect ?? "UNAVAILABLE"}</dd></div><div><dt>FX</dt><dd>{decomposition?.fx_effect ?? "UNAVAILABLE"}</dd></div><div><dt>Fluxo de caixa</dt><dd>{decomposition?.cash_flow_effect ?? "UNAVAILABLE"}</dd></div><div><dt>Taxas</dt><dd>{decomposition?.fees_effect ?? "UNAVAILABLE"}</dd></div><div><dt>Indisponível/não classificado</dt><dd>{decomposition?.unclassified_or_unavailable ?? "UNAVAILABLE"}</dd></div></dl><p className="state-note">Fonte e limitações: {decomposition?.provenance.map((item) => `${item.provider}/${item.dataset} (${item.data_level}/${item.freshness})`).join("; ") || "UNAVAILABLE"}</p></div></section><section className="portfolios-card"><h2>Ledger append-only</h2><table><caption>Eventos manuais, ordenados por ocorrência</caption><thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Ativo</th><th scope="col">Moeda</th><th scope="col">Valor</th></tr></thead><tbody>{events.map((item) => <tr key={item.id}><th scope="row">{item.occurred_at}</th><td>{item.event_type}</td><td>{item.canonical_id ?? "—"}</td><td>{item.currency}</td><td>{item.gross_amount ?? item.unit_price ?? "—"}</td></tr>)}</tbody></table></section></>}
+      <table><caption>Fallback tabular da equity curve</caption><thead><tr><th scope="col">Data</th><th scope="col">Patrimônio</th><th scope="col">Estado</th><th scope="col">Dados ausentes</th></tr></thead><tbody>{(equityCurve?.points ?? []).map((point) => <tr key={point.valuation_date}><th scope="row">{point.valuation_date}</th><td>{point.total_value_base ?? "UNAVAILABLE"}</td><td>{point.valuation_status} / {point.freshness}</td><td>{point.missing_inputs.join(", ") || "—"}</td></tr>)}</tbody></table></section><section className="portfolio-summary-grid"><div className="portfolios-card"><h2>Posições atuais</h2><table><caption>Quantidade, custo médio, valor e P&amp;L</caption><thead><tr><th scope="col">Ativo</th><th scope="col">Quantidade</th><th scope="col">Custo médio</th><th scope="col">Valor atual</th><th scope="col">P&amp;L</th></tr></thead><tbody>{(valuation?.positions ?? []).map((position) => <tr key={position.canonical_id}><th scope="row">{position.canonical_id}</th><td>{position.quantity}</td><td>{position.weighted_average_cost}</td><td>{position.market_value_base ?? "UNAVAILABLE"}</td><td>{position.unrealized_pnl ?? "UNAVAILABLE"}</td></tr>)}</tbody></table></div><div className="portfolios-card"><h2>Decomposição de impactos</h2><dl className="portfolio-metrics"><div><dt>Preço</dt><dd>{decomposition?.price_effect ?? "UNAVAILABLE"}</dd></div><div><dt>FX</dt><dd>{decomposition?.fx_effect ?? "UNAVAILABLE"}</dd></div><div><dt>Fluxo de caixa</dt><dd>{decomposition?.cash_flow_effect ?? "UNAVAILABLE"}</dd></div><div><dt>Taxas</dt><dd>{decomposition?.fees_effect ?? "UNAVAILABLE"}</dd></div><div><dt>Indisponível/não classificado</dt><dd>{decomposition?.unclassified_or_unavailable ?? "UNAVAILABLE"}</dd></div></dl><p className="state-note">Fonte e limitações: {decomposition?.provenance.map((item) => `${item.provider}/${item.dataset} (${item.data_level}/${item.freshness})`).join("; ") || "UNAVAILABLE"}</p></div><div className="portfolios-card"><h2>Drawdown</h2>{drawdown?.status === "COMPLETE" ? <><dl className="portfolio-metrics"><div><dt>Drawdown máximo (fração do pico)</dt><dd>{drawdown.max_drawdown}</dd></div><div><dt>Pico</dt><dd>{drawdown.peak_date ?? "—"}</dd></div><div><dt>Vale</dt><dd>{drawdown.trough_date ?? "—"}</dd></div></dl><div className="table-wrap"><table><caption>Drawdown diário em relação ao maior patrimônio anterior ({drawdown.base_currency})</caption><thead><tr><th scope="col">Data</th><th scope="col">Patrimônio</th><th scope="col">Pico</th><th scope="col">Drawdown</th></tr></thead><tbody>{drawdown.points.map((point) => <tr key={point.valuation_date}><th scope="row">{point.valuation_date}</th><td>{point.total_value_base}</td><td>{point.peak_value_base}</td><td>{point.drawdown}</td></tr>)}</tbody></table></div></> : <p className="muted">Indisponível: {drawdown?.missing_inputs.join(", ") || "sem dados"}.</p>}<p className="muted">Metodologia: {drawdown?.methodology ?? "sem dados"}</p></div></section><section className="portfolios-card"><h2>Ledger append-only</h2><table><caption>Eventos manuais, ordenados por ocorrência</caption><thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Ativo</th><th scope="col">Moeda</th><th scope="col">Valor</th></tr></thead><tbody>{events.map((item) => <tr key={item.id}><th scope="row">{item.occurred_at}</th><td>{item.event_type}</td><td>{item.canonical_id ?? "—"}</td><td>{item.currency}</td><td>{item.gross_amount ?? item.unit_price ?? "—"}</td></tr>)}</tbody></table></section></>}
   </main>;
+}
+
+// Static page (ADR-005): the asset passed by the asset page is read on the client.
+export function PortfoliosFromQuery() {
+  const requested = useSearchParams().get("canonical_id") ?? "";
+  return <PortfoliosPanel initialCanonicalId={CANONICAL_ID.test(requested) ? requested : ""} />;
 }
