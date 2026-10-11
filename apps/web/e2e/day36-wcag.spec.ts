@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 // Day 36: automated WCAG 2.2 AA gate on every route and both themes. Axe does not replace
 // the manual review (directive section 20); the report lists what was checked by hand.
-const ROUTES = ["/", "/login", "/register", "/watchlists", "/portfolios", "/compare", "/calendar", "/heatmap", "/atlas", "/assets?id=equity.br.b3.petr4", "/account", "/editorial/admin", "/admin/system"];
+const ROUTES = ["/", "/login", "/register", "/watchlists", "/portfolios", "/compare", "/calendar", "/heatmap", "/atlas", "/assets?id=equity.br.b3.petr4", "/markets", "/markets?tab=indices", "/account", "/editorial/admin", "/admin/system"];
 const THEMES = ["dark", "light"] as const;
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
@@ -63,6 +63,19 @@ test("keyboard: every focusable control on the dashboard shows a visible focus i
     if (state && !state.outlined) missing.push(state.name);
   }
   expect(missing).toEqual([]);
+});
+
+test("markets tabs follow the WAI-ARIA keyboard pattern and keep the tab in the URL", async ({ page }) => {
+  await settle(page, "/markets");
+  await page.getByRole("tab", { name: /Visão geral/ }).focus();
+  await page.keyboard.press("ArrowRight");
+  const equities = page.getByRole("tab", { name: /Ações Brasil/ });
+  await expect(equities).toBeFocused();
+  await expect(equities).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("End");
+  await expect(page.getByRole("tab", { name: /Fundos/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page).toHaveURL(/tab=fundos/);
+  await expect(page.getByRole("tabpanel")).toContainText("MUTUAL_FUND");
 });
 
 test("reduced motion keeps the information: the chart still has its table", async ({ page }) => {

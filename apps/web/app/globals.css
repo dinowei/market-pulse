@@ -142,7 +142,7 @@ h2 { font-size: 1rem; margin-bottom: 1rem; }
 .particle-chart figcaption { color: var(--pa-text-secondary); font-size: .72rem; margin-top: .5rem; }
 .chart-placeholder { display: grid; place-items: center; min-height: 15rem; border: 1px dashed var(--pa-border-hairline); color: var(--pa-text-secondary); text-align: center; gap: .4rem; padding: 2rem; }
 .chart-placeholder strong { color: var(--pa-market-flat); font-size: .8rem; font-weight: 400; }
-.table-wrap { overflow-x: auto; margin-top: 1rem; }
+.table-wrap { overflow-x: auto; margin-top: 1rem; position: relative; }
 table { border-collapse: collapse; width: 100%; min-width: 32rem; font-size: .78rem; }
 caption { color: var(--pa-text-secondary); text-align: left; margin-bottom: .5rem; }
 th, td { border-bottom: 1px solid var(--pa-border-hairline); padding: .55rem .4rem; text-align: right; }
@@ -313,7 +313,7 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .importance-low { border-left: 3px solid var(--pa-market-flat); }
 @media (max-width: 700px) { .editorial-admin-header, .editorial-admin-card { display: block; } .editorial-admin-header button, .editorial-admin-actions { margin-top: .7rem; } .editorial-admin-form { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .portfolios-header { display: block; } .portfolios-back { display: inline-block; margin-top: .5rem; } .portfolios-toolbar, .portfolio-summary-grid { grid-template-columns: 1fr; } .portfolio-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-/* ADR-023: chart type and Particle Atlas motion (P1, NEXT_PUBLIC_ATLAS_MOTION). */
+/* ADR-023: chart type, markets hub and Particle Atlas motion (P1, NEXT_PUBLIC_ATLAS_MOTION). */
 .control:disabled { cursor: not-allowed; opacity: .45; }
 .control-note { color: var(--pa-text-secondary); font-size: .7rem; margin: .4rem 0 0; max-width: 22rem; }
 .chart-axis-soft { stroke-dasharray: .6 .8; }
@@ -325,11 +325,59 @@ footer { border-top: 1px solid var(--pa-border-hairline); color: var(--pa-text-s
 .chart-candle-down .chart-wick { stroke: var(--pa-market-down); }
 .chart-candle-flat .chart-body, .chart-candle-flat .chart-wick { stroke: var(--pa-market-flat); }
 .chart-volume { fill: var(--pa-border-control); opacity: .55; }
+.markets-panel { margin: 0 auto; max-width: 74rem; }
+.markets-panel h1 { font-size: clamp(1.4rem, 3vw, 2.2rem); margin-bottom: 1rem; }
+.markets-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .6rem; justify-content: flex-end; }
+.markets-actions a { color: var(--pa-text-secondary); font-size: .78rem; }
+.pulse-field { background: radial-gradient(ellipse at 50% 40%, var(--pa-bg-elevated), var(--pa-bg-canvas) 70%); border: 1px solid var(--pa-border-hairline); border-radius: var(--pa-radius); margin: 1rem 0; padding: .75rem; }
+.pulse-field svg { display: block; height: auto; max-height: 12rem; overflow: visible; width: 100%; }
+.pulse-orbit { fill: var(--pa-bg-elevated); fill-opacity: .55; stroke: var(--pa-border-hairline); stroke-dasharray: 1.5 2.5; transition: stroke .3s ease, opacity .3s ease; }
+.pulse-cluster.active .pulse-orbit { stroke: var(--pa-border-control); }
+.pulse-cluster:not(.active) { opacity: .45; }
+.pulse-label { fill: var(--pa-text-secondary); font-size: 6.5px; letter-spacing: .06em; }
+.pulse-particle { transition: fill-opacity .3s ease, stroke-opacity .3s ease; }
+.pulse-particle.dim { fill-opacity: .25; stroke-opacity: .3; }
+.pulse-up { fill: var(--pa-market-up); }
+.pulse-down { fill: var(--pa-market-down); }
+.pulse-flat { fill: var(--pa-market-flat); }
+.pulse-unknown { fill: none; stroke: var(--pa-state-unavailable); stroke-width: .9; }
+.pulse-field figcaption { color: var(--pa-text-secondary); display: grid; font-size: .74rem; gap: .35rem; margin-top: .5rem; }
+.pulse-legend { display: flex; flex-wrap: wrap; gap: .4rem 1rem; }
+.markets-tabs { border-bottom: 1px solid var(--pa-border-hairline); display: flex; flex-wrap: wrap; gap: .25rem; margin: 1rem 0 0; }
+.markets-tab { background: transparent; border: 1px solid transparent; border-bottom: 0; border-radius: var(--pa-radius) var(--pa-radius) 0 0; color: var(--pa-text-secondary); cursor: pointer; font-size: .76rem; padding: .55rem .7rem; position: relative; }
+.markets-tab:hover { color: var(--pa-text-primary); }
+.markets-tab.active { background: var(--pa-bg-surface); border-color: var(--pa-border-hairline); color: var(--pa-text-primary); margin-bottom: -1px; }
+.markets-tab.active::after { background: var(--pa-text-primary); bottom: 0; content: ""; height: 2px; left: .7rem; position: absolute; right: .7rem; }
+.tab-count { color: var(--pa-text-secondary); font-size: .66rem; font-variant-numeric: tabular-nums; margin-left: .45rem; }
+.markets-tabpanel { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); border-top: 0; padding: 1rem; }
+.markets-compare { align-items: center; background: var(--pa-bg-elevated); border: 1px solid var(--pa-border-hairline); border-top: 0; display: flex; flex-wrap: wrap; font-size: .76rem; gap: .6rem 1rem; padding: .6rem 1rem; }
+.markets-compare-link { color: var(--pa-text-primary); font-weight: 600; text-underline-offset: .2em; }
+.markets-table .numeric { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.markets-table th small, .markets-table td small { color: var(--pa-text-secondary); font-weight: 400; }
+.markets-table th:nth-child(2), .markets-table td:nth-child(2) { text-align: left; }
+.markets-table td:first-child { width: 3rem; }
+.markets-table input[type="checkbox"] { height: 1.1rem; width: 1.1rem; }
+.row-reason { display: block; font-size: .64rem; margin-top: .25rem; }
+.markets-overview { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); list-style: none; margin: 0; padding: 0; }
+.markets-card { background: var(--pa-bg-canvas); border: 1px solid var(--pa-border-hairline); border-radius: var(--pa-radius); color: var(--pa-text-primary); cursor: pointer; display: grid; gap: .35rem; height: 100%; padding: .85rem; text-align: left; width: 100%; }
+.markets-card:hover { border-color: var(--pa-border-control); }
+.markets-card .eyebrow { margin: 0; }
+.markets-card strong { font-size: 1.05rem; font-weight: 600; }
+.markets-card .muted { font-size: .72rem; }
+.markets-card-symbols { color: var(--pa-text-secondary); font-size: .68rem; letter-spacing: .04em; overflow-wrap: anywhere; }
+.markets-unavailable ul { display: grid; gap: .5rem; list-style: none; margin: .8rem 0 0; padding: 0; }
+.markets-unavailable li { align-items: baseline; border: 1px dashed var(--pa-border-hairline); border-radius: var(--pa-radius); display: flex; flex-wrap: wrap; gap: .4rem 1rem; padding: .65rem .8rem; }
+.markets-unavailable li span:not(.state-label) { color: var(--pa-text-secondary); font-size: .74rem; }
+.markets-unavailable .state-label { margin-left: auto; }
+@media (max-width: 520px) { .pulse-label { display: none; } }
+@media (max-width: 700px) { .markets-panel .section-heading { display: block; } .markets-actions { justify-content: flex-start; margin-bottom: .8rem; } .markets-tab { padding: .5rem .55rem; } }
 /* One-shot transitions; they replay only when the drawing remounts (new key). */
 @keyframes atlas-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes atlas-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes atlas-rise { from { opacity: 0; transform: scaleY(.15); } to { opacity: 1; transform: none; } }
+@keyframes atlas-gather { from { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.3); } to { opacity: 1; transform: none; } }
 .atlas-motion .chart-draw { animation: atlas-draw .9s cubic-bezier(.3, .6, .2, 1) both; stroke-dasharray: 1; }
 .atlas-motion .chart-point { animation: atlas-fade .45s ease-out .55s both; }
 .atlas-motion .chart-candle, .atlas-motion .chart-volume { animation: atlas-rise .5s cubic-bezier(.3, .6, .2, 1) both; animation-delay: calc(min(var(--i), 60) * 8ms); transform-box: fill-box; transform-origin: 50% 100%; }
+.atlas-motion .pulse-particle { animation: atlas-gather .8s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(min(var(--i), 40) * 22ms); transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: reduce) { .atlas-motion *, .atlas-motion *::before, .atlas-motion *::after { animation: none !important; transition: none !important; } }

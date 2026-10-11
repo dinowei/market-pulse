@@ -4,3 +4,8 @@
 export function useRouter() {
   return { push() {} };
 }
+
+// A static render has no query string: an empty URLSearchParams, never invented params.
+export function useSearchParams() {
+  return new URLSearchParams();
+}
