@@ -76,7 +76,7 @@ function MarketTable({ tab, rows, selected, onToggle }: { tab: MarketTab; rows: 
           <td className="numeric">{value === null ? <span className="muted">Indisponível</span> : <>{value} <small>{row.unitDeclared ? row.currency : "unidade não declarada"}</small></>}</td>
           <td><ChangeCell row={row} /></td>
           <td><StateCell row={row} /></td>
-          <td>{formatUtc(row.officialAt)}</td>
+          <td>{row.officialAt || !row.sessionDate ? formatUtc(row.officialAt) : `Pregão ${row.sessionDate}`}</td>
           <td><small>{row.source ?? "—"}</small></td>
         </tr>;
       })}</tbody>

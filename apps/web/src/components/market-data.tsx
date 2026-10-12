@@ -46,9 +46,15 @@ export function ProvenancePanel({ data }: { data: PublicQuote | PublicHistorySer
         <div><dt>Dataset</dt><dd>{data.dataset}</dd></div>
         <div><dt>Data level</dt><dd>{data.data_level}</dd></div>
         <div><dt>Freshness</dt><dd>{data.freshness}</dd></div>
-        <div><dt>Horário oficial</dt><dd>{data.timestamp_official ?? "Indisponível"}</dd></div>
+        <div><dt>Horário oficial</dt><dd>{data.timestamp_official ?? (data.session_date ? `Só a data do pregão: ${data.session_date}` : "Indisponível")}</dd></div>
         <div><dt>Coletado em</dt><dd>{data.timestamp_collected}</dd></div>
+        {data.observed_at && <div><dt>Observado em</dt><dd>{data.observed_at}</dd></div>}
         <div><dt>Latência</dt><dd>{data.latency_ms == null ? "Indisponível" : `${data.latency_ms} ms`}</dd></div>
+        {data.timezone && <div><dt>Fuso do mercado</dt><dd>{data.timezone}</dd></div>}
+        {data.quality_status && <div><dt>Qualidade</dt><dd>{data.quality_status}</dd></div>}
+        {data.license_status && <div><dt>Licença</dt><dd>{data.license_status}</dd></div>}
+        <div><dt>Fonte reserva</dt><dd>{data.fallback_used ? "Sim: a fonte principal não respondeu" : "Não"}</dd></div>
+        <div><dt>DEMO</dt><dd>{data.is_demo ? "Sim, dado sintético" : "Não"}</dd></div>
       </dl>
       {data.limitations.length > 0 && <p className="limitation-note">Limitações: {data.limitations.join("; ")}</p>}
       {data.unavailable_reason && <p className="state-note">Motivo: {formatReason(data.unavailable_reason)}</p>}

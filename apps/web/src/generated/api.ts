@@ -1162,8 +1162,14 @@ export interface components {
             credentials: {
                 [key: string]: boolean;
             };
+            /** Credential Status */
+            credential_status?: {
+                [key: string]: string;
+            };
             /** Activation */
             activation: string;
+            /** Owner Activation */
+            owner_activation?: string | null;
             /** Rate Limits */
             rate_limits: string;
             /** Commercial Use */
@@ -1296,6 +1302,23 @@ export interface components {
         };
         /** BenchmarkItem */
         BenchmarkItem: {
+            /** Session Date */
+            session_date?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Quality Status */
+            quality_status?: string | null;
+            /** License Status */
+            license_status?: string | null;
+            /** Is Demo */
+            is_demo?: boolean | null;
+            /**
+             * Fallback Used
+             * @default false
+             */
+            fallback_used: boolean;
             /** Canonical Id */
             canonical_id: string;
             /** Symbol */
@@ -2255,6 +2278,23 @@ export interface components {
         };
         /** PublicHistorySeries */
         PublicHistorySeries: {
+            /** Session Date */
+            session_date?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Quality Status */
+            quality_status?: string | null;
+            /** License Status */
+            license_status?: string | null;
+            /** Is Demo */
+            is_demo?: boolean | null;
+            /**
+             * Fallback Used
+             * @default false
+             */
+            fallback_used: boolean;
             /** Canonical Id */
             canonical_id: string;
             /** Symbol */
@@ -2304,6 +2344,23 @@ export interface components {
         };
         /** PublicQuote */
         PublicQuote: {
+            /** Session Date */
+            session_date?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Quality Status */
+            quality_status?: string | null;
+            /** License Status */
+            license_status?: string | null;
+            /** Is Demo */
+            is_demo?: boolean | null;
+            /**
+             * Fallback Used
+             * @default false
+             */
+            fallback_used: boolean;
             /** Canonical Id */
             canonical_id: string;
             /** Symbol */

@@ -110,6 +110,8 @@ export type MarketRow = {
   freshness: Freshness | null;
   source: string | null;
   officialAt: string | null;
+  /** Trading day when the source names no time (EOD); never turned into midnight. */
+  sessionDate: string | null;
   reason: string | null;
   limitations: readonly string[];
   /** Catalog coverage in words (H-31); benchmarks are synthetic references. */
@@ -154,6 +156,7 @@ export function rowFromInstrument(item: InstrumentSummary, quote: PublicQuote | 
     // The API names a missing source "none"; that is the absence of a source, shown as "—".
     source: quote && quote.provider !== "none" ? `${quote.provider} · ${quote.dataset}` : null,
     officialAt: quote?.timestamp_official ?? null,
+    sessionDate: quote?.session_date ?? null,
     reason: quote ? quote.unavailable_reason ?? null : "QUOTE_NOT_LOADED",
     limitations: quote?.limitations ?? [],
     coverage: coverageLabel(item),
@@ -174,11 +177,13 @@ export function rowFromBenchmark(item: BenchmarkItem): MarketRow {
     changePercent: item.change_percent ?? null,
     dataLevel: item.data_level,
     freshness: item.freshness,
-    source: `${item.source} · ${item.dataset}`,
+    source: item.source !== "none" ? `${item.source} · ${item.dataset}` : null,
     officialAt: item.timestamp_official ?? null,
+    sessionDate: item.session_date ?? null,
     reason: item.unavailable_reason ?? null,
     limitations: item.limitations,
-    coverage: "Referência sintética · DEMO",
+    // ADR-027: a real-data answer says so; synthetic references keep saying DEMO.
+    coverage: item.is_demo !== false ? "Referência sintética · DEMO" : item.value == null ? "Referência · sem dado real" : "Referência · dado real (uso privado)",
     unitDeclared: false,
   };
 }

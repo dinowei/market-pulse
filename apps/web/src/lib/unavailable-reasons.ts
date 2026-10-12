@@ -13,6 +13,7 @@ const REASONS: Record<string, string> = {
   SOURCE_UNAVAILABLE: "A fonte não respondeu.",
   QUOTE_NOT_LOADED: "A cotação não foi carregada.",
   PROVIDER_PAUSED: "A fonte está pausada.",
+  SESSION_REQUIRED: "Dados reais só aparecem com a sessão do responsável (uso privado).",
 };
 
 export function explainReason(code: string | null | undefined): { code: string; text: string } | null {

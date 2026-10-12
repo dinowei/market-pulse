@@ -148,8 +148,11 @@ export function ProviderRegistry({ items }: { items: RegistryItem[] }) {
           <td>{item.status}</td>
           <td>{item.markets.join(", ")}<br /><small>{item.capabilities.join(", ") || "nenhuma"}</small></td>
           <td>{item.license_status}</td>
-          <td>{Object.entries(item.credentials).map(([name, present]) => <span key={name} className="admin-credential">{name}: {present ? "presente" : "ausente"}</span>)}</td>
-          <td>{item.activation === "ACTIVE" ? "Ativo" : formatReason(item.activation)}{item.blocked_reason && <><br /><small>{item.blocked_reason}</small></>}</td>
+          {/* ADR-027: PRESENTE, AUSENTE, INVÁLIDA or NÃO LIDA PELO CÓDIGO; never the value. */}
+          <td>{Object.keys(item.credential_status ?? {}).length > 0
+            ? Object.entries(item.credential_status ?? {}).map(([name, state]) => <span key={name} className="admin-credential">{name}: {state}</span>)
+            : Object.entries(item.credentials).map(([name, present]) => <span key={name} className="admin-credential">{name}: {present ? "presente" : "ausente"}</span>)}</td>
+          <td>{item.activation === "ACTIVE" ? "Ativo" : formatReason(item.activation)}{item.owner_activation && <><br /><small>Uso privado (ADR-027): {item.owner_activation === "ACTIVE" ? "ativo" : formatReason(item.owner_activation)}</small></>}{item.blocked_reason && <><br /><small>{item.blocked_reason}</small></>}</td>
           <td><small>{item.rate_limits}</small></td>
           <td>{item.verified_on}</td>
         </tr>)}</tbody>

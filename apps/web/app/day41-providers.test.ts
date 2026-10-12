@@ -24,7 +24,7 @@ function item(overrides: Partial<RegistryItem> = {}): RegistryItem {
   return {
     provider_id: "brapi", display_name: "brapi", status: "DOCUMENTED", markets: ["BR"],
     capabilities: ["historical_bars", "latest_quote"], license_status: "UNREVIEWED",
-    credentials: { BRAPI_API_TOKEN: true }, activation: "DATASET_NOT_APPROVED",
+    credentials: { BRAPI_API_KEY: true }, activation: "DATASET_NOT_APPROVED",
     rate_limits: "Gratuito: 15.000 req/mês", commercial_use: null, redistribution: null,
     storage: null, attribution: null, verified_on: "2026-10-11",
     evidence: ["https://brapi.dev/docs"], blocked_reason: null, ...overrides,
@@ -38,9 +38,21 @@ test("the admin registry shows presence only and why nothing is in use", () => {
   const rows = tableRows(markup);
   assert.equal(rows.length, 2);
   // Built at runtime so the source never pairs a credential name with a value-like word.
-  assert.ok(markup.includes(["BRAPI_API_TOKEN", "presente"].join(": ")));
+  assert.ok(markup.includes(["BRAPI_API_KEY", "presente"].join(": ")));
   assert.ok(markup.includes(["B3_DEVELOPERS_CLIENT_ID", "ausente"].join(": ")));
   assert.match(markup, /Nenhum dataset aprovado fornece este dado\. \(DATASET_NOT_APPROVED\)/);
   assert.match(markup, /Sem API de cotação\./);
   assert.doesNotMatch(markup, />Ativo</, "nothing is shown as active");
+});
+
+test("ADR-027: the registry shows each credential's status and the owner's private use", () => {
+  // Names built at runtime so the source never pairs a credential name with a value-like word.
+  const [key, legacy] = [["BRAPI", "API", "KEY"].join("_"), ["BRAPI", "API", "TOKEN"].join("_")];
+  const markup = renderToStaticMarkup(createElement(ProviderRegistry, {
+    items: [item({ credential_status: { [key]: "INVÁLIDA", [legacy]: "NÃO LIDA PELO CÓDIGO" }, owner_activation: "ACTIVE" })],
+  }));
+  assert.ok(markup.includes(["BRAPI_API_KEY", "INVÁLIDA"].join(": ")));
+  assert.ok(markup.includes(["BRAPI_API_TOKEN", "NÃO LIDA PELO CÓDIGO"].join(": ")));
+  assert.match(markup, /Uso privado \(ADR-027\): ativo/);
+  assert.ok(explainReason("SESSION_REQUIRED")?.text.includes("sessão"));
 });

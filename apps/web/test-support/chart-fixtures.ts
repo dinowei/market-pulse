@@ -16,7 +16,7 @@ export function historySeries(points: HistoryPoint[], overrides: Partial<History
     provider: "synthetic-fixture", dataset: "offline-chart-tests", timestamp_official: "2026-09-01T00:00:00Z",
     timestamp_collected: "2026-09-01T00:01:00Z", latency_ms: null,
     limitations: ["Dados sintéticos para teste offline."], points, tabular_fallback: true,
-    accessibility: { reduced_motion: true }, unavailable_reason: null, request_id: "offline-test", ...overrides,
+    accessibility: { reduced_motion: true }, unavailable_reason: null, request_id: "offline-test", fallback_used: false, ...overrides,
   };
 }
 

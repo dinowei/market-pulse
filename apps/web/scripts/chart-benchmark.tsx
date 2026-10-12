@@ -19,7 +19,7 @@ function series(count: number): PublicHistorySeries {
     canonical_id: "equity.br.b3.petr4", symbol: "PETR4", period: "MAX", mode: "PRICE", adjustment_type: "UNADJUSTED",
     currency: "BRL", data_level: "DEMO", freshness: "STALE", provider: "demo", dataset: "demo-history",
     timestamp_official: new Date(start).toISOString(), timestamp_collected: new Date(start).toISOString(), latency_ms: 0,
-    limitations: [], points, tabular_fallback: true, accessibility: { reduced_motion: true, smoothed: false }, request_id: "bench",
+    limitations: [], points, tabular_fallback: true, accessibility: { reduced_motion: true, smoothed: false }, request_id: "bench", fallback_used: false,
   } as PublicHistorySeries;
 }
 
