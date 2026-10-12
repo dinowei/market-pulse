@@ -334,6 +334,18 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
   - A arquitetura da ADR-025 continua pronta.
 - **Critério de pronto:** o responsável cadastra as chaves no painel do Render e decide formalmente a licença de cada provider (revisão dos termos e status no registro por pull request), ou autoriza explicitamente o modo de uso pessoal com essa ressalva.
 - **Classe:** C para o staging privado; A antes de qualquer exibição pública.
+- **Atualização de 2026-10-12 ([ADR-027](adr/027-owner-private-real-data-staging.md)):**
+  - **Decisão:** o responsável autorizou explicitamente o uso privado no staging.
+    - Dados reais aparecem só na sessão dele.
+    - O visitante sem sessão recebe `SESSION_REQUIRED`.
+    - O DEMO deixou de ser o padrão do staging.
+  - **Medido localmente:** com as chaves do `.env`, as cinco fontes responderam (8 chamadas,
+    uma por endpoint).
+  - **Continua aberto:**
+    - a licença pública de cada fonte, `A` antes de abrir o produto;
+    - o histórico do Ibovespa, fora do plano da brapi (403);
+    - proventos e desdobramentos reais, sem normalizador;
+    - cripto, S&P 500, Nasdaq, CDI, IPCA e IFIX, sem fonte aprovada.
 
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 

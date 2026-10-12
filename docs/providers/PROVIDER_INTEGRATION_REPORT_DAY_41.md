@@ -6,6 +6,41 @@
 - **Classificação:** arquitetura preparada, providers ainda não ativados.
 - **Este documento não ativa provider nem autoriza deploy.**
 
+## Atualização de 2026-10-12: ativação no staging privado
+
+- **Decisão:** [ADR-027](../adr/027-owner-private-real-data-staging.md), por pedido explícito do
+  responsável. A licença das respostas é `OWNER_APPROVED_PRIVATE_STAGING`, não
+  `PUBLIC_APPROVED`, e só a sessão do responsável recebe dado real.
+- **Código:**
+  - o gateway fica em `app/market_data/live_data.py`;
+  - os contratos são montados em `app/market_data/real_market_data.py`;
+  - o registro e os normalizadores continuam os da ADR-025.
+- **Chamadas reais medidas localmente**, com as chaves do `.env`: uma por endpoint, sem laço
+  (`MARKET_PULSE_LIVE_PROVIDER_TESTS=1`, `tests/test_live_providers_optin.py`).
+
+  | Provider | Endpoint | Resultado |
+  | --- | --- | --- |
+  | brapi | cotação PETR4 e `^BVSP` | OK |
+  | brapi | histórico PETR4 com `includeRaw` | OK |
+  | brapi | histórico `^BVSP` | 403, fora do plano: fica `LICENSE_BLOCKED` |
+  | Twelve Data | `quote` e `time_series` AAPL (`adjust=none`) | OK |
+  | Alpha Vantage | `GLOBAL_QUOTE` AAPL | OK |
+  | Open Exchange Rates | `latest` USD/BRL | OK |
+  | Massive | barras diárias AAPL, sem ajuste | OK |
+
+- **Pelo gateway completo:**
+  - PETR4 pela brapi (`DELAYED`);
+  - AAPL pela Twelve Data, só com a data do pregão;
+  - séries de 3 meses das duas;
+  - Ibovespa pela brapi e USD/BRL pela Open Exchange Rates;
+  - a segunda consulta saiu do cache.
+- **Ainda indisponível, com motivo:**
+  - histórico do Ibovespa;
+  - cripto;
+  - S&P 500, Nasdaq, CDI, IPCA e IFIX;
+  - proventos e desdobramentos reais;
+  - câmbio por Twelve Data ou Alpha Vantage, sem normalizador verificado.
+
 ## 1. Estado atual do projeto
 
 - **Remoto:** staging em `fa6a95c`, com Vercel e Render alinhados e validados sem login.

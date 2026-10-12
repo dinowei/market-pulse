@@ -86,10 +86,17 @@ runbook.
 | `MARKET_PULSE_AUTH_COOKIE_SECURE` | `true`. O login já força `Secure` fora de `local`/`test`; deixar explícito. |
 | `MARKET_PULSE_AUTH_COOKIE_SAMESITE` | `lax`; `none` é recusado no boot (ADR-008). |
 | `MARKET_PULSE_REGISTRATION_ENABLED` | Vazio ou `false`. Ver o item 6. |
+| `MARKET_PULSE_REAL_DATA_PROVIDERS` | Desde 2026-10-12 ([ADR-027](../adr/027-owner-private-real-data-staging.md)): `brapi,twelve_data,alpha_vantage,open_exchange_rates,massive`. Recusado no boot com DEMO, cadastro aberto ou em produção. |
+| `BRAPI_API_KEY`, `TWELVE_DATA_API_KEY`, `ALPHA_VANTAGE_API_KEY`, `OPEN_EXCHANGE_RATES_APP_ID`, `MASSIVE_API_KEY` | Valores cadastrados pelo responsável no painel (`sync: false` no Blueprint). `BRAPI_API_TOKEN` não é mais lido. |
 
 **Não definir no staging:** `MARKET_PULSE_TEST_*`, `MARKET_PULSE_DEMO_DATABASE_URL`,
-`MARKET_PULSE_DEMO_ALLOW_RECREATE`, `APP_ENV` e qualquer chave de provider. As demais
-variáveis `MARKET_PULSE_*` têm padrão no código.
+`MARKET_PULSE_DEMO_ALLOW_RECREATE`, `APP_ENV`, `HG_BRASIL_API_KEY` e as chaves da B3. As
+demais variáveis `MARKET_PULSE_*` têm padrão no código.
+
+**Conferir as chaves sem ver os valores:** no shell do serviço, `uv run python -m
+app.providers.credentials_report` lista PRESENTE, AUSENTE ou NÃO LIDA PELO CÓDIGO por
+variável. O painel interno (`/admin/system`) também mostra INVÁLIDA quando o provider
+responde 401.
 
 ## 5. Vercel — web
 

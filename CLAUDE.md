@@ -168,14 +168,30 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
 
     **Nenhum provider está ativo.** Detalhes no
     [relatório](docs/providers/PROVIDER_INTEGRATION_REPORT_DAY_41.md).
-  - **Sistema visual v2 (ADR-026), só no código:**
+  - **Sistema visual v2 (ADR-026):**
     - cabeçalho único em todas as páginas;
     - IBM Plex Sans e mono do sistema;
     - textura de partículas e moldura técnica;
     - CSS dentro do orçamento de 10 KB.
-  - **H-34:** os dados reais de providers dependem das chaves no Render (cadastradas pelo
-    responsável) e de decisão de licença; o modo de uso pessoal foi bloqueado pela trava de
-    segurança da sessão.
+
+    Em 2026-10-12 (`ee9db95`), abaixo de 1024 px o cabeçalho passou a rolar com a página e o
+    menu ficou numa linha. **Medido:** 12 rotas × 5 larguras sem rolagem lateral e E2E de
+    acessibilidade com 40 de 40.
+  - **Dados reais no staging privado (ADR-027, 2026-10-12):**
+    - **Decisão:** autorizados pelo responsável; só a sessão dele vê dado real.
+    - **Visitante sem sessão:** recebe `SESSION_REQUIRED`.
+    - **DEMO:** deixa de ser o padrão do staging.
+    - **Fontes:** brapi, Twelve Data, Alpha Vantage, Open Exchange Rates e Massive, ligadas
+      por `MARKET_PULSE_REAL_DATA_PROVIDERS`.
+    - **Recusa no boot:** em produção, com DEMO ou com cadastro aberto.
+
+    **Medido localmente:**
+    - 8 chamadas reais, todas OK;
+    - histórico do Ibovespa com 403 (fora do plano);
+    - backend com 486 passed;
+    - frontend com 112 testes.
+
+    A licença pública continua `UNREVIEWED` (H-34, classe A antes de abrir o produto).
   - **Banco do staging expira em 2026-11-05 (H-29).**
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
