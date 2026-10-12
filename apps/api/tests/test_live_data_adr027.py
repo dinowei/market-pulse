@@ -10,6 +10,7 @@ import json
 import urllib.error
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -245,6 +246,31 @@ def test_real_data_is_refused_in_production_with_demo_with_open_signup_and_for_b
         "twelve_data",
     )
     assert _settings().real_data_providers == ()
+
+
+def test_the_staging_blueprint_activates_real_data_and_boots():
+    blueprint = (Path(__file__).parents[3] / "render.yaml").read_text(encoding="utf-8")
+    lines = blueprint.splitlines()
+
+    def value_of(key: str) -> str | None:
+        index = next(i for i, line in enumerate(lines) if line.strip() == f"- key: {key}")
+        following = lines[index + 1].strip()
+        return (
+            following.removeprefix("value: ").strip('"') if following.startswith("value:") else None
+        )
+
+    providers = value_of("MARKET_PULSE_REAL_DATA_PROVIDERS")
+    assert providers == APPROVED
+    for key in KEYS:
+        assert value_of(key) is None, f"{key} must be set in the dashboard, never in the file"
+    validate_real_data_settings(
+        _settings(
+            real_data_providers=providers,
+            environment=value_of("MARKET_PULSE_ENVIRONMENT"),
+            demo_enabled=value_of("MARKET_PULSE_DEMO_ENABLED") == "true",
+            registration_enabled=value_of("MARKET_PULSE_REGISTRATION_ENABLED") == "true",
+        )
+    )
 
 
 def test_credential_status_shows_names_only():
