@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -55,4 +57,9 @@ test("ADR-027: the registry shows each credential's status and the owner's priva
   assert.ok(markup.includes(["BRAPI_API_TOKEN", "NÃO LIDA PELO CÓDIGO"].join(": ")));
   assert.match(markup, /Uso privado \(ADR-027\): ativo/);
   assert.ok(explainReason("SESSION_REQUIRED")?.text.includes("sessão"));
+});
+
+test("ADR-027: an empty panel is UNAVAILABLE, never labelled DEMO", () => {
+  const dashboard = readFileSync(join(process.cwd(), "src", "components", "market-data.tsx"), "utf8");
+  assert.doesNotMatch(dashboard, /UNAVAILABLE · DEMO/, "no data is not demo data");
 });
