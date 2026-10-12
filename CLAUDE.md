@@ -192,6 +192,22 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     - frontend com 112 testes.
 
     A licença pública continua `UNREVIEWED` (H-34, classe A antes de abrir o produto).
+
+    **Staging alinhado em `87fdfc5` (2026-10-12 20:29 UTC, autorizado):**
+    - Vercel com status `success` e Render `dep-db6k5f84…` `live`, no mesmo commit;
+    - `MARKET_PULSE_REAL_DATA_PROVIDERS` aplicada pela API do Render;
+    - o deploy foi disparado pela API, porque o deploy automático segue sem disparar (H-33).
+
+    **Medido sem login:**
+    - 12 páginas com 200;
+    - health e ready com 200;
+    - docs com 404;
+    - sem sessão, cotação, série, benchmarks e heatmap vêm como `SESSION_REQUIRED` com
+      `is_demo=false` e `Cache-Control: private, no-store`;
+    - zero 5xx.
+
+    **Falta:** o responsável conferir os dados reais com login e o estado das chaves no
+    painel interno, porque o agente não digita senha.
   - **Banco do staging expira em 2026-11-05 (H-29).**
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
@@ -220,8 +236,16 @@ ficam como reserva.
 A Fase 2 terminou no Dia 40 com gates abertos. A ordem das próximas ações está na seção 3
 do [handoff final](docs/FINAL_HANDOFF_DAY_40.md):
 
-1. O usuário faz o smoke com login no staging (`fa6a95c`): login, watchlist, carteira,
-   drawdown e logout. Depois, decide o que fazer com o deploy automático do Render (H-33).
+1. O usuário faz o smoke com login no staging (`87fdfc5`):
+   - login;
+   - cotação real de PETR4 e AAPL;
+   - Ibovespa e USD/BRL nos benchmarks;
+   - watchlist, carteira e drawdown;
+   - estado das chaves em `/admin/system`;
+   - logout.
+
+   Depois, decide o que fazer com o deploy automático do Render (H-33) e revisa os termos de
+   uso das cinco fontes antes de qualquer abertura (H-34, ADR-027).
 2. Decidir o banco do staging antes de 2026-11-05 (H-29).
 3. O usuário desbloqueia a cobrança do GitHub (H-05), o que libera o CI e as rodadas
    oficiais (`release-gate.yml`).
