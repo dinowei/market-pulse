@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -26,4 +28,14 @@ test("route matching keeps the dashboard exact and sections by prefix", () => {
 
 test("the dashboard renders its own header with search, so the shared chrome stays out", () => {
   assert.equal(renderToStaticMarkup(createElement(SiteChrome)), "");
+});
+
+test("below desktop width the header scrolls away and the menu stays one row", () => {
+  const css = readFileSync(join(process.cwd(), "app", "globals.css"), "utf8");
+  const narrow = css.slice(css.indexOf("@media (max-width: 1023px)"));
+  assert.match(narrow, /\.site-header \{ position: static; \}/, "a tall sticky header would cover focused content");
+  assert.match(narrow, /\.site-header nav \{ flex-wrap: nowrap; overflow-x: auto;/);
+  assert.match(css, /scroll-padding-top: 8rem;/, "focus and the skip link clear the sticky desktop header");
+  const header = readFileSync(join(process.cwd(), "src", "components", "site-header.tsx"), "utf8");
+  assert.match(header, /\[aria-current="page"\]'\)\?\.scrollIntoView/, "the current page stays visible in the scrolled menu");
 });

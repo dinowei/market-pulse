@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { API_BASE } from "../lib/api-client";
 import { PaletteToggle } from "./palette-toggle";
@@ -39,6 +39,12 @@ export function SiteHeader({ search, extraLinks }: { search?: ReactNode; extraLi
   const pathname = usePathname() ?? "/";
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  // Below desktop width the menu scrolls sideways: keep the current page in view.
+  useEffect(() => {
+    navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [pathname]);
 
   async function logout() {
     try {
@@ -56,7 +62,7 @@ export function SiteHeader({ search, extraLinks }: { search?: ReactNode; extraLi
       <header className={search ? "topbar site-header" : "topbar site-header site-header-plain"}>
         <Link className="brand" href="/"><BrandMark /><span className="brand-name">MARKET PULSE</span> <span>BETA</span></Link>
         {search}
-        <nav aria-label="Navegação principal">
+        <nav ref={navRef} aria-label="Navegação principal">
           {SITE_NAV.map((item) => {
             const active = isActiveRoute(pathname, item.href);
             return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={active ? "nav-active" : undefined}>{item.label}</Link>;

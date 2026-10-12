@@ -55,8 +55,9 @@ uma escala sugerida.
 | Espaçamento | **Sem escala formal**: valores em `rem` por componente; o mais comum é `1rem`, e as páginas usam `clamp(1rem, 4vw, 3rem)` de margem interna |
 | Raio | `--pa-radius: 4px` em painéis; `999px` em controles, menu e selos |
 | Profundidade | Sem sombra projetada: camadas de fundo, gradiente sutil no topo dos painéis, marcas técnicas nos cantos e textura de pontos no fundo (decorativa) |
-| Breakpoints | `max-width: 1050px` e `max-width: 700px` |
-| Camadas | Um único `z-index: 2`, nos resultados da busca |
+| Breakpoints | `max-width: 1050px`, `max-width: 1023px` (cabeçalho) e `max-width: 700px` |
+| Cabeçalho | Fixo no topo só a partir de 1024 px, com `scroll-padding-top: 8rem` para o foco não ficar sob ele; abaixo disso rola com a página e o menu vira uma linha com rolagem lateral, mantendo a página atual visível |
+| Camadas | `z-index: 20` no cabeçalho fixo; `z-index: 2` nos resultados da busca |
 
 **Estados de interação:**
 
