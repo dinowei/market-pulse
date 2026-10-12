@@ -84,7 +84,7 @@ from app.contracts import (
     WebVitalsRequest,
 )
 from app.core.client_ip import client_ip
-from app.core.config import get_settings, registration_open
+from app.core.config import get_settings, is_protected_environment, registration_open
 from app.editorial.service import InMemoryEditorialService, PostgresEditorialService
 from app.editorial.validator import EditorialStatus, validate_editorial_blocks
 from app.errors import request_id as request_id_for
@@ -113,6 +113,17 @@ from app.market_data.economic_calendar import (
 from app.market_data.heatmap import market_heatmap
 from app.market_data.normalization import AdjustmentType
 from app.market_data.public_market_data import public_history, public_quote
+from app.market_data.real_market_data import (
+    not_configured_benchmarks,
+    not_configured_quote,
+    not_configured_series,
+    real_benchmarks,
+    real_quote,
+    real_series,
+    session_required_benchmarks,
+    session_required_quote,
+    session_required_series,
+)
 from app.market_data.refresh_application import (
     RefreshBatchRequest,
     RefreshBatchResponse,
@@ -497,6 +508,76 @@ def search_instruments(
     return _page(search_catalog(q), limit, offset)
 
 
+# ADR-027: where market data comes from for this request.
+SYNTHETIC, REAL_OWNER, REAL_ANONYMOUS, NOT_CONFIGURED = (
+    "SYNTHETIC",
+    "REAL_OWNER",
+    "REAL_ANONYMOUS",
+    "NOT_CONFIGURED",
+)
+
+
+def _signed_in(request: Request) -> bool:
+    if isinstance(getattr(request.state, "authenticated_user", None), AuthUserResponse):
+        return True
+    token = request.cookies.get(get_settings().auth_cookie_name)
+    if not token:
+        return False
+    try:
+        get_auth_service().me(token)
+    except Exception:
+        return False
+    return True
+
+
+def market_data_mode(request: Request) -> str:
+    """Real data for the owner's session; never DEMO by accident on a protected environment."""
+
+    settings = get_settings()
+    if settings.real_data_providers:
+        return REAL_OWNER if _signed_in(request) else REAL_ANONYMOUS
+    if is_protected_environment(settings):
+        return NOT_CONFIGURED
+    return SYNTHETIC
+
+
+def _keep_private(response: Response, mode: str) -> None:
+    # A shared cache must never hand the owner's real data to someone else.
+    if mode in (REAL_OWNER, REAL_ANONYMOUS):
+        response.headers["Cache-Control"] = "private, no-store"
+        response.headers["Vary"] = "Cookie"
+
+
+def _quote_for(mode: str, canonical_id: str, request_id: str) -> PublicQuote:
+    if mode == REAL_OWNER:
+        return real_quote(canonical_id, request_id)
+    if mode == REAL_ANONYMOUS:
+        return session_required_quote(canonical_id, request_id)
+    if mode == NOT_CONFIGURED:
+        return not_configured_quote(canonical_id, request_id)
+    return public_quote(canonical_id, request_id)
+
+
+def _series_for(
+    mode: str,
+    canonical_id: str,
+    period: HistoryPeriod,
+    series_mode: SeriesMode,
+    request_id: str,
+    adjustment_type: str,
+) -> PublicHistorySeries:
+    if mode == REAL_OWNER:
+        return real_series(canonical_id, period, series_mode, request_id, adjustment_type)
+    if mode == REAL_ANONYMOUS:
+        return session_required_series(canonical_id, period, series_mode, request_id)
+    if mode == NOT_CONFIGURED:
+        return not_configured_series(canonical_id, period, series_mode, request_id)
+    series = benchmark_series(canonical_id, period, series_mode, request_id)
+    if series is not None:
+        return series
+    return public_history(canonical_id, period, series_mode, request_id, adjustment_type)
+
+
 @router.get("/market-data/quotes/latest", tags=["market-data"])
 def latest_quote() -> dict[str, object]:
     return {"items": [], "status": "UNAVAILABLE", "reason": "LICENSE_BLOCKED"}
@@ -507,9 +588,11 @@ def latest_quote() -> dict[str, object]:
     response_model=PublicQuote,
     tags=["market-data"],
 )
-def public_quote_by_id(canonical_id: str, request: Request) -> PublicQuote:
+def public_quote_by_id(canonical_id: str, request: Request, response: Response) -> PublicQuote:
+    mode = market_data_mode(request)
+    _keep_private(response, mode)
     try:
-        return public_quote(canonical_id, request_id_for(request))
+        return _quote_for(mode, canonical_id, request_id_for(request))
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Instrument not found") from exc
 
@@ -519,11 +602,15 @@ def public_quote_by_id(canonical_id: str, request: Request) -> PublicQuote:
     response_model=BatchQuoteResponse,
     tags=["market-data"],
 )
-def public_quotes_batch(payload: BatchQuoteRequest, request: Request) -> BatchQuoteResponse:
+def public_quotes_batch(
+    payload: BatchQuoteRequest, request: Request, response: Response
+) -> BatchQuoteResponse:
+    mode = market_data_mode(request)
+    _keep_private(response, mode)
     items: list[PublicQuote] = []
     for canonical_id in payload.canonical_ids:
         try:
-            items.append(public_quote(canonical_id, request_id_for(request)))
+            items.append(_quote_for(mode, canonical_id, request_id_for(request)))
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="Instrument not found") from exc
     return BatchQuoteResponse(items=items)
@@ -534,7 +621,15 @@ def public_quotes_batch(payload: BatchQuoteRequest, request: Request) -> BatchQu
     response_model=BenchmarkListResponse,
     tags=["market-data", "benchmarks"],
 )
-def public_benchmarks() -> BenchmarkListResponse:
+def public_benchmarks(request: Request, response: Response) -> BenchmarkListResponse:
+    mode = market_data_mode(request)
+    _keep_private(response, mode)
+    if mode == REAL_OWNER:
+        return BenchmarkListResponse(items=real_benchmarks())
+    if mode == REAL_ANONYMOUS:
+        return BenchmarkListResponse(items=session_required_benchmarks())
+    if mode == NOT_CONFIGURED:
+        return BenchmarkListResponse(items=not_configured_benchmarks())
     return BenchmarkListResponse(items=benchmark_items())
 
 
@@ -543,8 +638,13 @@ def public_benchmarks() -> BenchmarkListResponse:
     response_model=HeatmapResponse,
     tags=["market-data"],
 )
-def public_heatmap(request: Request) -> HeatmapResponse:
-    return market_heatmap(request_id_for(request))
+def public_heatmap(request: Request, response: Response) -> HeatmapResponse:
+    mode = market_data_mode(request)
+    _keep_private(response, mode)
+    return market_heatmap(
+        request_id_for(request),
+        quote=lambda canonical_id, request_id: _quote_for(mode, canonical_id, request_id),
+    )
 
 
 @router.get(
@@ -569,6 +669,7 @@ def public_corporate_actions(
 def public_history_by_id(
     canonical_id: str,
     request: Request,
+    response: Response,
     period: HistoryPeriod = Query(...),
     mode: SeriesMode = Query(SeriesMode.PRICE),
     adjustment_type: AdjustmentType = Query(AdjustmentType.UNADJUSTED),
@@ -582,18 +683,14 @@ def public_history_by_id(
         ),
     ),
 ) -> PublicHistorySeries:
-    series = benchmark_series(canonical_id, period, mode, request_id_for(request))
-    if series is None:
-        try:
-            series = public_history(
-                canonical_id,
-                period,
-                mode,
-                request_id_for(request),
-                adjustment_type.value,
-            )
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail="Instrument not found") from exc
+    data_mode = market_data_mode(request)
+    _keep_private(response, data_mode)
+    try:
+        series = _series_for(
+            data_mode, canonical_id, period, mode, request_id_for(request), adjustment_type.value
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Instrument not found") from exc
     return _with_display_downsampling(series, max_points)
 
 
@@ -625,17 +722,17 @@ def _with_display_downsampling(
 def public_history_batch(
     payload: BatchHistoryRequest,
     request: Request,
+    response: Response,
 ) -> BatchHistoryResponse:
     request_id = request_id_for(request)
+    data_mode = market_data_mode(request)
+    _keep_private(response, data_mode)
     items: list[PublicHistorySeries] = []
     for canonical_id in payload.canonical_ids:
-        benchmark = benchmark_series(canonical_id, payload.period, payload.mode, request_id)
-        if benchmark is not None:
-            items.append(benchmark)
-            continue
         try:
             items.append(
-                public_history(
+                _series_for(
+                    data_mode,
                     canonical_id,
                     payload.period,
                     payload.mode,

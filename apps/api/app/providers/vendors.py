@@ -220,6 +220,72 @@ def brapi_quote(
     )
 
 
+def brapi_series_request(ref: InstrumentRef, range_: str) -> ProviderRequest:
+    # brapi OpenAPI 3.0.0 (read 2026-10-12): daily open/high/low/close "podem vir ajustados";
+    # only includeRaw (Pro plan) returns rawOpen/rawHigh/rawLow/rawClose without adjustment.
+    return ProviderRequest(
+        "brapi",
+        "GET",
+        "https://brapi.dev/api/v2/stocks/historical",
+        {
+            "symbols": ref.provider_symbol,
+            "range": range_,
+            "interval": "1d",
+            "sortOrder": "asc",
+            "includeRaw": "true",
+        },
+        auth_header="Authorization",
+        auth_scheme="Bearer",
+    )
+
+
+_BRAPI_RAW = {"open": "rawOpen", "high": "rawHigh", "low": "rawLow", "close": "rawClose"}
+
+
+def brapi_series(payload: Mapping[str, Any], ref: InstrumentRef) -> SeriesResult:
+    """Unadjusted daily bars from the raw* fields; a session without them is left out."""
+
+    results = payload.get("results")
+    if not isinstance(results, list):
+        raise _schema("results ausente")
+    item = next(
+        (
+            row
+            for row in results
+            if isinstance(row, dict) and row.get("requestedSymbol") == ref.provider_symbol
+        ),
+        None,
+    )
+    data = item.get("data") if isinstance(item, dict) else None
+    rows = data.get("historicalDataPrice") if isinstance(data, dict) else None
+    if not isinstance(rows, list):
+        raise _schema(f"historicalDataPrice ausente para {ref.provider_symbol}")
+    raw_rows = [
+        {"date": row.get("date"), "volume": row.get("volume")}
+        | {key: row.get(source) for key, source in _BRAPI_RAW.items()}
+        for row in rows
+        if isinstance(row, dict)
+        and all(row.get(source) is not None for source in _BRAPI_RAW.values())
+    ]
+    if rows and not raw_rows:
+        raise _schema("sem preço sem ajuste (raw*): includeRaw exige o plano Pro da brapi")
+
+    def instant(row: Mapping[str, Any]) -> datetime:
+        stamp = row.get("date")
+        if not isinstance(stamp, int) or isinstance(stamp, bool):
+            raise _schema("date ausente ou não inteiro")
+        # Documented as the session date in Unix seconds.
+        return datetime.fromtimestamp(stamp, UTC)
+
+    fields = {key: key for key in ("open", "high", "low", "close", "volume")}
+    skipped = len(rows) - len(raw_rows)
+    return SeriesResult(
+        _bars(raw_rows, ref, ref.currency, AdjustmentType.UNADJUSTED, instant, fields),
+        partial=skipped > 0,
+        notes=(f"RAW_MISSING: {skipped} pregões sem preço sem ajuste",) if skipped else (),
+    )
+
+
 # --- Twelve Data ---------------------------------------------------------------------------
 
 
@@ -231,6 +297,7 @@ def _twelve_data_error(payload: Mapping[str, Any]) -> None:
             reason_for_status("twelve_data", status),
             f"Twelve Data respondeu erro {status}",
             retryable=status == 429,
+            http_status=status or None,
         )
 
 
@@ -280,6 +347,7 @@ def twelve_data_quote(
 
 
 def twelve_data_series_request(ref: InstrumentRef, outputsize: int = 30) -> ProviderRequest:
+    # `adjust` defaults to "splits" (docs read 2026-10-12); "none" keeps the series unadjusted.
     return ProviderRequest(
         "twelve_data",
         "GET",
@@ -289,6 +357,7 @@ def twelve_data_series_request(ref: InstrumentRef, outputsize: int = 30) -> Prov
             "interval": "1day",
             "outputsize": str(outputsize),
             "timezone": "UTC",
+            "adjust": "none",
         },
         auth_header="Authorization",
         auth_scheme="apikey",
@@ -426,6 +495,7 @@ def open_exchange_rates_rate(
         raise NormalizationError(
             reason_for_status("open_exchange_rates", status),
             f"Open Exchange Rates respondeu {payload.get('message', 'erro')}",
+            http_status=status or None,
         )
     if payload.get("base") != base:
         raise _schema(f"base {payload.get('base')} difere da pedida {base}")

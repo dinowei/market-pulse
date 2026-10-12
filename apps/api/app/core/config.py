@@ -52,6 +52,19 @@ class Settings(BaseSettings):
     # H-23 (ADR-020): proxies in front of the API that append to X-Forwarded-For. 0 ignores
     # the header (the socket peer is the client); only set it for a measured, exclusive chain.
     trusted_proxy_hops: Annotated[int, Field(ge=0, le=5)] = 0
+    # ADR-027: providers the owner approved for the private staging, comma-separated registry
+    # ids. Empty keeps real data off. Refused in production, with DEMO or with open sign-up.
+    real_data_providers: Annotated[tuple[str, ...], NoDecode] = ()
+
+    @field_validator("real_data_providers", mode="before")
+    @classmethod
+    def _parse_provider_ids(cls, value: object) -> object:
+        if isinstance(value, str):
+            value = value.split(",")
+        if isinstance(value, (list, tuple)):
+            ids = (str(item).strip().lower() for item in value)
+            return tuple(dict.fromkeys(item for item in ids if item))
+        return value
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -79,6 +92,36 @@ def registration_open(settings: Settings) -> bool:
     if settings.registration_enabled is not None:
         return settings.registration_enabled
     return not is_protected_environment(settings)
+
+
+def validate_real_data_settings(settings: Settings) -> None:
+    """ADR-027: real data only in a private staging, never mixed with DEMO."""
+
+    if not settings.real_data_providers:
+        return
+    if settings.environment.lower() == "production":
+        raise ProductionConfigurationError(
+            "Forbidden configuration: MARKET_PULSE_REAL_DATA_PROVIDERS is not allowed in "
+            "production before a PUBLIC_APPROVED license decision"
+        )
+    if settings.demo_enabled:
+        raise ProductionConfigurationError(
+            "Forbidden configuration: MARKET_PULSE_REAL_DATA_PROVIDERS and "
+            "MARKET_PULSE_DEMO_ENABLED cannot be combined (DEMO and real data never mix)"
+        )
+    if registration_open(settings):
+        raise ProductionConfigurationError(
+            "Forbidden configuration: MARKET_PULSE_REAL_DATA_PROVIDERS requires registration "
+            "to stay closed (private use by the owner's account)"
+        )
+    from app.providers.registry import owner_use_blockers
+
+    blockers = owner_use_blockers(settings.real_data_providers)
+    if blockers:
+        raise ProductionConfigurationError(
+            "Invalid setting: MARKET_PULSE_REAL_DATA_PROVIDERS names providers that cannot be "
+            f"used: {', '.join(blockers)}"
+        )
 
 
 def validate_production_settings(settings: Settings) -> None:

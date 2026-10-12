@@ -109,5 +109,7 @@ class ProviderHttpTransport:
                 f"{self.entry.provider_id} respondeu HTTP {status}"
                 + (f"; aguardar {retry_after:.0f}s" if retry_after is not None else ""),
                 retryable=reason is UnavailableReason.RATE_LIMITED or status >= 500,
+                http_status=status,
+                retry_after_seconds=retry_after,
             )
         return TransportResponse(status, payload, retry_after)

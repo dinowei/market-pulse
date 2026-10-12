@@ -6,7 +6,9 @@ here: a tile without a previous close keeps a null change, and an instrument wit
 approved dataset stays UNAVAILABLE.
 """
 
-from app.contracts import HeatmapGroup, HeatmapResponse
+from collections.abc import Callable
+
+from app.contracts import HeatmapGroup, HeatmapResponse, PublicQuote
 from app.instruments.catalog import CatalogStatus, get_catalog
 from app.market_data.public_market_data import public_quote
 
@@ -22,7 +24,10 @@ HEATMAP_LIMITATIONS = (
 )
 
 
-def market_heatmap(request_id: str) -> HeatmapResponse:
+def market_heatmap(
+    request_id: str, quote: Callable[[str, str], PublicQuote] = public_quote
+) -> HeatmapResponse:
+    """`quote` is the request's data source (ADR-027): synthetic locally, real for the owner."""
     entries = [
         entry
         for entry in get_catalog()
@@ -33,7 +38,7 @@ def market_heatmap(request_id: str) -> HeatmapResponse:
         HeatmapGroup(
             group=kind,
             tiles=[
-                public_quote(entry.canonical_id, request_id)
+                quote(entry.canonical_id, request_id)
                 for entry in entries
                 if entry.instrument_type.upper() == kind
             ],

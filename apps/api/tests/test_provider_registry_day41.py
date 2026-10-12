@@ -115,21 +115,22 @@ def test_serve_falls_back_once_and_keeps_the_trace() -> None:
         return ActivationDecision(True, None)
 
     def call(provider_id: str) -> str:
-        if provider_id == "massive":
+        if provider_id == "twelve_data":
             raise ProviderError("PROVIDER_RATE_LIMIT", "limit", retryable=True)
         return f"quote-from-{provider_id}"
 
-    breaker = CircuitBreaker(failure_threshold=1, cooldown_seconds=60, clock=lambda: 0.0)
+    # Owner's order for the US (2026-10-12): Twelve Data, Massive, Alpha Vantage.
+    breakers = {
+        "twelve_data": CircuitBreaker(failure_threshold=1, cooldown_seconds=60, clock=lambda: 0.0)
+    }
     result, trace = serve(
-        ProviderCapability.LATEST_QUOTE, "US", call, breakers={"massive": breaker}, decide=allow
+        ProviderCapability.LATEST_QUOTE, "US", call, breakers=breakers, decide=allow
     )
-    assert result == "quote-from-twelve_data"
-    assert (trace.primary, trace.served_by, trace.fallback_used) == ("massive", "twelve_data", True)
+    assert result == "quote-from-massive"
+    assert (trace.primary, trace.served_by, trace.fallback_used) == ("twelve_data", "massive", True)
     assert [attempt.outcome for attempt in trace.attempts] == ["RATE_LIMITED", "SERVED"]
-    assert breaker.state == CircuitBreaker.OPEN
-    _, again = serve(
-        ProviderCapability.LATEST_QUOTE, "US", call, breakers={"massive": breaker}, decide=allow
-    )
+    assert breakers["twelve_data"].state == CircuitBreaker.OPEN
+    _, again = serve(ProviderCapability.LATEST_QUOTE, "US", call, breakers=breakers, decide=allow)
     assert again.attempts[0].outcome == "CIRCUIT_OPEN"
 
 
@@ -166,12 +167,18 @@ def test_circuit_breaker_opens_and_half_opens() -> None:
 def test_admin_registry_shows_presence_only_and_never_the_value(monkeypatch) -> None:
     from app.admin.system import _provider_registry
 
-    monkeypatch.setenv("BRAPI_API_TOKEN", "FAKE-TOKEN-0002")
+    monkeypatch.setenv("BRAPI_API_KEY", "FAKE-TOKEN-0002")
+    monkeypatch.setenv("BRAPI_API_TOKEN", "FAKE-TOKEN-0003")
     items = {item.provider_id: item for item in _provider_registry()}
     assert len(items) == 7
-    assert items["brapi"].credentials == {"BRAPI_API_TOKEN": True}
+    assert items["brapi"].credentials == {"BRAPI_API_KEY": True}
+    assert items["brapi"].credential_status == {
+        "BRAPI_API_KEY": "PRESENTE",
+        "BRAPI_API_TOKEN": "NÃO LIDA PELO CÓDIGO",
+    }
     assert items["brapi"].activation == "DATASET_NOT_APPROVED", "a key alone activates nothing"
+    assert items["brapi"].owner_activation == "DATASET_NOT_APPROVED", "nothing approved by default"
     assert items["b3_developers"].activation == "LICENSE_BLOCKED"
     assert items["b3_developers"].blocked_reason
     dumped = "".join(item.model_dump_json() for item in items.values())
-    assert "FAKE-TOKEN-0002" not in dumped
+    assert "FAKE-TOKEN-0002" not in dumped and "FAKE-TOKEN-0003" not in dumped

@@ -24,7 +24,13 @@ from app.contracts import (
     AdminVolumetricStatus,
 )
 from app.core.config import get_settings
-from app.providers.registry import REGISTRY, activation_decision, credential_presence
+from app.providers.registry import (
+    REGISTRY,
+    activation_decision,
+    credential_presence,
+    credential_status,
+    owner_use_decision,
+)
 
 _SECRET_RE = re.compile(
     r"(?i)(?:password|token|secret|api[_-]?key|authorization|cookie)\s*[:=]\s*[^\s,;]+"
@@ -163,9 +169,14 @@ def _providers(checked_at: datetime) -> AdminProviderGovernanceStatus:
 
 
 def _provider_registry() -> list[AdminProviderRegistryItem]:
+    from app.market_data.live_data import approved_providers, credential_rejected
+
+    approved = approved_providers()
     items = []
     for entry in REGISTRY:
         decision = activation_decision(entry)
+        owner = owner_use_decision(entry, approved=approved)
+        rejected = credential_rejected(entry.provider_id) if approved else False
         items.append(
             AdminProviderRegistryItem(
                 provider_id=entry.provider_id,
@@ -175,7 +186,12 @@ def _provider_registry() -> list[AdminProviderRegistryItem]:
                 capabilities=sorted(capability.value for capability in entry.capabilities),
                 license_status=entry.license_status,
                 credentials=credential_presence(entry),
+                credential_status={
+                    name: status.value
+                    for name, status in credential_status(entry, rejected=rejected).items()
+                },
                 activation="ACTIVE" if decision.allowed else decision.reason.value,
+                owner_activation="ACTIVE" if owner.allowed else owner.reason.value,
                 rate_limits=entry.rate_limits,
                 commercial_use=entry.commercial_use,
                 redistribution=entry.redistribution,

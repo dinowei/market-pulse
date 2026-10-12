@@ -312,7 +312,34 @@ class HistoryPeriod(StrEnum):
     MAX = "MAX"
 
 
-class PublicQuote(StrictModel):
+class MarketProvenance(StrictModel):
+    """ADR-027: provenance every market-data answer carries, real, DEMO or unavailable.
+
+    `timestamp_official` is the source timestamp and `timestamp_collected` the ingestion time;
+    `observed_at` is when this answer was assembled, so their gap is the cache age.
+    """
+
+    session_date: date | None = None
+    timezone: str | None = None
+    observed_at: datetime | None = None
+    quality_status: str | None = None
+    license_status: str | None = None
+    is_demo: bool | None = None
+    fallback_used: bool = False
+
+    @model_validator(mode="after")
+    def _demo_flag_follows_data_level(self) -> "MarketProvenance":
+        level = getattr(self, "data_level", None)
+        if level is not None:
+            expected = level is DataLevel.DEMO
+            if self.is_demo is None:
+                self.is_demo = expected
+            elif self.is_demo != expected:
+                raise ValueError("is_demo must match data_level DEMO")
+        return self
+
+
+class PublicQuote(MarketProvenance):
     canonical_id: str
     symbol: str
     name: str
@@ -335,8 +362,12 @@ class PublicQuote(StrictModel):
 
     @model_validator(mode="after")
     def require_quote_provenance(self) -> "PublicQuote":
+        # A session-only source (EOD) names the trading day and has no time: the time is not
+        # invented, and latency is then unknown.
         if self.freshness is not Freshness.UNAVAILABLE and (
-            self.price is None or self.timestamp_official is None or self.latency_ms is None
+            self.price is None
+            or (self.timestamp_official is None and self.session_date is None)
+            or (self.timestamp_official is not None and self.latency_ms is None)
         ):
             raise ValueError("public quote requires complete provenance")
         return self
@@ -392,7 +423,7 @@ class SeriesDownsampling(StrictModel):
     basis: Literal["value"] = "value"
 
 
-class PublicHistorySeries(StrictModel):
+class PublicHistorySeries(MarketProvenance):
     canonical_id: str
     symbol: str
     period: HistoryPeriod
@@ -417,7 +448,8 @@ class PublicHistorySeries(StrictModel):
     @model_validator(mode="after")
     def require_series_provenance(self) -> "PublicHistorySeries":
         if self.freshness is not Freshness.UNAVAILABLE and (
-            self.timestamp_official is None or self.latency_ms is None
+            (self.timestamp_official is None and self.session_date is None)
+            or (self.timestamp_official is not None and self.latency_ms is None)
         ):
             raise ValueError("public series requires complete provenance")
         if self.accessibility.get("smoothed", False):
@@ -489,7 +521,7 @@ class EconomicCalendarResponse(StrictModel):
     limit: int = Field(ge=1, le=100)
 
 
-class BenchmarkItem(StrictModel):
+class BenchmarkItem(MarketProvenance):
     canonical_id: str
     symbol: str
     name: str
@@ -952,7 +984,11 @@ class AdminProviderRegistryItem(StrictModel):
     capabilities: list[str]
     license_status: str
     credentials: dict[str, bool]
+    # ADR-027: PRESENTE, AUSENTE, INVÁLIDA (the provider answered 401) or NÃO LIDA PELO CÓDIGO.
+    credential_status: dict[str, str] = Field(default_factory=dict)
     activation: str
+    # The owner's private-staging decision: ACTIVE or the reason it cannot serve.
+    owner_activation: str | None = None
     rate_limits: str
     commercial_use: str | None = None
     redistribution: str | None = None

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
@@ -38,6 +39,22 @@ _BENCHMARKS: tuple[tuple[str, str, str, str, Decimal], ...] = (
 
 def benchmark_ids() -> frozenset[str]:
     return frozenset(item[0] for item in _BENCHMARKS)
+
+
+@dataclass(frozen=True)
+class BenchmarkDefinition:
+    symbol: str
+    name: str
+    currency: str
+
+
+def benchmark_definitions() -> dict[str, BenchmarkDefinition]:
+    """Identity only (no synthetic level), in display order; used by the real-data path."""
+
+    return {
+        canonical_id: BenchmarkDefinition(symbol, name, currency)
+        for canonical_id, symbol, name, currency, _ in _BENCHMARKS
+    }
 
 
 def benchmark_items() -> list[BenchmarkItem]:

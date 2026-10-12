@@ -8,6 +8,7 @@ from app.core.config import (
     get_settings,
     is_protected_environment,
     validate_production_settings,
+    validate_real_data_settings,
 )
 from app.errors import (
     http_exception_handler,
@@ -25,6 +26,7 @@ from app.routers import router
 
 settings = get_settings()
 validate_production_settings(settings)
+validate_real_data_settings(settings)
 # Interactive docs and the live schema stay off where the API is reachable from the
 # internet; the versioned contract remains docs/api/openapi.json, built from app.openapi().
 _public_docs = not is_protected_environment(settings)

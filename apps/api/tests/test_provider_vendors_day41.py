@@ -255,7 +255,7 @@ class _FakeResponse(io.BytesIO):
 def test_transport_refuses_inactive_providers_before_any_network_call() -> None:
     called = []
     transport = ProviderHttpTransport(
-        get_entry("brapi"), {"BRAPI_API_TOKEN": "x"}, opener=lambda *a, **k: called.append(a)
+        get_entry("brapi"), {"BRAPI_API_KEY": "x"}, opener=lambda *a, **k: called.append(a)
     )
     with pytest.raises(NormalizationError) as error:
         transport.send(brapi_quote_request(BR))
@@ -274,7 +274,7 @@ def test_transport_injects_the_credential_and_parses_decimals() -> None:
         seen["url"], seen["auth"] = request.full_url, request.get_header("Authorization")
         return _FakeResponse(b'{"price": 10.25}')
 
-    transport = ProviderHttpTransport(_active("brapi"), {"BRAPI_API_TOKEN": "tok"}, opener=opener)
+    transport = ProviderHttpTransport(_active("brapi"), {"BRAPI_API_KEY": "tok"}, opener=opener)
     response = transport.send(brapi_quote_request(BR))
     assert response.payload == {"price": Decimal("10.25")}
     assert seen["auth"] == "Bearer tok" and "tok" not in seen["url"]

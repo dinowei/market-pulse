@@ -20,7 +20,7 @@ SECRET_PATTERNS = (
         r"(?i)(?:postgres(?:ql)?|rediss?)://[^\s/:]*:(?P<password>[^\s/@]+)@"
     ),
     re.compile(
-        r"(?i)\b(?:BRAPI_API_TOKEN|HG_BRASIL_API_KEY|TWELVE_DATA_API_KEY|"
+        r"(?i)\b(?:BRAPI_API_KEY|BRAPI_API_TOKEN|HG_BRASIL_API_KEY|TWELVE_DATA_API_KEY|"
         r"ALPHA_VANTAGE_API_KEY|OPEN_EXCHANGE_RATES_APP_ID|MASSIVE_API_KEY|"
         r"B3_DEVELOPERS_CLIENT_ID)[ \t]*[:=][ \t]*['\"]?(?P<provider_value>[^\s'\"]{8,})"
     ),

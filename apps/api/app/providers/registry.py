@@ -106,7 +106,8 @@ REGISTRY: tuple[ProviderRegistryEntry, ...] = (
                 ProviderCapability.DIVIDENDS,
             }
         ),
-        credential_envs=("BRAPI_API_TOKEN",),
+        # The name configured by the owner in Render and in the local .env (2026-10-12).
+        credential_envs=("BRAPI_API_KEY",),
         auth="Header Authorization: Bearer <token>",
         base_url="https://brapi.dev/api",
         endpoints={
@@ -362,15 +363,12 @@ REGISTRY: tuple[ProviderRegistryEntry, ...] = (
 # `activation_decision`; until then every chain resolves to nothing (fail closed).
 PRECEDENCE: Mapping[tuple[ProviderCapability, str], tuple[str, ...]] = {
     (ProviderCapability.LATEST_QUOTE, "BR"): ("brapi", "hg_brasil"),
-    (ProviderCapability.LATEST_QUOTE, "US"): ("massive", "twelve_data", "alpha_vantage"),
+    # Owner's order (2026-10-12): Twelve Data, then Massive, then Alpha Vantage.
+    (ProviderCapability.LATEST_QUOTE, "US"): ("twelve_data", "massive", "alpha_vantage"),
     (ProviderCapability.HISTORICAL_BARS, "BR"): ("brapi",),
-    (ProviderCapability.HISTORICAL_BARS, "US"): ("massive", "twelve_data", "alpha_vantage"),
-    (ProviderCapability.FX_RATES, "FX"): (
-        "open_exchange_rates",
-        "twelve_data",
-        "hg_brasil",
-        "alpha_vantage",
-    ),
+    (ProviderCapability.HISTORICAL_BARS, "US"): ("twelve_data", "massive", "alpha_vantage"),
+    # Massive is not listed: the pages read on 2026-10-11 did not confirm FX in its plans.
+    (ProviderCapability.FX_RATES, "FX"): ("open_exchange_rates", "twelve_data", "alpha_vantage"),
     (ProviderCapability.DIVIDENDS, "BR"): ("brapi",),
     (ProviderCapability.DIVIDENDS, "US"): ("massive",),
     (ProviderCapability.CORPORATE_ACTIONS, "US"): ("massive", "alpha_vantage"),
@@ -393,10 +391,80 @@ def credential_presence(
     return {name: bool(env.get(name, "").strip()) for name in entry.credential_envs}
 
 
+# Names the code no longer reads. Reported so an old variable is not mistaken for a working
+# credential (the owner's brapi key is BRAPI_API_KEY).
+UNREAD_CREDENTIAL_ENVS: Mapping[str, tuple[str, ...]] = {"brapi": ("BRAPI_API_TOKEN",)}
+
+
+class CredentialStatus(StrEnum):
+    PRESENT = "PRESENTE"
+    MISSING = "AUSENTE"
+    INVALID = "INVÁLIDA"
+    NOT_READ = "NÃO LIDA PELO CÓDIGO"
+
+
+def credential_status(
+    entry: ProviderRegistryEntry,
+    environ: Mapping[str, str] | None = None,
+    *,
+    rejected: bool = False,
+) -> dict[str, CredentialStatus]:
+    """Status per variable name, never the value. `rejected`: the provider answered 401/403."""
+
+    env = os.environ if environ is None else environ
+    result = {
+        name: (CredentialStatus.INVALID if rejected else CredentialStatus.PRESENT)
+        if present
+        else CredentialStatus.MISSING
+        for name, present in credential_presence(entry, env).items()
+    }
+    for name in UNREAD_CREDENTIAL_ENVS.get(entry.provider_id, ()):
+        if env.get(name, "").strip():
+            result[name] = CredentialStatus.NOT_READ
+    return result
+
+
 @dataclass(frozen=True)
 class ActivationDecision:
     allowed: bool
     reason: UnavailableReason | None
+
+
+# ADR-027: the owner's decision to use a provider in the private staging (one closed account).
+# It is not PUBLIC_APPROVED: anonymous visitors never receive data authorized this way.
+OWNER_PRIVATE_LICENSE = "OWNER_APPROVED_PRIVATE_STAGING"
+
+
+def owner_use_blockers(provider_ids: tuple[str, ...]) -> tuple[str, ...]:
+    """Ids the owner cannot approve: unknown, contract-only or blocked providers."""
+
+    known = {entry.provider_id: entry for entry in REGISTRY}
+    return tuple(
+        provider_id
+        for provider_id in provider_ids
+        if provider_id not in known
+        or known[provider_id].blocked_reason
+        or known[provider_id].status in {ProviderStatus.BLOCKED, ProviderStatus.REVOKED}
+    )
+
+
+def owner_use_decision(
+    entry: ProviderRegistryEntry,
+    environ: Mapping[str, str] | None = None,
+    *,
+    approved: frozenset[str],
+) -> ActivationDecision:
+    """Fail closed: listed by the owner, not blocked, not paused and with every credential."""
+
+    if owner_use_blockers((entry.provider_id,)):
+        return ActivationDecision(False, UnavailableReason.LICENSE_BLOCKED)
+    if entry.status is ProviderStatus.PAUSED:
+        return ActivationDecision(False, UnavailableReason.UNAVAILABLE)
+    if entry.provider_id not in approved:
+        return ActivationDecision(False, UnavailableReason.DATASET_NOT_APPROVED)
+    if not entry.credential_envs or not all(credential_presence(entry, environ).values()):
+        return ActivationDecision(False, UnavailableReason.PROVIDER_NOT_CONFIGURED)
+    return ActivationDecision(True, None)
 
 
 def activation_decision(

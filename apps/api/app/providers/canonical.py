@@ -32,6 +32,8 @@ class UnavailableReason(StrEnum):
     SCHEMA_UNSUPPORTED = "SCHEMA_UNSUPPORTED"
     RATE_LIMITED = "RATE_LIMITED"
     SOURCE_ERROR = "SOURCE_ERROR"
+    # ADR-027: real data only for the owner's signed-in session in the private staging.
+    SESSION_REQUIRED = "SESSION_REQUIRED"
 
 
 class QualityStatus(StrEnum):
@@ -51,9 +53,20 @@ class ValueUnit(StrEnum):
 class NormalizationError(ProviderError):
     """A payload that cannot become a canonical value; `code` is an UnavailableReason."""
 
-    def __init__(self, reason: UnavailableReason, message: str, *, retryable: bool = False):
+    def __init__(
+        self,
+        reason: UnavailableReason,
+        message: str,
+        *,
+        retryable: bool = False,
+        http_status: int | None = None,
+        retry_after_seconds: float | None = None,
+    ):
         super().__init__(reason.value, message, retryable=retryable)
         self.reason = reason
+        # 401/403 mark the credential as rejected; Retry-After sets the provider's cooldown.
+        self.http_status = http_status
+        self.retry_after_seconds = retry_after_seconds
 
 
 class CanonicalQuote(BaseModel):

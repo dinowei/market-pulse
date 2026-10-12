@@ -22,7 +22,7 @@ from app.contracts import (
 from app.contracts import (
     PerformanceStatus as ContractPerformanceStatus,
 )
-from app.core.config import get_settings
+from app.core.config import get_settings, is_protected_environment
 from app.portfolios.service import PortfolioEventInput
 from app.providers.models import DataLevel, Freshness
 
@@ -364,6 +364,15 @@ def demo_price_marks(
         from app.demo.read_models import price_marks
 
         return price_marks([item.canonical_id for item in events]), {}
+    settings = get_settings()
+    if settings.real_data_providers:
+        # ADR-027: portfolios need a session, so the owner's real marks apply; an instrument
+        # without a live quote stays missing and the valuation says so.
+        from app.market_data.real_market_data import real_price_marks
+
+        return real_price_marks([item.canonical_id for item in events])
+    if is_protected_environment(settings):
+        return {}, {}  # never synthetic marks outside an explicit DEMO environment
     now = datetime.now(UTC)
     prices: dict[str, PriceMark] = {}
     currencies = {"equity.us.nasdaq.aapl": "USD", "equity.br.b3.petr4": "BRL"}
@@ -650,28 +659,50 @@ class PortfolioPerformanceService:
                 f" Corte DEMO: {DEMO_CUTOFF.isoformat()}; eventos posteriores não são projetados"
                 " para pontos históricos. O ledger original permanece intacto."
             )
+        real = bool(get_settings().real_data_providers)
+        today = datetime.now(UTC).date()
+        if real:
+            dates = sorted({*dates, today})
+            window_note = (
+                " Dados reais (ADR-027): cada ponto usa o fechamento daquele pregão; o câmbio"
+                " atual vale só para hoje, então posições em outra moeda ficam sem valor nos"
+                " dias anteriores."
+            )
         points: list[EquityCurvePointResponse] = []
         provenance: tuple[PerformanceProvenance, ...] = ()
         for day in dates:
             events_at_day = [item for item in events if item.occurred_at.date() <= day]
+            day_fx = fx
             if get_settings().demo_enabled:
                 from app.demo.read_models import price_marks
 
                 prices = price_marks([item.canonical_id for item in events_at_day], as_of=day)
+            elif real:
+                from app.market_data.real_market_data import real_price_marks_on
+
+                prices = real_price_marks_on([item.canonical_id for item in events_at_day], day)
+                day_fx = fx if day == today else {}
             result = calculate_valuation(
                 events_at_day,
                 base_currency=portfolio.base_currency,
                 prices=prices,
-                fx_rates=fx,
+                fx_rates=day_fx,
             )
+            if real:
+                stale = any(item.freshness == Freshness.STALE for item in result.provenance)
+                level, freshness = DataLevel.EOD, Freshness.STALE if stale else Freshness.FRESH
+                if result.status == PerformanceStatus.UNAVAILABLE:
+                    freshness = Freshness.UNAVAILABLE
+            else:
+                level, freshness = DataLevel.DEMO, Freshness.STALE
             points.append(
                 EquityCurvePointResponse(
                     valuation_date=day,
                     total_value_base=result.total_value_base,
                     cash_value_base=result.cash_value_base,
                     positions_value_base=result.positions_value_base,
-                    data_level=DataLevel.DEMO,
-                    freshness=Freshness.STALE,
+                    data_level=level,
+                    freshness=freshness,
                     valuation_status=ContractPerformanceStatus(result.status.value),
                     missing_inputs=result.missing_inputs,
                 )
