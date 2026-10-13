@@ -1,16 +1,22 @@
-# Design system Particle Atlas: referência do que está implementado
+# Design system do Market Pulse (v3): referência do que está implementado
 
-- **Data:** 2026-10-07 (Dia 40).
-- **Natureza:** inventário do código em `apps/web` na branch `feature/dia-31-34`. A norma
-  continua sendo a [diretriz Particle Atlas](PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md) e a
-  [semântica de gráficos](PARTICLE_ATLAS_CHART_SEMANTICS.md); em conflito, elas
-  prevalecem e este documento deve ser corrigido.
+- **Data:** 2026-10-13 (v3, [ADR-028](../adr/028-visual-identity-v3-chart-workspace.md)).
+- **Natureza:** inventário do código em `apps/web` na branch `feature/dia-41-sync`.
+- **Norma:**
+  - A ADR-028 substitui a parte visual da
+    [diretriz Particle Atlas](PARTICLE_ATLAS_FRONTEND_DIRECTIVE.md), da ADR-006 e da ADR-026,
+    por decisão do responsável.
+  - As regras de dado da [semântica de gráficos](PARTICLE_ATLAS_CHART_SEMANTICS.md)
+    continuam valendo: uma série real por linha, `INDEX_100` na comparação, direção com
+    pista não cromática e indisponibilidade visível.
+  - Em conflito com essas regras, este documento deve ser corrigido.
 - **Decisões que o moldaram:** [ADR-005](../adr/005-hybrid-progressive-rendering.md),
-  [ADR-006](../adr/006-monochrome-financial-chart-semantics.md),
-  [ADR-014](../adr/014-chart-engine-keep-svg.md),
   [ADR-015](../adr/015-oklch-tokens-and-theme-contrast.md),
-  [ADR-016](../adr/016-global-persisted-theme.md) e
-  [ADR-019](../adr/019-global-atlas-table-and-basic-heatmap.md).
+  [ADR-016](../adr/016-global-persisted-theme.md),
+  [ADR-019](../adr/019-global-atlas-table-and-basic-heatmap.md),
+  [ADR-021](../adr/021-optional-color-vision-palette.md),
+  [ADR-028](../adr/028-visual-identity-v3-chart-workspace.md) e
+  [ADR-029](../adr/029-owner-real-data-universe.md).
 
 ## 1. Tokens
 
@@ -19,25 +25,30 @@ Definidos em `apps/web/app/globals.css`, com o mesmo valor em hex e em `oklch()`
 
 | Token | Escuro | Claro | Uso |
 | --- | --- | --- | --- |
-| `--pa-bg-canvas` | `#08090a` | `#f3f5f7` | Fundo da página |
-| `--pa-bg-surface` | `#111317` | `#ffffff` | Painéis |
-| `--pa-bg-elevated` | `#171a20` | `#e9edf1` | Elevação (blocos do heatmap, resultados de busca) |
-| `--pa-border-hairline` | `#2a2e35` | `#c3c9d1` | Grades e divisórias |
-| `--pa-border-control` | `#636870` | `#81868e` | Borda de campos (≥ 3:1) |
-| `--pa-text-primary` | `#f7f7f5` | `#111317` | Texto e linha financeira principal |
-| `--pa-text-secondary` | `#a7adb6` | `#4f5966` | Metadados |
-| `--pa-accent-neutral` | `#a7adb6` | `#4f5966` | Ponto da série principal; marca de `FRESH` |
-| `--pa-market-up` | `#5ee68a` | `#137a3c` | Direção `UP` |
-| `--pa-market-down` | `#ff7272` | `#b42323` | Direção `DOWN` |
-| `--pa-market-flat` | `#72b7ff` | `#075da8` | Direção `FLAT`, benchmark e links |
-| `--pa-state-stale` | `#ffad5c` | `#9a5100` | Só `STALE` e alerta restrito |
-| `--pa-state-unavailable` | `#8b929d` | `#5c6570` | `UNAVAILABLE` |
-| `--pa-state-demo` | `#e3e7ed` | `#303942` | `DEMO` |
-| `--pa-focus` | `#ffffff` | `#111317` | Contorno de foco |
+| `--pa-bg-canvas` | `#0a1020` | `#f2f5fb` | Fundo da página (com brilho radial decorativo no topo) |
+| `--pa-bg-surface` | `#111a2e` | `#ffffff` | Painéis, cartões e barra lateral |
+| `--pa-bg-elevated` | `#18233c` | `#e8eef8` | Elevação (chips da faixa, blocos do heatmap, menus) |
+| `--pa-border-hairline` | `#24324f` | `#cfd8ea` | Grades e divisórias |
+| `--pa-border-control` | `#64759c` | `#7a87a3` | Borda de campos (≥ 3:1) |
+| `--pa-text-primary` | `#eef2fb` | `#0d1630` | Texto |
+| `--pa-text-secondary` | `#a6b2ca` | `#45547a` | Metadados |
+| `--pa-accent-neutral` | `#a6b2ca` | `#45547a` | Marca de `FRESH` |
+| `--pa-accent` | `#86a3ff` | `#2f4fd6` | Acento: links, linha principal do workspace, item ativo |
+| `--pa-accent-strong` | `#3f5ef0` | `#2f4fd6` | Fundo de botão e aba ativos (texto em `--pa-accent-ink`, `#ffffff`) |
+| `--pa-violet` | `#b9a0ff` | `#6a45d6` | Acento secundário (marcadores de família, comparação) |
+| `--pa-cyan` | `#4cc9f0` | `#0a6d91` | Acento secundário (marcadores de família, comparação) |
+| `--pa-market-up` | `#34d399` | `#08784a` | Direção `UP` |
+| `--pa-market-down` | `#f87171` | `#c22d2d` | Direção `DOWN` |
+| `--pa-market-flat` | `#86a3ff` | `#2f4fd6` | Direção `FLAT` |
+| `--pa-state-stale` | `#f5a524` | `#8c5a00` | Só `STALE` e alerta restrito |
+| `--pa-state-unavailable` | `#919db6` | `#56648a` | `UNAVAILABLE` |
+| `--pa-state-demo` | `#e2e8f5` | `#2b3757` | `DEMO` |
+| `--pa-focus` | `#9fb5ff` | `#2f4fd6` | Contorno de foco |
 
 **Contraste (testado):** texto ≥ 4,5:1 e foco e bordas de controle ≥ 3:1 nos dois temas
-(`oklch-tokens-day33.test.ts`, `day35-frontend.test.ts`, `day36-a11y.test.ts`). O menor
-valor das cores de direção é 4,60:1 (alta, tema claro, fundo elevado).
+(`oklch-tokens-day33.test.ts`, `day36-a11y.test.ts`, `theme-global.test.ts`). O menor valor
+das cores de direção é 4,75:1 no tema claro (alta, fundo elevado) e 5,65:1 no escuro
+(queda, fundo elevado).
 
 ### Tipografia, forma e camadas
 
@@ -46,32 +57,26 @@ uma escala sugerida.
 
 | Aspecto | Implementado |
 | --- | --- |
-| Família | IBM Plex Sans no corpo (`next/font`, auto-hospedada); pilha monoespaçada do sistema (`--pa-mono`) em rótulos, números, cabeçalhos de tabela e selos ([ADR-026](../adr/026-particle-atlas-visual-system-v2.md)) |
-| Pesos | 400 e 600 |
-| Números | Algarismos tabulares em todas as tabelas, no preço e nas métricas da carteira |
-| Títulos | `h1`: `clamp(1.5rem, 3vw, 2.5rem)`, altura de linha 1,1; `h2`: `1rem` |
-| Texto auxiliar | Entre `.66rem` e `.85rem`; os mais usados são `.68rem`, `.72rem` e `.75rem` |
-| Altura de linha | 1,1 (títulos), 1,45 e 1,5 (texto corrido) |
-| Espaçamento | **Sem escala formal**: valores em `rem` por componente; o mais comum é `1rem`, e as páginas usam `clamp(1rem, 4vw, 3rem)` de margem interna |
-| Raio | `--pa-radius: 4px` em painéis; `999px` em controles, menu e selos |
-| Profundidade | Sem sombra projetada: camadas de fundo, gradiente sutil no topo dos painéis, marcas técnicas nos cantos e textura de pontos no fundo (decorativa) |
-| Breakpoints | `max-width: 1050px`, `max-width: 1023px` (cabeçalho) e `max-width: 700px` |
-| Cabeçalho | Fixo no topo só a partir de 1024 px, com `scroll-padding-top: 8rem` para o foco não ficar sob ele; abaixo disso rola com a página e o menu vira uma linha com rolagem lateral, mantendo a página atual visível |
-| Camadas | `z-index: 20` no cabeçalho fixo; `z-index: 2` nos resultados da busca |
+| Família | Archivo com eixo de largura (`wdth`), auto-hospedada por `next/font`; títulos e números largos (`wdth` 108 a 122) |
+| Pesos | 400 a 800 (`600` e `700` nos rótulos e botões, `800` em títulos e valores) |
+| Números | Algarismos tabulares nas tabelas, no preço, no panorama e nas métricas da carteira |
+| Rótulos | Caixa normal (sem caixa alta) |
+| Raio | `--pa-radius: 12px` em painéis e cartões; `10px` nos itens do menu lateral; `999px` em controles, chips e selos |
+| Profundidade | Sombra suave nos painéis (`--pa-shadow`) e brilho radial decorativo no fundo |
+| Breakpoints | `max-width: 1180px` (painel e ativo em uma coluna), `1023px` (barra lateral vira faixa no topo), `700px` e `520px` |
+| Estrutura | Barra lateral fixa com as seções "Mercado" e "Sua área"; barra superior com busca global e faixa de referências focável |
+| Camadas | `z-index: 30` nos resultados da busca; menus do workspace dentro da área do gráfico |
 
 **Estados de interação:**
 
 | Estado | Regra |
 | --- | --- |
 | Foco | Contorno de 2 px em `--pa-focus`, com afastamento de 3 px |
-| Hover | Texto do menu passa a `--pa-text-primary`; botões de watchlist ganham borda `--pa-text-secondary`; resultados da busca ganham fundo `--pa-bg-surface` |
-| Ativo | Controle selecionado com fundo `--pa-bg-elevated` e `aria-pressed` |
+| Hover | Item do menu lateral ganha fundo `--pa-bg-elevated`; controles ganham borda `--pa-border-control`; cartões do panorama ganham borda `--pa-accent` |
+| Ativo | Controle selecionado com fundo `--pa-accent-strong`, texto `--pa-accent-ink` e `aria-pressed`; página atual no menu com fundo tingido, barra de acento e `aria-current` |
 | Desabilitado | Opacidade de 0,45 e cursor `not-allowed`; no envio de login e cadastro, 0,65 e cursor `wait` |
 
-Uma escala de espaçamento em tokens seria uma mudança visual, que fica para a revisão de
-Cláudio; ela não foi criada para não alterar a interface sem decisão.
-
-**Paleta opcional para daltonismo** (`<html data-palette="cvd">`, [ADR-021](../adr/021-optional-color-vision-palette.md)): escuro `UP #bddbb6`, `DOWN #c4685a`, `FLAT #3f82f0`; claro `UP #007d1e`, `DOWN #5e3532`, `FLAT #173f81`. Mesmas famílias de cor, separadas pela luminosidade.
+**Paleta opcional para daltonismo** (`<html data-palette="cvd">`, [ADR-021](../adr/021-optional-color-vision-palette.md)): escuro `UP #bddbb6`, `DOWN #d27668`, `FLAT #4f8ff5`; claro `UP #007d1e`, `DOWN #5e3532`, `FLAT #173f81`. Mesmas famílias de cor, separadas pela luminosidade; o workspace usa os mesmos valores.
 
 ## 2. Semântica obrigatória
 
@@ -94,7 +99,11 @@ epsilon e sem converter para ponto flutuante. Os dígitos não são arredondados
 
 | Peça | Arquivo | Contrato |
 | --- | --- | --- |
-| Selo de estado | `DataStateBadge` em `market-data.tsx` | `DataLevel` e `Freshness` em texto |
+| Estrutura do app | `AppShell` em `site-header.tsx` | Barra lateral, busca global (`instrument-search.tsx`), faixa de referências e botões de tema e paleta |
+| Workspace de gráficos | `chart-workspace.tsx` e `src/lib/chart-workspace/` | Canvas (Lightweight Charts 5.2.1): 10 tipos, indicadores, comparação em base 100, 15 ferramentas de desenho salvas por ativo, tabela equivalente e avisos de dado derivado ([ADR-028](../adr/028-visual-identity-v3-chart-workspace.md)) |
+| Panorama "Mercados agora" | `market-panorama.tsx` e `src/lib/panorama.ts` | Seis famílias; cotação ou benchmark da API, variação com pista não cromática, linha de 3 meses e motivo quando falta dado ([ADR-029](../adr/029-owner-real-data-universe.md)) |
+| Ícones | `icons.tsx` | Traço de 24 px desenhado para o projeto; sempre ao lado de texto ou com nome acessível |
+| Selo de estado | `DataStateBadge` em `data-table.tsx` (reexportado por `market-data.tsx`) | `DataLevel` e `Freshness` em texto |
 | Painel de proveniência | `ProvenancePanel` em `market-data.tsx` | Fonte, dataset, horários, latência e limitações |
 | Variação com direção | `describeChange` em `src/lib/price-direction.ts` | Texto assinado, seta e palavra, ou `null` |
 | Avisos legais | `src/lib/disclaimers.ts` | Texto literal da política (§11), testado contra ela |
@@ -131,8 +140,9 @@ e o [relatório do Dia 36](ACCESSIBILITY_DAY_36.md).
 
 ## 5. Fora do P0
 
-Canvas e WebGL, malha e globo do Global Atlas, escala contínua de intensidade no heatmap
-continuam P1. O pulso de partículas e as transições do gráfico existem desde a
+O Canvas entrou no workspace de gráficos pela
+[ADR-028](../adr/028-visual-identity-v3-chart-workspace.md), sempre com a tabela
+equivalente. Continuam P1 o WebGL, a malha e o globo do Global Atlas e a escala contínua de
+intensidade no heatmap. O pulso de partículas e as transições do gráfico existem desde a
 [ADR-023](../adr/023-markets-hub-chart-type-and-motion.md), também como P1: atrás de
-`NEXT_PUBLIC_ATLAS_MOTION`, com alternativa em texto e tabela, sem perda de informação
-(diretriz §24).
+`NEXT_PUBLIC_ATLAS_MOTION`, com alternativa em texto e tabela, sem perda de informação.

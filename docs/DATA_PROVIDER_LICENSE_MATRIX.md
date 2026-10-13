@@ -68,6 +68,18 @@ Fixtures sintéticas internas não são aprovação de provider. Elas podem ser 
   - nenhuma linha passa a `PUBLIC_APPROVED`;
   - nenhuma dessas fontes alimenta exposição pública ou produção antes da revisão dos termos.
 
+**Universo ampliado (2026-10-13, [ADR-029](adr/029-owner-real-data-universe.md)).**
+
+- **Fontes e aprovação:** as mesmas da ADR-027, com o mesmo rótulo e a mesma restrição à
+  sessão do responsável.
+- **Novos dados:**
+  - cotações da brapi para VALE3, ITUB4, WEGE3, CMIN3, BOVA11, MXRF11 e AAPL34;
+  - cotações de MSFT, NVDA e SPY (Twelve Data, Massive e Alpha Vantage, nessa ordem);
+  - cotação e série diária da Twelve Data para USD/BRL, EUR/USD, BTC/USD, ETH/USD e XAU/USD.
+- **Risco registrado:** o registro descreve o plano Basic da Twelve Data como "Internal
+  non-display usage". Exibir esses pares, mesmo só ao responsável, depende da revisão dos
+  termos, e cada novo ativo amplia esse risco.
+
 ## Processo de revisão
 
 1. Definir uma única combinação de provider, plano, endpoint, dataset, finalidade e modalidade.

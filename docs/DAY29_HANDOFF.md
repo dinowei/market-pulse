@@ -346,6 +346,24 @@ marca como **NÃO VERIFICADO** o que ninguém conferiu na fonte.
     - o histórico do Ibovespa, fora do plano da brapi (403);
     - proventos e desdobramentos reais, sem normalizador;
     - cripto, S&P 500, Nasdaq, CDI, IPCA e IFIX, sem fonte aprovada.
+- **Atualização de 2026-10-13 ([ADR-029](adr/029-owner-real-data-universe.md)):**
+  - **Universo ampliado:** 18 ids com dado real possível na sessão do responsável, entre
+    eles BTC/USD, ETH/USD, USD/BRL e EUR/USD (com série diária) e ouro, pela Twelve Data.
+    Medido em 29 chamadas opt-in: 24 respostas e 5 recusas esperadas.
+  - **Continua aberto:**
+    - S&P 500, Nasdaq, IFIX, CDI e IPCA sem fonte (a brapi recusa séries macro neste plano);
+    - histórico de WEGE3, CMIN3, BOVA11, MXRF11 e AAPL34 fora do plano da brapi (403);
+    - commodities além do ouro, pela Alpha Vantage, sem série só de fechamento;
+    - o plano Basic da Twelve Data é descrito como "Internal non-display usage", e o risco
+      de licença cresce com cada ativo exibido.
+
+### H-35 Revisão humana da identidade visual v3 e do workspace de gráficos
+- **Origem:** [ADR-028](adr/028-visual-identity-v3-chart-workspace.md), em 2026-10-12.
+- **Fato:** o visual e as ferramentas passaram no axe, no reflow, no teclado e nos testes
+  unitários, mas nenhuma pessoa revisou a v3 com leitor de tela, zoom de 200% e toque.
+- **Critério de pronto:** revisão do responsável (e de Cláudio, se houver) com leitor de
+  tela no workspace, desenho por toque num celular e Web Vitals do staging remedidos com a v3.
+- **Classe:** C para o staging privado; A antes de abrir o produto.
 
 ## F. Itens que impediam o fechamento do Dia 28 (resolvidos em 2026-10-01)
 

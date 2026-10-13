@@ -208,6 +208,37 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
 
     **Falta:** o responsável conferir os dados reais com login e o estado das chaves no
     painel interno, porque o agente não digita senha.
+  - **Visual v3, workspace de gráficos e mais ativos (ADR-028 e ADR-029, 2026-10-12/13):**
+    - **Pedido do responsável:** site com cor e com as ferramentas de um terminal de
+      gráficos, deixando de lado a diretriz visual do Atlas. A trava de segurança não foi
+      contornada.
+    - **Visual v3 (ADR-028):**
+      - paleta azul-tinta com acento cobalto, violeta e ciano;
+      - fonte Archivo e barra lateral;
+      - busca global e faixa de referências focável.
+    - **Workspace (Lightweight Charts 5.2.1, Apache-2.0):**
+      - 10 tipos de gráfico;
+      - IFR, MACD, médias e Bollinger;
+      - comparação em base 100;
+      - 15 ferramentas de desenho salvas por ativo;
+      - captura de tela, tela cheia e tabela equivalente.
+    - **Dados (ADR-029):**
+      - 18 ids com dado real possível na sessão do responsável, entre eles cripto,
+        USD/BRL e EUR/USD com série e ouro, pela Twelve Data, e mais ações e fundos da B3;
+      - panorama "Mercados agora" no painel e aba Commodities no hub;
+      - recusa de consulta deixou de abrir o circuit breaker.
+
+    **Medido localmente:**
+    - backend com 497 passed e 18 skipped (opt-in);
+    - 29 chamadas reais opt-in: 24 respostas e 5 recusas esperadas (histórico da B3 fora
+      do plano);
+    - frontend com 125 testes, lint, typecheck e build;
+    - maior bundle com 191,8 KB gzip e CSS com 9,5 KB;
+    - gate de desempenho aprovado.
+
+    **Commits:** `5b40d2c`, `46e80f0`, `2ebfda4` e `56314c1`, mais a documentação, em
+    `feature/dia-41-sync`. Pendências novas: H-35 (revisão humana da v3) e a atualização de
+    H-34 no [handoff](docs/DAY29_HANDOFF.md).
   - **Banco do staging expira em 2026-11-05 (H-29).**
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
