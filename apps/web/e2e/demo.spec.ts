@@ -117,6 +117,7 @@ test("isolation: B cannot read A's watchlists, ledger, positions or performance"
     "/performance",
     "/performance/decomposition",
     "/equity-curve",
+    "/overview",
   ]) {
     expect([403, 404]).toContain((await page.request.get(`${api}/api/v1/portfolios/${aPortfolios.items[0].id}${suffix}`)).status());
   }

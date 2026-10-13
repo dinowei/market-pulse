@@ -1,0 +1,13 @@
+{
+  "budgets": {
+    "LCP": 2500,
+    "INP": 200,
+    "CLS": 0.1
+  },
+  "samples": {
+    "/": { "LCP": 1800, "INP": 120, "CLS": 0.04 },
+    "/portfolios": { "LCP": 2100, "INP": 150, "CLS": 0.06 },
+    "/compare": { "LCP": 1900, "INP": 130, "CLS": 0.03 },
+    "/calendar": { "LCP": 1950, "INP": 140, "CLS": 0.04 }
+  }
+}

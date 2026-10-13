@@ -1,0 +1,5 @@
+{
+  "description": "Day 38 regression budget for first-load assets per prerendered route (gzip). Measured maximum on 2026-10-07: 185.2 KB JS (/portfolios) and 6.1 KB CSS; the budget leaves about 8% headroom. Raising it requires a recorded decision.",
+  "firstLoadJsGzipKb": 200,
+  "firstLoadCssGzipKb": 10
+}

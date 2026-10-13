@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from enum import StrEnum
 
@@ -12,6 +12,8 @@ from app.contracts import (
     EquityCurveResponse,
     PerformanceDecompositionResponse,
     PerformanceProvenance,
+    PortfolioDrawdownPointResponse,
+    PortfolioDrawdownResponse,
     PortfolioEventResponse,
     PortfolioPerformanceResponse,
     PortfolioValuationPositionResponse,
@@ -20,7 +22,7 @@ from app.contracts import (
 from app.contracts import (
     PerformanceStatus as ContractPerformanceStatus,
 )
-from app.core.config import get_settings
+from app.core.config import get_settings, is_protected_environment
 from app.portfolios.service import PortfolioEventInput
 from app.providers.models import DataLevel, Freshness
 
@@ -314,6 +316,25 @@ def calculate_twr(points: list[TWRPoint]) -> TWRResult:
     )
 
 
+def calculate_drawdown(values: list[tuple[date, Decimal]]) -> list[PortfolioDrawdownPointResponse]:
+    """Drawdown of each day against the running peak; Decimal throughout, never positive."""
+    peak: Decimal | None = None
+    points = []
+    for day, value in sorted(values):
+        if value <= 0:
+            raise ValueError("drawdown requires strictly positive valuations")
+        peak = value if peak is None or value > peak else peak
+        points.append(
+            PortfolioDrawdownPointResponse(
+                valuation_date=day,
+                total_value_base=value,
+                peak_value_base=peak,
+                drawdown=value / peak - Decimal("1"),
+            )
+        )
+    return points
+
+
 def event_inputs(events: list[PortfolioEventResponse]) -> list[PortfolioEventInput]:
     return [
         PortfolioEventInput(
@@ -343,6 +364,15 @@ def demo_price_marks(
         from app.demo.read_models import price_marks
 
         return price_marks([item.canonical_id for item in events]), {}
+    settings = get_settings()
+    if settings.real_data_providers:
+        # ADR-027: portfolios need a session, so the owner's real marks apply; an instrument
+        # without a live quote stays missing and the valuation says so.
+        from app.market_data.real_market_data import real_price_marks
+
+        return real_price_marks([item.canonical_id for item in events])
+    if is_protected_environment(settings):
+        return {}, {}  # never synthetic marks outside an explicit DEMO environment
     now = datetime.now(UTC)
     prices: dict[str, PriceMark] = {}
     currencies = {"equity.us.nasdaq.aapl": "USD", "equity.br.b3.petr4": "BRL"}
@@ -424,30 +454,15 @@ class PortfolioPerformanceService:
         if get_settings().demo_enabled and events:
             curve = self.equity_curve_response(user_id, portfolio_id)
             days = curve.points
-            if days and days[0].total_value_base is not None and days[0].total_value_base <= 0:
+            issue = self._flow_neutral_issue(events, days)
+            if issue == "POSITIVE_BEGINNING_VALUATION":
                 return TWRResult(
                     None,
                     PerformanceStatus.UNAVAILABLE,
                     "TWR exige patrimônio inicial estritamente positivo.",
                     ("POSITIVE_BEGINNING_VALUATION",),
                 )
-            later_flows = (
-                any(
-                    event.event_type in {"CASH_DEPOSIT", "CASH_WITHDRAWAL", "REVERSAL"}
-                    and event.occurred_at.date() > days[0].valuation_date
-                    for event in events
-                )
-                if days
-                else True
-            )
-            if (
-                len(days) >= 2
-                and not later_flows
-                and all(
-                    point.total_value_base is not None and point.valuation_status == "COMPLETE"
-                    for point in days
-                )
-            ):
+            if issue is None:
                 return calculate_twr(
                     [
                         TWRPoint(
@@ -558,6 +573,71 @@ class PortfolioPerformanceService:
             provenance=valuation.provenance,
         )
 
+    @staticmethod
+    def _flow_neutral_issue(events, days) -> str | None:
+        """Why a curve cannot be read as pure performance, or None when it can.
+
+        Shared by the TWR and the drawdown: a positive start, at least two complete days
+        and no external flow after the first day.
+        """
+        if days and days[0].total_value_base is not None and days[0].total_value_base <= 0:
+            return "POSITIVE_BEGINNING_VALUATION"
+        if len(days) < 2 or not all(
+            point.total_value_base is not None and point.valuation_status == "COMPLETE"
+            for point in days
+        ):
+            return "HISTORICAL_VALUATION"
+        if any(
+            event.event_type in {"CASH_DEPOSIT", "CASH_WITHDRAWAL", "REVERSAL"}
+            and event.occurred_at.date() > days[0].valuation_date
+            for event in events
+        ):
+            return "EXTERNAL_FLOWS_AFTER_START"
+        return None
+
+    def drawdown_response(self, user_id: str, portfolio_id: str) -> PortfolioDrawdownResponse:
+        portfolio, events = self._inputs(user_id, portfolio_id)
+        events, outside_window = self._valuation_window(events)
+        methodology = (
+            "Drawdown: queda de cada dia em relação ao maior patrimônio anterior, sobre a curva "
+            "de valuations sem fluxos externos depois do primeiro dia (mesma condição do TWR)."
+        )
+        if outside_window:
+            issue = "EVENTS_AFTER_DEMO_CUTOFF"
+        elif not (get_settings().demo_enabled and events):
+            issue = "HISTORICAL_VALUATION"
+        else:
+            curve = self.equity_curve_response(user_id, portfolio_id)
+            issue = self._flow_neutral_issue(events, curve.points)
+            if issue is None:
+                points = calculate_drawdown(
+                    [(point.valuation_date, point.total_value_base) for point in curve.points]
+                )
+                trough = min(points, key=lambda point: (point.drawdown, point.valuation_date))
+                peak = max(
+                    (point for point in points if point.valuation_date <= trough.valuation_date),
+                    key=lambda point: (point.total_value_base, -point.valuation_date.toordinal()),
+                )
+                return PortfolioDrawdownResponse(
+                    portfolio_id=portfolio.id,
+                    base_currency=portfolio.base_currency,
+                    status=ContractPerformanceStatus.COMPLETE,
+                    max_drawdown=trough.drawdown,
+                    peak_date=peak.valuation_date if trough.drawdown < 0 else None,
+                    trough_date=trough.valuation_date if trough.drawdown < 0 else None,
+                    points=points,
+                    methodology=methodology,
+                    provenance=curve.provenance,
+                )
+        return PortfolioDrawdownResponse(
+            portfolio_id=portfolio.id,
+            base_currency=portfolio.base_currency,
+            status=ContractPerformanceStatus.UNAVAILABLE,
+            points=[],
+            methodology=methodology,
+            missing_inputs=(issue,),
+        )
+
     def equity_curve_response(self, user_id: str, portfolio_id: str) -> EquityCurveResponse:
         portfolio, events = self._inputs(user_id, portfolio_id)
         events, _ = self._valuation_window(events)
@@ -579,28 +659,50 @@ class PortfolioPerformanceService:
                 f" Corte DEMO: {DEMO_CUTOFF.isoformat()}; eventos posteriores não são projetados"
                 " para pontos históricos. O ledger original permanece intacto."
             )
+        real = bool(get_settings().real_data_providers)
+        today = datetime.now(UTC).date()
+        if real:
+            dates = sorted({*dates, today})
+            window_note = (
+                " Dados reais (ADR-027): cada ponto usa o fechamento daquele pregão; o câmbio"
+                " atual vale só para hoje, então posições em outra moeda ficam sem valor nos"
+                " dias anteriores."
+            )
         points: list[EquityCurvePointResponse] = []
         provenance: tuple[PerformanceProvenance, ...] = ()
         for day in dates:
             events_at_day = [item for item in events if item.occurred_at.date() <= day]
+            day_fx = fx
             if get_settings().demo_enabled:
                 from app.demo.read_models import price_marks
 
                 prices = price_marks([item.canonical_id for item in events_at_day], as_of=day)
+            elif real:
+                from app.market_data.real_market_data import real_price_marks_on
+
+                prices = real_price_marks_on([item.canonical_id for item in events_at_day], day)
+                day_fx = fx if day == today else {}
             result = calculate_valuation(
                 events_at_day,
                 base_currency=portfolio.base_currency,
                 prices=prices,
-                fx_rates=fx,
+                fx_rates=day_fx,
             )
+            if real:
+                stale = any(item.freshness == Freshness.STALE for item in result.provenance)
+                level, freshness = DataLevel.EOD, Freshness.STALE if stale else Freshness.FRESH
+                if result.status == PerformanceStatus.UNAVAILABLE:
+                    freshness = Freshness.UNAVAILABLE
+            else:
+                level, freshness = DataLevel.DEMO, Freshness.STALE
             points.append(
                 EquityCurvePointResponse(
                     valuation_date=day,
                     total_value_base=result.total_value_base,
                     cash_value_base=result.cash_value_base,
                     positions_value_base=result.positions_value_base,
-                    data_level=DataLevel.DEMO,
-                    freshness=Freshness.STALE,
+                    data_level=level,
+                    freshness=freshness,
                     valuation_status=ContractPerformanceStatus(result.status.value),
                     missing_inputs=result.missing_inputs,
                 )

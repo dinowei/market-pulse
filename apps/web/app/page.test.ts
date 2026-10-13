@@ -9,7 +9,7 @@ test("home renders the terminal without inventing a quote before loading", () =>
   const html = renderToStaticMarkup(createElement(HomePage));
   assert.equal(elements(html, "main").length, 1);
   assert.match(html, /Observatório de mercado/);
-  assert.match(html, /Carregando série tipada/);
+  assert.match(html, /Carregando o catálogo/);
   assert.equal(elements(html, "path").length, 0);
   assert.doesNotMatch(html, /PETR4|108\.00/);
 });

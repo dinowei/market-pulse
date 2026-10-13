@@ -23,7 +23,7 @@ class CandidateAdapter:
 CANDIDATE_ADAPTERS = (
     CandidateAdapter(
         "brapi",
-        "BRAPI_API_TOKEN",
+        "BRAPI_API_KEY",
         frozenset(
             {
                 ProviderCapability.LATEST_QUOTE,

@@ -78,17 +78,10 @@ def catalog_entries() -> tuple[InstrumentCatalogEntry, ...]:
     )
 
 
-def _allowed(row: dict, capability: ProviderCapability) -> bool:
-    # This explicit scope belongs only to our local generator, never an external provider.
+def _license_allows(row: dict, capability: ProviderCapability) -> bool:
     settings = demo_settings()
     return (
-        row["provider"] == "demo"
-        and row["provider_status"] == "DEMO_SYNTHETIC"
-        and row["dataset_status"] == "DEMO_SYNTHETIC"
-        and row["data_level"] == "DEMO"
-        and row["freshness"] in {"FRESH", "STALE"}
-        and row["dataset"] in {"demo-day24-quotes", "demo-day24-bars-1d", "demo-day24-bars-1h"}
-        and LicenseService()
+        LicenseService()
         .decide_access(
             DatasetAccessRequest(
                 dataset=ProviderDatasetRef(
@@ -110,6 +103,30 @@ def _allowed(row: dict, capability: ProviderCapability) -> bool:
             )
         )
         .allowed
+    )
+
+
+def _allowed(row: dict, capability: ProviderCapability) -> bool:
+    # This explicit scope belongs only to our local generator, never an external provider.
+    return (
+        row["provider"] == "demo"
+        and row["provider_status"] == "DEMO_SYNTHETIC"
+        and row["dataset_status"] == "DEMO_SYNTHETIC"
+        and row["data_level"] == "DEMO"
+        and row["freshness"] in {"FRESH", "STALE"}
+        and row["dataset"] in {"demo-day24-quotes", "demo-day24-bars-1d", "demo-day24-bars-1h"}
+        and _license_allows(row, capability)
+    )
+
+
+def _action_allowed(row: dict) -> bool:
+    # corporate_actions carries no DataLevel/Freshness columns: the dataset is the scope.
+    return (
+        row["provider"] == "demo"
+        and row["provider_status"] == "DEMO_SYNTHETIC"
+        and row["dataset_status"] == "DEMO_SYNTHETIC"
+        and row["dataset"] == "demo-day24-corporate-actions"
+        and _license_allows(row, ProviderCapability.CORPORATE_ACTIONS)
     )
 
 
@@ -153,6 +170,20 @@ def bar_rows(canonical_id: str, period: HistoryPeriod = HistoryPeriod.MAX) -> li
     if not all(_allowed(row, ProviderCapability.HISTORICAL_BARS) for row in rows):
         return []
     return rows
+
+
+def corporate_action_rows(canonical_id: str) -> tuple[list[dict], int]:
+    """Licensed corporate actions of one instrument, plus how many rows were withheld."""
+    with _connection() as conn:
+        rows = conn.execute(
+            f"SELECT {_FIELDS} FROM corporate_actions m {_JOINS} "
+            "WHERE i.canonical_id=%s AND NOT EXISTS (SELECT 1 FROM corporate_actions n "
+            "WHERE n.supersedes_event_id=m.id) "
+            "ORDER BY m.ex_date NULLS LAST, m.payment_date NULLS LAST, m.id",
+            (canonical_id,),
+        ).fetchall()
+    allowed = [row for row in rows if _action_allowed(row)]
+    return allowed, len(rows) - len(allowed)
 
 
 def history_points(rows: list[dict]) -> list[PublicHistoryPoint]:

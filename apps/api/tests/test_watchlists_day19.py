@@ -75,9 +75,7 @@ def test_owner_can_create_list_add_canonical_item_and_list_only_own_data(monkeyp
     assert client_b.get("/api/v1/watchlists").json()["items"] == []
     assert client_b.get(f"/api/v1/watchlists/{watchlist_id}").status_code == 404
     assert (
-        client_b.patch(
-            f"/api/v1/watchlists/{watchlist_id}", json={"name": "vazamento"}
-        ).status_code
+        client_b.patch(f"/api/v1/watchlists/{watchlist_id}", json={"name": "vazamento"}).status_code
         == 404
     )
     assert client_b.delete(f"/api/v1/watchlists/{watchlist_id}").status_code == 404

@@ -104,7 +104,7 @@ Uma tarefa só está concluída quando:
 - `git status`, diff completo e comandos/exit codes foram revisados;
 - riscos e pendências reais foram declarados.
 
-Consulte [docs/AGENTS.md](docs/AGENTS.md) para regras complementares de manutenção documental.
+Consulte [docs/CLAUDE.md](docs/CLAUDE.md) para regras complementares de manutenção documental.
 
 ## Baseline enterprise
 

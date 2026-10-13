@@ -14,11 +14,13 @@ SECRET_PATTERNS = (
     re.compile(r"BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"\b(?:sk_live|rk_live|ghp_|github_pat_)[A-Za-z0-9_\-]+\b"),
+    # The rediss scheme is Redis over TLS (managed services require it), and the user part
+    # of the authority may be empty (only a colon before the password), so both are matched.
     re.compile(
-        r"(?i)(?:postgres(?:ql)?|redis)://[^\s/:]+:(?P<password>[^\s/@]+)@"
+        r"(?i)(?:postgres(?:ql)?|rediss?)://[^\s/:]*:(?P<password>[^\s/@]+)@"
     ),
     re.compile(
-        r"(?i)\b(?:BRAPI_API_TOKEN|HG_BRASIL_API_KEY|TWELVE_DATA_API_KEY|"
+        r"(?i)\b(?:BRAPI_API_KEY|BRAPI_API_TOKEN|HG_BRASIL_API_KEY|TWELVE_DATA_API_KEY|"
         r"ALPHA_VANTAGE_API_KEY|OPEN_EXCHANGE_RATES_APP_ID|MASSIVE_API_KEY|"
         r"B3_DEVELOPERS_CLIENT_ID)[ \t]*[:=][ \t]*['\"]?(?P<provider_value>[^\s'\"]{8,})"
     ),
@@ -29,6 +31,7 @@ LOCAL_PASSWORD_PLACEHOLDERS = frozenset({"local_only", "market_pulse_local_only"
 PROVIDER_PLACEHOLDERS = frozenset(
     {"local_only", "YOUR_TOKEN", "YOUR_API_KEY", "SEU_TOKEN", "SEU_API_KEY"}
 )
+WORKFLOW_ACTION_RE = re.compile(r"^\s*-\s*uses:\s*(?P<reference>[^#\s]+)", re.MULTILINE)
 
 
 def files() -> list[Path]:
@@ -65,6 +68,38 @@ def secret_scan() -> int:
     return 0
 
 
+def workflow_security_failures() -> list[str]:
+    failures: list[str] = []
+    workflow_dir = ROOT / ".github" / "workflows"
+    for path in sorted((*workflow_dir.glob("*.yml"), *workflow_dir.glob("*.yaml"))):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for index, line in enumerate(lines):
+            match = WORKFLOW_ACTION_RE.match(line)
+            if not match:
+                continue
+            reference = match.group("reference")
+            location = f"{path.relative_to(ROOT)}:{index + 1}"
+            if not reference.startswith("./") and not re.fullmatch(
+                r"[^@]+@[0-9a-f]{40}", reference, flags=re.IGNORECASE
+            ):
+                failures.append(f"{location}: action must use a full commit SHA")
+            if reference.casefold().startswith("actions/checkout@"):
+                step_indent = len(line) - len(line.lstrip())
+                block = []
+                for following in lines[index + 1 :]:
+                    following_indent = len(following) - len(following.lstrip())
+                    if following.strip() and following_indent <= step_indent:
+                        break
+                    block.append(following)
+                credentials_disabled = any(
+                    re.fullmatch(r"\s*persist-credentials:\s*false\s*", item)
+                    for item in block
+                )
+                if not credentials_disabled:
+                    failures.append(f"{location}: checkout must disable persisted credentials")
+    return failures
+
+
 def supply_chain() -> int:
     required = ("pnpm-lock.yaml", "apps/api/uv.lock", "apps/web/package.json")
     missing = [item for item in required if not (ROOT / item).is_file()]
@@ -84,8 +119,14 @@ def supply_chain() -> int:
     if yfinance_locations:
         print("yfinance found:", ", ".join(yfinance_locations))
         return 1
+    workflow_failures = workflow_security_failures()
+    if workflow_failures:
+        print("Workflow security gate failed:", *workflow_failures, sep="\n")
+        return 1
     print("YFINANCE=ABSENT")
     print("LOCKFILES=PASS")
+    print("ACTIONS_PINNED_TO_SHA=PASS")
+    print("CHECKOUT_CREDENTIALS=NOT_PERSISTED")
     print("LICENSES=MANUAL_REVIEW_REQUIRED (no license database is bundled)")
     print("VULNERABILITIES=RUN pnpm audit and review uv audit tooling before release")
     return 0

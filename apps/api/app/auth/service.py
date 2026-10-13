@@ -8,11 +8,11 @@ from typing import Protocol
 from uuid import uuid4
 
 import psycopg
-from redis import Redis
 
 from app.auth.passwords import hash_password, verify_dummy, verify_password
 from app.contracts import AuthUserResponse, LoginRequest, RegisterRequest
 from app.core.config import Settings, get_settings
+from app.core.redis_client import shared_redis
 
 
 class AuthUnavailable(RuntimeError):
@@ -45,6 +45,10 @@ class SessionStore(Protocol):
     def get(self, token_hash: str) -> AuthUserResponse | None: ...
 
     def revoke(self, token_hash: str) -> None: ...
+
+    def revoke_user(self, user_id: str) -> int: ...
+
+    def restore_user(self, user_id: str) -> None: ...
 
     def available(self) -> bool: ...
 
@@ -83,12 +87,7 @@ class PostgresAuthStore:
 class RedisSessionStore:
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.client = Redis.from_url(
-            settings.redis_url,
-            socket_connect_timeout=settings.cache_timeout_seconds,
-            socket_timeout=settings.cache_timeout_seconds,
-            decode_responses=True,
-        )
+        self.client = shared_redis(settings.redis_url, settings.cache_timeout_seconds)
 
     def available(self) -> bool:
         try:
@@ -124,6 +123,9 @@ class RedisSessionStore:
             if datetime.fromisoformat(values["expires_at"]) <= datetime.now(timezone.utc):
                 self.revoke(token_hash)
                 return None
+            if self._user_revoked(values["user_id"]):
+                self.revoke(token_hash)
+                return None
             return AuthUserResponse(
                 id=values["user_id"], email=values["email"], status=values["status"]
             )
@@ -136,23 +138,67 @@ class RedisSessionStore:
         except Exception as exc:
             raise AuthUnavailable from exc
 
+    @staticmethod
+    def _revoked_key(user_id: str) -> str:
+        return f"auth:revoked_user:{user_id}"
+
+    def _user_revoked(self, user_id: str) -> bool:
+        try:
+            return bool(self.client.exists(self._revoked_key(user_id)))
+        except Exception as exc:
+            raise AuthUnavailable from exc
+
+    def revoke_user(self, user_id: str) -> int:
+        # Sessions are keyed by token hash with no per-user index, so a scan is the only
+        # way to reach the other devices. The marker is written first so that a session
+        # created or read while the scan runs is rejected as well.
+        try:
+            self.client.set(
+                self._revoked_key(user_id), "1", ex=self.settings.auth_session_ttl_seconds
+            )
+            removed = 0
+            for key in self.client.scan_iter(match="auth:session:*", count=500):
+                if self.client.hget(key, "user_id") == user_id:
+                    removed += int(self.client.delete(key))
+            return removed
+        except Exception as exc:
+            raise AuthUnavailable from exc
+
+    def restore_user(self, user_id: str) -> None:
+        # Undo of the marker only. Sessions already deleted by revoke_user stay deleted:
+        # the user logs in again, which beats being locked out for the whole session TTL.
+        try:
+            self.client.delete(self._revoked_key(user_id))
+        except Exception as exc:
+            raise AuthUnavailable from exc
+
 
 class RedisRateLimiter:
     def __init__(self, settings: Settings):
-        self.client = Redis.from_url(
-            settings.redis_url,
-            socket_connect_timeout=settings.cache_timeout_seconds,
-            socket_timeout=settings.cache_timeout_seconds,
-            decode_responses=True,
-        )
+        self.client = shared_redis(settings.redis_url, settings.cache_timeout_seconds)
         self.settings = settings
 
-    def allow(self, key: str) -> bool:
+    def allow(
+        self,
+        key: str,
+        window_seconds: int | None = None,
+        max_attempts: int | None = None,
+    ) -> bool:
         try:
+            w = (
+                window_seconds
+                if window_seconds is not None
+                else self.settings.auth_rate_limit_window_seconds
+            )
+            m = (
+                max_attempts
+                if max_attempts is not None
+                else self.settings.auth_rate_limit_max_attempts
+            )
             current = int(self.client.incr(key))
             if current == 1:
-                self.client.expire(key, self.settings.auth_rate_limit_window_seconds)
-            return current <= self.settings.auth_rate_limit_max_attempts
+                self.client.expire(key, w)
+            return current <= m
         except Exception as exc:
             raise AuthUnavailable from exc
 
@@ -196,15 +242,31 @@ class InMemorySessionStore:
     def revoke(self, token_hash: str) -> None:
         self.sessions.pop(token_hash, None)
 
+    def revoke_user(self, user_id: str) -> int:
+        doomed = [h for h, (user, _) in self.sessions.items() if user.id == user_id]
+        for token_hash in doomed:
+            self.sessions.pop(token_hash, None)
+        return len(doomed)
+
+    def restore_user(self, user_id: str) -> None:
+        # No marker exists in memory; deleted sessions are not brought back.
+        return None
+
 
 class InMemoryRateLimiter:
     def __init__(self, max_attempts: int = 5):
         self.max_attempts = max_attempts
         self.counts: dict[str, int] = {}
 
-    def allow(self, key: str) -> bool:
+    def allow(
+        self,
+        key: str,
+        window_seconds: int | None = None,
+        max_attempts: int | None = None,
+    ) -> bool:
         self.counts[key] = self.counts.get(key, 0) + 1
-        return self.counts[key] <= self.max_attempts
+        m = max_attempts if max_attempts is not None else self.max_attempts
+        return self.counts[key] <= m
 
 
 @dataclass
@@ -267,3 +329,13 @@ class AuthService:
     def logout(self, token: str | None) -> None:
         if token and self.sessions is not None:
             self.sessions.revoke(self._hash_token(token))
+
+    def revoke_user(self, user_id: str) -> int:
+        if self.sessions is None:
+            raise AuthUnavailable
+        return self.sessions.revoke_user(user_id)
+
+    def restore_user(self, user_id: str) -> None:
+        if self.sessions is None:
+            raise AuthUnavailable
+        self.sessions.restore_user(user_id)

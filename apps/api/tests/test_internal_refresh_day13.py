@@ -115,18 +115,18 @@ def test_internal_refresh_rejects_extra_fields_empty_lists_and_oversized_batches
     headers = {"X-Cron-Secret": "local_demo_only_change_me"}
     extra = {**payload("equity.br.b3.petr4"), "unexpected": True}
     assert (
-        client.post(
-            "/api/v1/internal/refresh-quotes", json=extra, headers=headers
-        ).status_code
+        client.post("/api/v1/internal/refresh-quotes", json=extra, headers=headers).status_code
         == 422
     )
-    assert client.post(
-        "/api/v1/internal/refresh-quotes", json=payload(), headers=headers
-    ).status_code == 422
+    assert (
+        client.post("/api/v1/internal/refresh-quotes", json=payload(), headers=headers).status_code
+        == 422
+    )
     too_many = payload("a", "b", "c", "d")
-    assert client.post(
-        "/api/v1/internal/refresh-quotes", json=too_many, headers=headers
-    ).status_code == 422
+    assert (
+        client.post("/api/v1/internal/refresh-quotes", json=too_many, headers=headers).status_code
+        == 422
+    )
 
 
 def test_refresh_secret_missing_from_configuration_fails_closed(monkeypatch):
@@ -143,9 +143,7 @@ def test_batch_failure_is_counted_without_aborting_other_items(monkeypatch):
     class PartialService:
         def refresh(self, request):
             if request.canonical_id.endswith("-bad"):
-                return RefreshResult(
-                    RefreshStatus.FAILED, "bad", "bad", "key", "REFRESH_FAILED"
-                )
+                return RefreshResult(RefreshStatus.FAILED, "bad", "bad", "key", "REFRESH_FAILED")
             return RefreshResult(RefreshStatus.SUCCESS, "ok", "ok", "key")
 
     monkeypatch.setattr(refresh_application, "_DEMO_SERVICE", PartialService())

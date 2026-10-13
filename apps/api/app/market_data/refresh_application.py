@@ -121,9 +121,7 @@ def refresh_market_data(
 
     dataset = _dataset(payload, settings)
     service = (
-        _DEMO_SERVICE
-        if payload.mode is RefreshMode.DEMO_ONLY
-        else RefreshService(cache=_CACHE)
+        _DEMO_SERVICE if payload.mode is RefreshMode.DEMO_ONLY else RefreshService(cache=_CACHE)
     )
     for canonical_id in ids:
         try:

@@ -45,7 +45,8 @@ def reconcile_market_data(
     holidays: frozenset[date] = frozenset(),
 ) -> ReconciliationResult:
     expected = tuple(
-        day for ordinal in range((end_date - start_date).days + 1)
+        day
+        for ordinal in range((end_date - start_date).days + 1)
         if (day := date.fromordinal(start_date.toordinal() + ordinal)).weekday() < 5
         and day not in holidays
     )

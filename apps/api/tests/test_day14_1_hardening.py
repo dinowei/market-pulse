@@ -131,8 +131,11 @@ def test_provider_result_rejects_financial_float_and_adapter_raw_payload():
     with pytest.raises(ValueError):
         ProviderResult(value=1.2, provenance=_provenance())
     dataset = ProviderDatasetRef(
-        provider="brapi", dataset="quotes", license_status="PUBLIC_APPROVED",
-        public_approved=True, evidence=True,
+        provider="brapi",
+        dataset="quotes",
+        license_status="PUBLIC_APPROVED",
+        public_approved=True,
+        evidence=True,
     )
     adapter = BrapiAdapter(
         dataset=dataset,
@@ -150,10 +153,17 @@ def test_provider_result_rejects_financial_float_and_adapter_raw_payload():
 def test_cache_envelope_rejects_missing_provenance():
     with pytest.raises(ValueError):
         CacheEnvelope(
-            value=Decimal("10"), source="demo", dataset="demo", data_level=DataLevel.DEMO,
-            freshness=Freshness.STALE, source_timestamp=None,
-            collected_at=datetime.now(UTC), cached_at=datetime.now(UTC),
-            fresh_until=datetime.now(UTC), stale_until=datetime.now(UTC), currency="BRL",
+            value=Decimal("10"),
+            source="demo",
+            dataset="demo",
+            data_level=DataLevel.DEMO,
+            freshness=Freshness.STALE,
+            source_timestamp=None,
+            collected_at=datetime.now(UTC),
+            cached_at=datetime.now(UTC),
+            fresh_until=datetime.now(UTC),
+            stale_until=datetime.now(UTC),
+            currency="BRL",
         )
 
 

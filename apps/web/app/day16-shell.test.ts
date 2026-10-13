@@ -7,9 +7,11 @@ const appRoot = join(process.cwd(), "app");
 const componentSource = () => readFileSync(join(process.cwd(), "src", "components", "market-data.tsx"), "utf8");
 const cssSource = () => readFileSync(join(appRoot, "globals.css"), "utf8");
 const pageSource = () => readFileSync(join(appRoot, "page.tsx"), "utf8");
+// The shared header (brand and menu) moved to site-header.tsx on 2026-10-11.
+const headerSource = () => readFileSync(join(process.cwd(), "src", "components", "site-header.tsx"), "utf8");
 
 test("Particle Atlas shell exposes the semantic terminal regions", () => {
-  const source = `${pageSource()}\n${componentSource()}`;
+  const source = `${pageSource()}\n${componentSource()}\n${headerSource()}`;
   for (const marker of ["Market Pulse", "Dashboard", "Morning Call", "search", "main", "aside", "footer"]) {
     assert.match(source, new RegExp(marker, "i"));
   }
