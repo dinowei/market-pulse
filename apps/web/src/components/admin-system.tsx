@@ -105,7 +105,7 @@ export function AdminSystemPanel() {
     <main id="main-content" className="admin-system-page">
       <header className="admin-system-header">
         <div>
-          <p className="eyebrow">PARTICLE ATLAS / OPERAÇÕES</p>
+          <p className="eyebrow">Operações</p>
           <h1>Painel do sistema</h1>
           <p className="muted">Visibilidade operacional interna. Sem dados sensíveis, recomendações ou credenciais.</p>
         </div>

@@ -68,7 +68,7 @@ export function MorningCallPanel() {
 
   return (
     <section id="morning-call" className="morning-call-panel" aria-labelledby="morning-call-title" data-editorial-types={editorialBlockTypes.join(",")}>
-      <p className="eyebrow">MORNING CALL</p>
+      <p className="eyebrow">Morning Call</p>
       <h2 id="morning-call-title">Resumo operacional</h2>
       {state.loading && <p className="muted">Carregando conteúdo editorial…</p>}
       {state.error && <p className="state-note" role="alert">Indisponível: {state.error}</p>}

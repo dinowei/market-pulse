@@ -131,7 +131,7 @@ export function MultiAssetComparison({ initialIds }: { initialIds?: string[] }) 
   return (
     <section className="comparison-panel" aria-labelledby="comparison-title">
       <div className="section-heading">
-        <div><p className="eyebrow">PARTICLE ATLAS / COMPARAÇÃO</p><h2 id="comparison-title">Ativo e benchmark</h2></div>
+        <div><p className="eyebrow">Comparação</p><h2 id="comparison-title">Ativo e benchmark</h2></div>
         <div className="control-row" role="group" aria-label="Modo de comparação">
           {(["PRICE", "INDEX_100"] as const).map((candidate) => <button type="button" className={mode === candidate ? "control active" : "control"} aria-pressed={mode === candidate} key={candidate} onClick={() => setMode(candidate)}>{candidate}</button>)}
         </div>

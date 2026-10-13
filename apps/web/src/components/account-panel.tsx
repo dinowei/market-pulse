@@ -79,7 +79,7 @@ export function AccountPanel() {
   const canDelete = confirmation === DELETE_CONFIRMATION && acknowledged && !busy;
   return (
     <section className="account-panel" aria-labelledby="account-title">
-      <p className="eyebrow">CONTA / PRIVACIDADE</p>
+      <p className="eyebrow">Conta e privacidade</p>
       <h1 id="account-title">Minha conta</h1>
       <dl className="meta-grid compact"><div><dt>E-mail</dt><dd>{user.email}</dd></div><div><dt>Situação</dt><dd>{user.status}</dd></div></dl>
 

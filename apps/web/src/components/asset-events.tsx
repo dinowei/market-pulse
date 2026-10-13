@@ -32,7 +32,7 @@ export function AssetEvents({ canonicalId }: { canonicalId: string }) {
   const data = current?.data;
   return (
     <section className="asset-events" aria-labelledby="asset-events-title">
-      <div className="section-heading"><p className="eyebrow">PROVENTOS E EVENTOS</p><h2 id="asset-events-title">Proventos e eventos corporativos</h2></div>
+      <div className="section-heading"><p className="eyebrow">Proventos e eventos</p><h2 id="asset-events-title">Proventos e eventos corporativos</h2></div>
       {!current && <p className="loading-state">Carregando eventos…</p>}
       {current?.error && <p className="state-note" role="alert">Eventos indisponíveis: {current.error}</p>}
       {data?.availability === "UNAVAILABLE" && <p className="muted">Indisponível: {formatReason(data.unavailable_reason)} {data.limitations.join(" ")}</p>}

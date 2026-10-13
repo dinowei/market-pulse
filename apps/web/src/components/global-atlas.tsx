@@ -42,7 +42,7 @@ export function GlobalAtlas() {
 
   return (
     <section className="atlas-panel" aria-labelledby="atlas-title">
-      <div className="section-heading"><div><p className="eyebrow">PARTICLE ATLAS / GLOBAL</p><h2 id="atlas-title">Global Atlas</h2></div><span className="state-label">CATÁLOGO · SEM PREÇOS</span></div>
+      <div className="section-heading"><div><p className="eyebrow">Global</p><h2 id="atlas-title">Global Atlas</h2></div><span className="state-label">CATÁLOGO · SEM PREÇOS</span></div>
       <p className="muted">Regiões, bolsas e instrumentos do catálogo do Market Pulse. O estado de cada linha diz se há dado aprovado; nenhuma linha é cotação.</p>
       {error && <p className="state-note" role="alert">Global Atlas indisponível: {error}</p>}
       {!error && !payload && <p className="loading-state">Carregando catálogo…</p>}

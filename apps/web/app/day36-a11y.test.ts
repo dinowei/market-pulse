@@ -70,11 +70,14 @@ test("direction text is AA (4.5:1) and stays above 3:1 under every simulated col
 });
 
 test("the simulation confirms why the non-color cues are mandatory", () => {
-  // Measured on 2026-10-07: some directions collapse for some visions. If a palette
-  // change ever separated them, this test fails so the report can be revisited.
+  // Re-measured with the v3 palette on 2026-10-12 (ADR-028): directions still collapse for
+  // some visions. If a palette change ever separated them, this test fails so the report can
+  // be revisited.
   const light = (name: string, vision: (typeof COLOR_VISIONS)[number]) => simulateColorVision(token('[data-theme="light"]', name), vision);
-  assert.ok(deltaEOk(light("--pa-market-up", "deuteranopia"), light("--pa-market-down", "deuteranopia")) < 0.05);
-  assert.ok(deltaEOk(light("--pa-market-down", "achromatopsia"), light("--pa-market-flat", "achromatopsia")) < 0.02);
+  const dark = (name: string, vision: (typeof COLOR_VISIONS)[number]) => simulateColorVision(token(":root", name), vision);
+  assert.ok(deltaEOk(light("--pa-market-up", "achromatopsia"), light("--pa-market-down", "achromatopsia")) < 0.01);
+  assert.ok(deltaEOk(dark("--pa-market-up", "deuteranopia"), dark("--pa-market-down", "deuteranopia")) < 0.08);
+  assert.ok(deltaEOk(dark("--pa-market-down", "achromatopsia"), dark("--pa-market-flat", "achromatopsia")) < 0.05);
   assert.ok(deltaEOk(token(":root", "--pa-market-up"), token(":root", "--pa-market-down")) > 0.2, "normal vision separates them");
 });
 

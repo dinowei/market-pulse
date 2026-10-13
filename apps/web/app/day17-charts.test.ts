@@ -3,7 +3,8 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ParticleChart } from "../src/components/particle-chart";
-import { AccessibleDataTable, ProvenancePanel, TerminalShell } from "../src/components/market-data";
+import { AccessibleDataTable, ProvenancePanel } from "../src/components/market-data";
+import { AppShell } from "../src/components/site-header";
 import { coordinates, elements, historyPoint, historySeries, tableRows } from "../test-support/chart-fixtures";
 
 
@@ -64,8 +65,9 @@ test("constant prices stay horizontal, zero is valid, and a single point is cent
 });
 
 // Canonical selection and contract integration are exercised by e2e/demo.spec.ts.
+// Since ADR-028 the navigation lives in the app shell that wraps every page.
 test("terminal navigation reaches the existing private routes and logout control", () => {
-  const markup = renderToStaticMarkup(createElement(TerminalShell));
+  const markup = renderToStaticMarkup(createElement(AppShell, null, createElement("main", null, "page")));
   const links = elements(markup, "a").map((link) => link.href);
   assert.ok(links.includes("/watchlists"));
   assert.ok(links.includes("/portfolios"));

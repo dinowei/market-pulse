@@ -61,4 +61,11 @@ test("no page pins its own theme and only the theme module touches browser stora
   assert.doesNotMatch(themeCode, /sessionStorage|document\.cookie|token|session/i);
   assert.equal((themeCode.match(/localStorage\.setItem\(/g) ?? []).length, 1, "a single write path for preferences");
   assert.match(themeCode, /key: typeof THEME_STORAGE_KEY \| typeof PALETTE_STORAGE_KEY/, "only the theme and palette keys can be written");
+  // ADR-028: chart settings and drawings use their own module, bound to one key prefix.
+  const chartCode = readFileSync(join(root, "src", "lib", "chart-workspace", "preferences.ts"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
+  assert.doesNotMatch(chartCode, /sessionStorage|document\.cookie|token|session/i);
+  assert.match(chartCode, /CHART_STORAGE_PREFIX = "market-pulse\.chart\."/);
+  assert.equal((chartCode.match(/if \(!key\.startsWith\(CHART_STORAGE_PREFIX\)\) return/g) ?? []).length, 2, "reads and writes refuse other keys");
 });

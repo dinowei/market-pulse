@@ -24,9 +24,11 @@ test("T2: the asset page reuses the dashboard contracts and offers only real act
     assert.doesNotMatch(read(...page), /searchParams/, `${page.join("/")} does not read the query on the server`);
   }
   assert.match(component("global-atlas"), /\/assets\?id=/);
-  for (const piece of ["PeriodSelector", "SeriesModeToggle", "ParticleChart", "AccessibleDataTable", "ProvenancePanel", "PriceChange", "DataStateBadge"]) {
+  // ADR-028: the chart workspace replaces the period, mode and SVG controls; it keeps the table.
+  for (const piece of ["ChartWorkspace", "ProvenancePanel", "PriceChange", "DataStateBadge"]) {
     assert.match(asset, new RegExp(`<${piece}\\b`), piece);
   }
+  assert.match(component("chart-workspace"), /<AccessibleDataTable\b/);
   assert.match(asset, /\/api\/v1\/watchlists\/favorites\/\$\{encodeURIComponent\(canonicalId\)\}/);
   assert.match(asset, /\/api\/v1\/watchlists\/\$\{encodeURIComponent\(target\)\}\/items/);
   assert.match(asset, /\/portfolios\?canonical_id=/);

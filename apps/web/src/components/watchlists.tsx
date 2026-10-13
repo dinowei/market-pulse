@@ -166,7 +166,7 @@ export function WatchlistsPanel() {
     return (
       <main id="main-content" className="watchlists-page terminal-root">
         <section className="watchlists-card" aria-labelledby="watchlists-title">
-          <p className="eyebrow">ÁREA PRIVADA</p>
+          <p className="eyebrow">Área privada</p>
           <h1 id="watchlists-title">Watchlists</h1>
           <p className="muted">Entre para acessar suas listas privadas e favoritos.</p>
           <Link className="auth-submit watchlists-link" href="/login">Ir para login</Link>
@@ -178,7 +178,7 @@ export function WatchlistsPanel() {
   return (
     <main id="main-content" className="watchlists-page terminal-root">
       <header className="watchlists-header">
-        <div><p className="eyebrow">PARTICLE ATLAS / ÁREA PRIVADA</p><h1 id="watchlists-title">Watchlists e favoritos</h1></div>
+        <div><p className="eyebrow">Área privada</p><h1 id="watchlists-title">Watchlists e favoritos</h1></div>
         <Link href="/" className="watchlists-back">Voltar ao terminal</Link>
       </header>
       <p className="watchlists-disclaimer">{FINANCIAL_DISCLAIMER} Uma watchlist apenas registra a identidade dos instrumentos acompanhados.</p>
@@ -198,7 +198,7 @@ export function WatchlistsPanel() {
       <div className="watchlists-grid">
         {watchlists.map((list) => (
           <section className="watchlists-card" key={list.id} aria-labelledby={`watchlist-${list.id}`}>
-            <div className="watchlist-card-heading"><div><p className="eyebrow">{list.is_system ? "SISTEMA" : "LISTA PRIVADA"}</p><h2 id={`watchlist-${list.id}`}>{list.name}</h2></div>{!list.is_system && <button type="button" className="watchlist-danger" onClick={() => void deleteList(list)} aria-label={`Excluir watchlist ${list.name}`}>Excluir</button>}</div>
+            <div className="watchlist-card-heading"><div><p className="eyebrow">{list.is_system ? "Sistema" : "Lista privada"}</p><h2 id={`watchlist-${list.id}`}>{list.name}</h2></div>{!list.is_system && <button type="button" className="watchlist-danger" onClick={() => void deleteList(list)} aria-label={`Excluir watchlist ${list.name}`}>Excluir</button>}</div>
             <button type="button" className="watchlist-select" onClick={() => setSelectedId(list.id)} aria-pressed={selectedId === list.id}>{selectedId === list.id ? "Lista selecionada" : "Selecionar lista"}</button>
             {list.items.length === 0 ? <p className="muted">Lista vazia.</p> : <ol className="watchlist-items">{list.items.map((item, index) => <li key={item.id}><div><strong>{item.display_symbol}</strong><span>{item.name} · {item.instrument_type}</span><small>{item.canonical_id} · {item.exchange ?? "GLOBAL"} · {item.currency} · {item.timezone}</small><small>Status: {item.support_state} · preço: UNAVAILABLE até fonte aprovada</small></div><div className="watchlist-item-actions"><button type="button" onClick={() => void moveItem(list, index, -1)} disabled={index === 0} aria-label={`Subir ${item.display_symbol}`}>Subir</button><button type="button" onClick={() => void moveItem(list, index, 1)} disabled={index === list.items.length - 1} aria-label={`Descer ${item.display_symbol}`}>Descer</button><button type="button" onClick={() => void removeItem(list.id, item)} aria-label={`Remover ${item.display_symbol}`}>Remover</button></div></li>)}</ol>}
           </section>

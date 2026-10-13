@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -9,17 +10,17 @@ import { apiRequest, httpStatus, isAbort } from "../lib/api-client";
 import { CANONICAL_ID } from "../lib/canonical-id";
 import { DEFAULT_BENCHMARK_ID } from "../lib/comparison-defaults";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
-import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-note";
 import { AssetEvents } from "./asset-events";
-import { AccessibleDataTable, DataStateBadge, PeriodSelector, PriceChange, ProvenancePanel, SeriesModeToggle } from "./market-data";
-import { ParticleChart } from "./particle-chart";
-import { ChartTypeToggle, effectiveChartKind } from "./chart-type-toggle";
-import { candleAvailability, type ChartKind } from "../lib/chart-geometry";
+import { DataStateBadge, PriceChange, ProvenancePanel } from "./market-data";
+
+// The canvas chart workspace (ADR-028) loads after the page; it carries its own table view.
+const ChartWorkspace = dynamic(() => import("./chart-workspace").then((module) => module.ChartWorkspace), {
+  ssr: false,
+  loading: () => <div className="card loading-state">Carregando o gráfico…</div>,
+});
 
 type PublicQuote = components["schemas"]["PublicQuote"];
-type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
-type HistoryPeriod = components["schemas"]["HistoryPeriod"];
-type SeriesMode = components["schemas"]["SeriesMode"];
+type BenchmarkItem = components["schemas"]["BenchmarkItem"];
 type InstrumentSummary = components["schemas"]["InstrumentSummary"];
 type InstrumentList = components["schemas"]["InstrumentList"];
 type Watchlist = components["schemas"]["WatchlistResponse"];
@@ -28,11 +29,10 @@ type WatchlistList = components["schemas"]["WatchlistListResponse"];
 // Classes the catalog cannot serve: the page says so instead of offering actions.
 const UNSERVED = new Set(["BLOCKED_SCOPE", "UNSUPPORTED"]);
 
-function useAssetData(canonicalId: string, period: HistoryPeriod, mode: SeriesMode) {
+function useAssetData(canonicalId: string) {
   const [instrument, setInstrument] = useState<{ id: string; value?: InstrumentSummary | null }>({ id: "" });
   const [quote, setQuote] = useState<{ id: string; value?: PublicQuote; error?: string }>({ id: "" });
-  const [history, setHistory] = useState<{ key: string; value?: PublicHistorySeries; error?: string }>({ key: "" });
-  const historyKey = `${canonicalId}|${period}|${mode}`;
+  const [options, setOptions] = useState<{ id: string; label: string }[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -45,18 +45,23 @@ function useAssetData(canonicalId: string, period: HistoryPeriod, mode: SeriesMo
     return () => controller.abort();
   }, [canonicalId]);
 
+  // Comparison candidates: the operational catalog and the benchmarks, as the API lists them.
   useEffect(() => {
     const controller = new AbortController();
-    apiRequest<PublicHistorySeries>(`/api/v1/market-data/history/${encodeURIComponent(canonicalId)}?period=${period}&mode=${mode}&adjustment_type=UNADJUSTED&max_points=${DISPLAY_MAX_POINTS}`, { signal: controller.signal })
-      .then((value) => setHistory({ key: historyKey, value }))
-      .catch((error: unknown) => { if (!isAbort(error)) setHistory({ key: historyKey, error: (error as Error).message }); });
+    Promise.all([
+      apiRequest<InstrumentList>("/api/v1/instruments/search?q=.&limit=50", { signal: controller.signal }).catch(() => ({ items: [] as InstrumentSummary[] })),
+      apiRequest<{ items: BenchmarkItem[] }>("/api/v1/market-data/benchmarks", { signal: controller.signal }).catch(() => ({ items: [] as BenchmarkItem[] })),
+    ]).then(([list, benchmarks]) => setOptions([
+      ...list.items.filter((item) => item.support_state === "P0_OPERATIONAL").map((item) => ({ id: item.canonical_id, label: `${item.display_symbol} · ${item.name}` })),
+      ...benchmarks.items.map((item) => ({ id: item.canonical_id, label: `${item.symbol} · ${item.name}` })),
+    ]));
     return () => controller.abort();
-  }, [canonicalId, historyKey, mode, period]);
+  }, []);
 
   return {
     instrument: instrument.id === canonicalId ? instrument.value : undefined,
     quote: quote.id === canonicalId ? quote : undefined,
-    history: history.key === historyKey ? history : undefined,
+    options,
   };
 }
 
@@ -132,10 +137,7 @@ function WatchlistActions({ canonicalId, servable }: { canonicalId: string; serv
 }
 
 export function AssetDetail({ canonicalId }: { canonicalId: string }) {
-  const [period, setPeriod] = useState<HistoryPeriod>("1M");
-  const [mode, setMode] = useState<SeriesMode>("PRICE");
-  const [chartKind, setChartKind] = useState<ChartKind>("line");
-  const { instrument, quote, history } = useAssetData(canonicalId, period, mode);
+  const { instrument, quote, options } = useAssetData(canonicalId);
   const servable = Boolean(instrument && !UNSERVED.has(instrument.support_state));
 
   if (instrument === null) {
@@ -151,10 +153,10 @@ export function AssetDetail({ canonicalId }: { canonicalId: string }) {
   return (
     <>
       <section className="asset-page-panel" aria-labelledby="asset-title">
-        <p className="eyebrow">ATIVO / {instrument?.instrument_type ?? "…"}</p>
         <h1 id="asset-title">{instrument ? `${instrument.display_symbol} · ${instrument.name}` : canonicalId}</h1>
         {instrument && (
           <dl className="meta-grid compact">
+            <div><dt>Tipo</dt><dd>{instrument.instrument_type}</dd></div>
             <div><dt>Identificador</dt><dd><code>{instrument.canonical_id}</code></dd></div>
             <div><dt>Bolsa</dt><dd>{instrument.exchange ?? "—"}</dd></div>
             <div><dt>País</dt><dd>{instrument.country ?? "—"}</dd></div>
@@ -166,34 +168,24 @@ export function AssetDetail({ canonicalId }: { canonicalId: string }) {
       </section>
 
       <div className="asset-page-grid">
-        <section className="series-panel" aria-labelledby="asset-series-title">
-          <div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="asset-series-title">{instrument?.display_symbol ?? canonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div>
-          <div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} />{history?.value && <ChartTypeToggle value={chartKind} onChange={setChartKind} availability={candleAvailability(history.value)} />}</div>
-          {!history && <p className="loading-state">Carregando série tipada…</p>}
-          {history?.error && <p className="state-note" role="alert">Série indisponível: {history.error}</p>}
-          {history?.value && <>
-            {downsamplingSummary(history.value.downsampling) && <p className="muted" role="note">{downsamplingSummary(history.value.downsampling)}</p>}
-            <ParticleChart series={history.value} kind={effectiveChartKind(chartKind, candleAvailability(history.value))} />
-            <AccessibleDataTable points={history.value.points} reducedFrom={history.value.downsampling?.original_points} ohlc={effectiveChartKind(chartKind, candleAvailability(history.value)) === "candles"} />
-          </>}
-          <p className="muted"><Link href={`/compare?ids=${encodeURIComponent(`${canonicalId},${DEFAULT_BENCHMARK_ID}`)}`}>Comparar com o Ibovespa</Link> em INDEX_100.</p>
-        </section>
+        <ChartWorkspace key={canonicalId} canonicalId={canonicalId} symbol={instrument?.display_symbol ?? canonicalId} compareOptions={options} />
 
         <aside className="asset-context" aria-labelledby="asset-quote-title">
-          <div className="section-heading"><p className="eyebrow">COTAÇÃO</p><h2 id="asset-quote-title">Último valor</h2></div>
+          <div className="section-heading"><h2 id="asset-quote-title">Último valor</h2>{quote?.value && <DataStateBadge dataLevel={quote.value.data_level} freshness={quote.value.freshness} />}</div>
           {!quote && <p className="loading-state">Carregando cotação…</p>}
           {quote?.error && <p className="state-note" role="alert">Cotação indisponível: {quote.error}</p>}
           {quote?.value && <>
-            <DataStateBadge dataLevel={quote.value.data_level} freshness={quote.value.freshness} />
-            <p className="asset-price">{quote.value.price == null ? "Indisponível" : `${quote.value.currency} ${quote.value.price}`}</p>
+            <p className="asset-price">{quote.value.price == null ? "Indisponível" : `${quote.value.currency} ${Number(quote.value.price).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`}</p>
             <PriceChange quote={quote.value} />
-            <ProvenancePanel data={quote.value} />
+            {quote.value.unavailable_reason === "SESSION_REQUIRED" && <p><Link href="/login">Entre</Link> para ver a cotação real.</p>}
           </>}
           <section aria-labelledby="asset-actions-title">
             <h2 id="asset-actions-title">Acompanhar</h2>
             <WatchlistActions canonicalId={canonicalId} servable={servable} />
             {servable && <p className="muted"><Link href={`/portfolios?canonical_id=${encodeURIComponent(canonicalId)}`}>Registrar evento na carteira</Link> com este ativo.</p>}
+            <p className="muted"><Link href={`/compare?ids=${encodeURIComponent(`${canonicalId},${DEFAULT_BENCHMARK_ID}`)}`}>Comparar com o Ibovespa</Link> em INDEX_100.</p>
           </section>
+          {quote?.value && <ProvenancePanel data={quote.value} />}
         </aside>
       </div>
 

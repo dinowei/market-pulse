@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans } from "next/font/google";
+import { Archivo } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import { SiteChrome } from "../src/components/site-header";
+import { AppShell } from "../src/components/site-header";
 import { WebVitalsReporter } from "../src/components/web-vitals-reporter";
 import { THEME_INIT_SCRIPT } from "../src/lib/theme";
 
-// Self-hosted at build time by next/font: no request to Google at runtime.
-// Data labels use the system monospace stack: no second font download (CSS budget, Day 38).
-const sans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "600"], variable: "--pa-font-sans", display: "swap" });
+// Self-hosted at build time by next/font: no request to Google at runtime. One variable
+// family with the width axis: expanded headings, regular text and tabular figures (ADR-028).
+const sans = Archivo({ subsets: ["latin"], axes: ["wdth"], variable: "--pa-font-sans", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Market Pulse",
@@ -23,8 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <Script id="mp-theme-init" strategy="beforeInteractive">{THEME_INIT_SCRIPT}</Script>
         <WebVitalsReporter />
-        <SiteChrome />
-        {children}
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

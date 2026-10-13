@@ -53,7 +53,7 @@ export function MarketHeatmap() {
   const tiles = groups.flatMap((group) => group.tiles.map((quote) => ({ group: group.group, quote })));
   return (
     <section className="heatmap-panel" aria-labelledby="heatmap-title">
-      <div className="section-heading"><div><p className="eyebrow">MERCADO / HEATMAP</p><h2 id="heatmap-title">Heatmap básico</h2></div><span className="state-label">INFORMATIVO</span></div>
+      <div className="section-heading"><div><p className="eyebrow">Heatmap</p><h2 id="heatmap-title">Heatmap básico</h2></div><span className="state-label">INFORMATIVO</span></div>
       {error && <p className="state-note" role="alert">Heatmap indisponível: {error}</p>}
       {!error && !payload && <p className="loading-state">Carregando heatmap…</p>}
       {payload && <>

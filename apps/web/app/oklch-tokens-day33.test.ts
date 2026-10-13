@@ -7,7 +7,7 @@ import { contrast, hexToOklch, oklchToHex, parseOklch } from "../src/lib/color";
 
 const root = process.cwd();
 const css = readFileSync(join(root, "app", "globals.css"), "utf8");
-const marketData = readFileSync(join(root, "src", "components", "market-data.tsx"), "utf8");
+const comparison = readFileSync(join(root, "src", "components", "multi-asset-comparison.tsx"), "utf8");
 
 function blockAt(source: string, selector: string, from = 0): string {
   const start = source.indexOf(`${selector} {`, from);
@@ -88,5 +88,5 @@ test("form fields use the control border, never the decorative hairline", () => 
 });
 
 test("the downsampling disclosure is neutral text, not the amber STALE/alert color", () => {
-  assert.match(marketData, /<p className="muted" role="note">\{downsamplingSummary/);
+  assert.match(comparison, /<p className="muted" role="note">Séries reduzidas/);
 });

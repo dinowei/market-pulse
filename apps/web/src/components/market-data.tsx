@@ -1,46 +1,43 @@
 "use client";
 
 import type { components } from "../generated/api";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ParticleChart } from "./particle-chart";
-import { ChartTypeToggle, effectiveChartKind } from "./chart-type-toggle";
-import { candleAvailability, type ChartKind } from "../lib/chart-geometry";
+import { useEffect, useMemo, useState } from "react";
 import { MorningCallPanel } from "./morning-call";
-import { DISPLAY_MAX_POINTS, downsamplingSummary } from "../lib/downsampling-note";
-import { SiteHeader } from "./site-header";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { describeChange } from "../lib/price-direction";
 import { formatReason } from "../lib/unavailable-reasons";
-import { DEFAULT_BENCHMARK_ID } from "../lib/comparison-defaults";
+import { apiRequest, isAbort } from "../lib/api-client";
+import { DataStateBadge } from "./data-table";
+
+// Shared pieces keep their historical import path (asset page, comparison and tests).
+export { AccessibleDataTable, DataStateBadge } from "./data-table";
+export { InstrumentSearch } from "./instrument-search";
 
 type PublicQuote = components["schemas"]["PublicQuote"];
 type PublicHistorySeries = components["schemas"]["PublicHistorySeries"];
-type PublicHistoryPoint = components["schemas"]["PublicHistoryPoint"];
-type DataLevel = components["schemas"]["DataLevel"];
-type Freshness = components["schemas"]["Freshness"];
 type HistoryPeriod = components["schemas"]["HistoryPeriod"];
 type SeriesMode = components["schemas"]["SeriesMode"];
 type InstrumentSummary = components["schemas"]["InstrumentSummary"];
 type InstrumentList = components["schemas"]["InstrumentList"];
+type BenchmarkItem = components["schemas"]["BenchmarkItem"];
+// DataLevel and Freshness reach the screen through DataStateBadge on every number.
 
 const periods = ["1D", "5D", "1M", "3M", "6M", "YTD", "1A", "5A", "MAX"] as const satisfies readonly HistoryPeriod[];
 const modes = ["PRICE", "INDEX_100"] as const satisfies readonly SeriesMode[];
 
-export function DataStateBadge({ dataLevel, freshness }: { dataLevel: DataLevel; freshness: Freshness }) {
-  const label = dataLevel === "DEMO" ? "DADOS DE DEMONSTRAÇÃO" : `${dataLevel} · ${freshness}`;
-  return (
-    <span className={`data-badge data-badge-${freshness.toLowerCase()}`} aria-label={`Estado ${freshness}, nível ${dataLevel}`}>
-      <span aria-hidden="true" className="badge-mark" />
-      {label}{dataLevel === "DEMO" && <span className="sr-only">DEMO · {freshness}</span>}
-    </span>
-  );
-}
+// Canvas chart workspace, loaded after the page (ADR-028). Fallback tabular: the same series
+// as a table lives inside it, so the chart is never the only way to read the data.
+const ChartWorkspace = dynamic(() => import("./chart-workspace").then((module) => module.ChartWorkspace), {
+  ssr: false,
+  loading: () => <div className="card loading-state">Carregando o gráfico…</div>,
+});
 
 export function ProvenancePanel({ data }: { data: PublicQuote | PublicHistorySeries }) {
   return (
     <section className="provenance-panel" aria-labelledby="provenance-title">
-      <div className="section-heading"><p className="eyebrow">PROVENANCE</p><h2 id="provenance-title">Origem e estado</h2></div>
+      <h2 id="provenance-title">Origem e estado</h2>
       <dl className="meta-grid">
         <div><dt>Provider</dt><dd>{data.provider}</dd></div>
         <div><dt>Dataset</dt><dd>{data.dataset}</dd></div>
@@ -65,7 +62,7 @@ export function ProvenancePanel({ data }: { data: PublicQuote | PublicHistorySer
 export function MarketStatusBar({ data }: { data?: PublicQuote | PublicHistorySeries }) {
   return (
     <div className="status-bar" role="status">
-      <span>{data ? <DataStateBadge dataLevel={data.data_level} freshness={data.freshness} /> : "BACKEND / AGUARDANDO"}</span>
+      <span>{data ? <DataStateBadge dataLevel={data.data_level} freshness={data.freshness} /> : "Aguardando a API"}</span>
       <span>{data?.latency_ms == null ? "latência indisponível" : `${data.latency_ms} ms`}</span>
       <span>{data?.timestamp_collected ? `coletado ${data.timestamp_collected}` : "sem coleta"}</span>
     </div>
@@ -86,20 +83,21 @@ export function PriceChange({ quote }: { quote: PublicQuote }) {
 export function AssetContextPanel({ quote, loading, error, selectedId }: { quote?: PublicQuote; loading: boolean; error?: string; selectedId: string }) {
   return (
     <aside className="asset-context" aria-labelledby="asset-context-title">
-      <div className="section-heading"><p className="eyebrow">ATIVO SELECIONADO</p><h2 id="asset-context-title">{quote?.symbol ?? (selectedId || "Ativo indisponível")}</h2></div>
-      {loading && <p className="muted">Carregando contrato…</p>}
+      <div className="section-heading"><h2 id="asset-context-title">{quote?.symbol ?? (selectedId || "Ativo indisponível")}</h2>{quote && <DataStateBadge dataLevel={quote.data_level} freshness={quote.freshness} />}</div>
+      {loading && <p className="muted">Carregando cotação…</p>}
       {error && <p className="state-note" role="alert">Dados indisponíveis: {error}</p>}
       {!loading && !error && quote && (
         <>
           <p className="asset-name">{quote.name}</p>
-          <p className="asset-price">{quote.price == null ? "Indisponível" : `${quote.currency} ${quote.price}`}</p>
+          <p className="asset-price">{quote.price == null ? "Indisponível" : `${quote.currency} ${Number(quote.price).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`}</p>
           <PriceChange quote={quote} />
+          {quote.unavailable_reason === "SESSION_REQUIRED" && <p><Link href="/login">Entre</Link> para ver a cotação real.</p>}
           <dl className="meta-grid compact">
             <div><dt>Moeda</dt><dd>{quote.currency}</dd></div>
             <div><dt>Bolsa</dt><dd>{quote.exchange ?? "Indisponível"}</dd></div>
           </dl>
-          <ProvenancePanel data={quote} />
           <p><Link href={`/assets?id=${encodeURIComponent(quote.canonical_id)}`}>Abrir página do ativo</Link></p>
+          <ProvenancePanel data={quote} />
         </>
       )}
       {!loading && !error && !quote && <p className="muted">Nenhum dado disponível.</p>}
@@ -115,82 +113,108 @@ export function SeriesModeToggle({ value, onChange }: { value: SeriesMode; onCha
   return <fieldset className="control-group"><legend>Modo de comparação</legend><div className="control-row">{modes.map((mode) => <button type="button" className={mode === value ? "control active" : "control"} aria-pressed={mode === value} key={mode} onClick={() => onChange(mode)}>{mode}</button>)}</div></fieldset>;
 }
 
-export function AccessibleDataTable({ points, reducedFrom, ohlc = false }: { points: PublicHistoryPoint[]; reducedFrom?: number; ohlc?: boolean }) {
-  const caption = reducedFrom ? `Fallback tabular da série histórica (${points.length} de ${reducedFrom} pontos, redução M4 declarada)` : "Fallback tabular da série histórica";
-  // With candles on screen, the equivalent table carries the same OHLC and volume.
+function changeCue(percent: string | null | undefined) {
+  if (percent == null) return null;
+  const value = Number(percent);
+  if (!Number.isFinite(value)) return null;
+  return { value, tone: value > 0 ? "direction-up" : value < 0 ? "direction-down" : "direction-flat", glyph: value > 0 ? "▲" : value < 0 ? "▼" : "▬", word: value > 0 ? "alta" : value < 0 ? "queda" : "estável" };
+}
+
+/** Cards for the benchmarks and the operational instruments, exactly as the API serves them. */
+function MarketOverview({ benchmarks, quotes }: { benchmarks: BenchmarkItem[]; quotes: PublicQuote[] }) {
+  const cards = [
+    ...quotes.map((quote) => ({ id: quote.canonical_id, title: quote.name, symbol: quote.symbol, value: quote.price, currency: quote.currency, change: quote.change_percent, level: quote.data_level, freshness: quote.freshness, reason: quote.unavailable_reason, source: quote.provider, href: `/assets?id=${encodeURIComponent(quote.canonical_id)}` })),
+    ...benchmarks.map((item) => ({ id: item.canonical_id, title: item.name, symbol: item.symbol, value: item.value, currency: item.currency, change: item.change_percent, level: item.data_level, freshness: item.freshness, reason: item.unavailable_reason, source: item.source, href: `/compare?ids=${encodeURIComponent(item.canonical_id)}` })),
+  ];
+  if (cards.length === 0) return <p className="muted">Carregando o panorama…</p>;
   return (
-    <div className="table-wrap"><table><caption>{caption}</caption><thead><tr><th scope="col">Sessão</th>{ohlc && <><th scope="col">Abertura</th><th scope="col">Máxima</th><th scope="col">Mínima</th></>}<th scope="col">Fechamento</th>{ohlc && <th scope="col">Volume</th>}<th scope="col">Índice 100</th><th scope="col">Gap</th></tr></thead><tbody>{points.map((point) => <tr key={`${point.timestamp}-${point.session_date}`}><th scope="row">{point.session_date}</th>{ohlc && <><td>{point.open ?? "—"}</td><td>{point.high ?? "—"}</td><td>{point.low ?? "—"}</td></>}<td>{point.close ?? "—"}</td>{ohlc && <td>{point.volume ?? "—"}</td>}<td>{point.index_100 ?? "—"}</td><td>{point.is_gap ? "Sim" : "Não"}</td></tr>)}</tbody></table></div>
+    <ul className="overview-grid">
+      {cards.map((card) => {
+        const cue = changeCue(card.change);
+        return (
+          <li key={card.id} className="card overview-card">
+            <h3>{card.title}</h3>
+            <span className="value">{card.value == null ? "—" : Number(card.value).toLocaleString("pt-BR", { maximumFractionDigits: Number(card.value) >= 1000 ? 0 : 4 })} <small>{card.value == null ? "" : card.currency}</small></span>
+            {cue ? <span className={cue.tone}>{cue.glyph} {Math.abs(cue.value).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% · {cue.word}</span> : <small>Variação indisponível</small>}
+            <DataStateBadge dataLevel={card.level} freshness={card.freshness} />
+            <small>{card.reason ? formatReason(card.reason) : `Fonte: ${card.source}`}</small>
+            <Link href={card.href}>{card.href.startsWith("/assets") ? `Abrir ${card.symbol}` : `Comparar ${card.symbol}`}</Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
-async function fetchJson<T>(url: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(url, { signal, headers: { Accept: "application/json" } });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json() as Promise<T>;
-}
-
-export function InstrumentSearch({ onSelect }: { onSelect: (canonicalId: string) => void }) {
-  const [query, setQuery] = useState("");
-  const [state, setState] = useState<{ key: string; data?: InstrumentList }>({ key: "" });
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-  useEffect(() => {
-    const normalized = query.trim();
-    if (normalized.length < 2) return;
-    const controller = new AbortController();
-    fetchJson<InstrumentList>(`${apiBase}/api/v1/instruments/search?q=${encodeURIComponent(normalized)}`, controller.signal).then((data) => setState({ key: normalized, data })).catch(() => undefined);
-    return () => controller.abort();
-  }, [apiBase, query]);
-  const items: InstrumentSummary[] = state.key === query.trim() ? state.data?.items ?? [] : [];
-  return <div className="search-wrap"><label className="search"><span className="sr-only">Buscar instrumento</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar símbolo ou nome" /></label>{items.length > 0 && <ul id="instrument-results" className="search-results" role="listbox">{items.map((item) => <li key={item.canonical_id}><button type="button" role="option" aria-selected={false} onClick={() => { onSelect(item.canonical_id); setQuery(item.display_symbol); }}>{item.display_symbol} · {item.name}<small>{item.support_state}</small></button></li>)}</ul>}{query.trim().length >= 2 && state.key === query.trim() && items.length === 0 && <p className="search-empty">Nenhum instrumento no catálogo.</p>}</div>;
-}
-
 export function TerminalShell() {
-  const [period, setPeriod] = useState<HistoryPeriod>("1M");
-  const [mode, setMode] = useState<SeriesMode>("PRICE");
-  const [chartKind, setChartKind] = useState<ChartKind>("line");
   const [selectedCanonicalId, setSelectedCanonicalId] = useState("");
-  const [quoteState, setQuoteState] = useState<{ key: string; data?: PublicQuote; error?: string }>({ key: "" });
-  const [historyState, setHistoryState] = useState<{ key: string; data?: PublicHistorySeries; error?: string }>({ key: "" });
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-  const quoteKey = `${apiBase}|${selectedCanonicalId}`;
-  const historyKey = `${quoteKey}|${period}|${mode}`;
-  const quote = quoteState.key === quoteKey ? quoteState.data : undefined;
-  const quoteError = quoteState.key === quoteKey ? quoteState.error : undefined;
-  const quoteLoading = quoteState.key !== quoteKey;
-  const history = historyState.key === historyKey ? historyState.data : undefined;
-  const historyError = historyState.key === historyKey ? historyState.error : undefined;
-  const historyLoading = historyState.key !== historyKey;
+  const [instruments, setInstruments] = useState<InstrumentSummary[]>([]);
+  const [benchmarks, setBenchmarks] = useState<BenchmarkItem[]>([]);
+  const [quotes, setQuotes] = useState<Record<string, PublicQuote>>({});
+  const [quoteError, setQuoteError] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (selectedCanonicalId) return;
     const controller = new AbortController();
-    fetchJson<InstrumentList>(`${apiBase}/api/v1/instruments/search?q=.&limit=1`, controller.signal)
-      .then((data) => setSelectedCanonicalId((current) => current || data.items[0]?.canonical_id || ""))
+    apiRequest<InstrumentList>("/api/v1/instruments/search?q=.&limit=50", { signal: controller.signal })
+      .then((data) => {
+        setInstruments(data.items);
+        setSelectedCanonicalId((current) => current || data.items.find((item) => item.support_state === "P0_OPERATIONAL")?.canonical_id || data.items[0]?.canonical_id || "");
+      })
+      .catch(() => undefined);
+    apiRequest<{ items: BenchmarkItem[] }>("/api/v1/market-data/benchmarks", { signal: controller.signal })
+      .then((data) => setBenchmarks(data.items))
       .catch(() => undefined);
     return () => controller.abort();
-  }, [apiBase, selectedCanonicalId]);
+  }, []);
 
+  const operational = useMemo(() => instruments.filter((item) => item.support_state === "P0_OPERATIONAL"), [instruments]);
   useEffect(() => {
-    if (!selectedCanonicalId) return;
     const controller = new AbortController();
-    fetchJson<PublicQuote>(`${apiBase}/api/v1/market-data/quotes/${encodeURIComponent(selectedCanonicalId)}`, controller.signal).then((data) => setQuoteState({ key: `${apiBase}|${selectedCanonicalId}`, data })).catch((error: unknown) => { if (error instanceof Error && error.name !== "AbortError") setQuoteState({ key: `${apiBase}|${selectedCanonicalId}`, error: error.message }); });
+    for (const item of operational) {
+      apiRequest<PublicQuote>(`/api/v1/market-data/quotes/${encodeURIComponent(item.canonical_id)}`, { signal: controller.signal })
+        .then((quote) => setQuotes((current) => ({ ...current, [item.canonical_id]: quote })))
+        .catch((error: unknown) => { if (!isAbort(error)) setQuoteError((current) => ({ ...current, [item.canonical_id]: (error as Error).message })); });
+    }
     return () => controller.abort();
-  }, [apiBase, selectedCanonicalId]);
+  }, [operational]);
 
-  useEffect(() => {
-    if (!selectedCanonicalId) return;
-    const controller = new AbortController();
-    fetchJson<PublicHistorySeries>(`${apiBase}/api/v1/market-data/history/${encodeURIComponent(selectedCanonicalId)}?period=${period}&mode=${mode}&adjustment_type=UNADJUSTED&max_points=${DISPLAY_MAX_POINTS}`, controller.signal).then((data) => setHistoryState({ key: historyKey, data })).catch((error: unknown) => { if (error instanceof Error && error.name !== "AbortError") setHistoryState({ key: historyKey, error: error.message }); });
-    return () => controller.abort();
-  }, [historyKey, apiBase, mode, period, selectedCanonicalId]);
+  const quote = quotes[selectedCanonicalId];
+  const selected = instruments.find((item) => item.canonical_id === selectedCanonicalId);
+  const compareOptions = [
+    ...operational.map((item) => ({ id: item.canonical_id, label: `${item.display_symbol} · ${item.name}` })),
+    ...benchmarks.map((item) => ({ id: item.canonical_id, label: `${item.symbol} · ${item.name}` })),
+  ];
 
   return <div className="terminal-root">
-    <SiteHeader search={<InstrumentSearch onSelect={setSelectedCanonicalId} />} extraLinks={<a href="#morning-call">Morning Call</a>} />
-    <div className="terminal-grid">
-      <aside className="left-rail" aria-label="Contexto operacional"><MorningCallPanel /><section><p className="eyebrow">AGENDA / EVENTOS</p><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE</span></section></aside>
-      <main id="main-content" className="main-panel"><div className="panel-heading"><div><p className="eyebrow">DASHBOARD / MERCADO</p><h1>Observatório de mercado</h1></div><span className="state-label">P0 · INFORMATIVO</span></div><section className="series-panel" aria-labelledby="series-title"><div className="series-heading"><div><p className="eyebrow">SÉRIE HISTÓRICA</p><h2 id="series-title">{quote?.symbol ?? selectedCanonicalId} · {period}</h2></div><span className="series-note">Sem suavização</span></div><div className="controls"><PeriodSelector value={period} onChange={setPeriod} /><SeriesModeToggle value={mode} onChange={setMode} />{history && <ChartTypeToggle value={chartKind} onChange={setChartKind} availability={candleAvailability(history)} />}</div>{historyLoading && <p className="loading-state">Carregando série tipada…</p>}{historyError && <p className="state-note" role="alert">Série indisponível: {historyError}</p>}{history && !historyLoading && <>{downsamplingSummary(history.downsampling) && <p className="muted" role="note">{downsamplingSummary(history.downsampling)}</p>}<ParticleChart series={history} kind={effectiveChartKind(chartKind, candleAvailability(history))} /><AccessibleDataTable points={history.points} reducedFrom={history.downsampling?.original_points} ohlc={effectiveChartKind(chartKind, candleAvailability(history)) === "candles"} /></>}{!historyLoading && !historyError && !history && <p className="muted">Nenhuma série disponível.</p>}{selectedCanonicalId && <p className="comparison-note"><Link href={`/compare?ids=${encodeURIComponent(`${selectedCanonicalId},${DEFAULT_BENCHMARK_ID}`)}`}>Comparar com o Ibovespa</Link> em INDEX_100, com tabela equivalente.</p>}</section></main>
-      <AssetContextPanel quote={quote} loading={quoteLoading} error={quoteError} selectedId={selectedCanonicalId} />
-    </div>
-    <footer><MarketStatusBar data={history ?? quote} /><span>{FINANCIAL_DISCLAIMER}</span></footer>
+    <main id="main-content" className="page">
+      <div className="page-head">
+        <div>
+          <h1>Observatório de mercado</h1>
+          <p className="muted">Gráfico com ferramentas de análise, cotações com procedência e o panorama das referências. Conteúdo informativo; DEMO e UNAVAILABLE sempre identificados.</p>
+        </div>
+        {operational.length > 0 && (
+          <label className="control-group">
+            <span className="sr-only">Ativo no gráfico</span>
+            <select className="control" value={selectedCanonicalId} onChange={(event) => setSelectedCanonicalId(event.target.value)} aria-label="Ativo no gráfico">
+              {operational.map((item) => <option key={item.canonical_id} value={item.canonical_id}>{item.display_symbol} · {item.name}</option>)}
+            </select>
+          </label>
+        )}
+      </div>
+      <div className="dashboard-grid">
+        {selectedCanonicalId ? <ChartWorkspace key={selectedCanonicalId} canonicalId={selectedCanonicalId} symbol={selected?.display_symbol ?? selectedCanonicalId} compareOptions={compareOptions} /> : <div className="card loading-state">Carregando o catálogo…</div>}
+        <div className="dashboard-side">
+          <AssetContextPanel quote={quote} loading={Boolean(selectedCanonicalId) && !quote && !quoteError[selectedCanonicalId]} error={quoteError[selectedCanonicalId]} selectedId={selectedCanonicalId} />
+          {/* Morning Call: the latest published summary, reviewed by a human before it appears. */}
+          <div className="card" id="morning-call"><MorningCallPanel /></div>
+          <section className="card" aria-labelledby="agenda-title"><h2 id="agenda-title">Agenda e eventos</h2><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE</span></section>
+        </div>
+      </div>
+      <section aria-labelledby="overview-title">
+        <h2 id="overview-title" style={{ marginTop: "2rem" }}>Panorama</h2>
+        <MarketOverview benchmarks={benchmarks} quotes={operational.map((item) => quotes[item.canonical_id]).filter((item): item is PublicQuote => Boolean(item))} />
+      </section>
+    </main>
+    <footer><MarketStatusBar data={quote} /><span>{FINANCIAL_DISCLAIMER}</span></footer>
   </div>;
 }

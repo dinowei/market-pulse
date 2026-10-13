@@ -99,7 +99,7 @@ function Overview({ groups, onOpen }: { groups: Map<MarketTabId, MarketRow[]>; o
     <ul className="markets-overview">{MARKET_TABS.filter((tab) => tab.id !== "overview" && (tab.unavailable || groups.has(tab.id))).map((tab) => {
       const rows = groups.get(tab.id) ?? [];
       return <li key={tab.id}><button type="button" className="markets-card" onClick={() => onOpen(tab.id)}>
-        <span className="eyebrow">{tab.label.toUpperCase()}</span>
+        <span className="eyebrow">{tab.label}</span>
         <strong>{tab.unavailable ? "Indisponível" : `${rows.length} ${rows.length === 1 ? "série" : "séries"}`}</strong>
         <span className="muted">{tab.unavailable ? "Sem dataset aprovado" : pulseSentence(pulseSummary(rows))}</span>
         {rows.length > 0 && <span className="markets-card-symbols">{rows.map((row) => row.symbol).join(" · ")}</span>}
@@ -158,7 +158,7 @@ export function MarketsHub({ initialTab = "overview" }: { initialTab?: MarketTab
   return (
     <section className="markets-panel" aria-labelledby="markets-title">
       <div className="section-heading">
-        <div><p className="eyebrow">PARTICLE ATLAS / MERCADOS</p><h1 id="markets-title">Mercados por família</h1></div>
+        <div><p className="eyebrow">Mercados</p><h1 id="markets-title">Mercados por família</h1></div>
         <div className="markets-actions">
           <Link href="/">Dashboard</Link>
           <button type="button" className="control" onClick={() => { setLoading(true); setRefreshKey((key) => key + 1); }} disabled={loading}>{loading ? "Atualizando…" : "Atualizar dados"}</button>

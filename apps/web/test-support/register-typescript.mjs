@@ -12,6 +12,7 @@ createRequire(import.meta.url)("next/link");
 registerHooks({
   resolve(specifier, context, nextResolve) {
     if (specifier === "next/link") return nextResolve("next/link.js", context);
+    if (specifier === "next/dynamic") return nextResolve("next/dynamic.js", context);
     if (specifier === "next/navigation") return nextResolve(new URL("./next-navigation.mjs", import.meta.url).href, context);
     if (specifier.startsWith(".") && context.parentURL && !extname(specifier)) {
       for (const extension of [".ts", ".tsx"]) {
