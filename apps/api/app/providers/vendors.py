@@ -108,6 +108,17 @@ def _utc_datetime_or_session(value: Any, name: str) -> tuple[datetime | None, da
         raise _schema(f"{name} inválido") from exc
 
 
+def _pair_currency(ref: InstrumentRef) -> str | None:
+    """The quote currency of a BASE/QUOTE pair (forex, crypto, metals); None for a ticker.
+
+    Twelve Data sends no `currency` for pairs (observed 2026-10-13): the value is priced in
+    the pair's quote currency by definition, and _currency still checks it against the catalog.
+    """
+
+    base, slash, quote = ref.provider_symbol.partition("/")
+    return quote if slash and base and quote else None
+
+
 def _currency(value: Any, ref: InstrumentRef) -> tuple[str, tuple[str, ...]]:
     if not isinstance(value, str) or len(value) != 3 or value != value.upper():
         raise _schema("moeda ausente ou fora do padrão ISO")
@@ -324,7 +335,7 @@ def twelve_data_quote(
     _twelve_data_error(payload)
     if payload.get("symbol") != ref.provider_symbol:
         raise _schema("símbolo da resposta difere do pedido")
-    currency, notes = _currency(payload.get("currency"), ref)
+    currency, notes = _currency(payload.get("currency") or _pair_currency(ref), ref)
     timestamp, session = _utc_datetime_or_session(payload.get("datetime"), "datetime")
     return CanonicalQuote(
         canonical_id=ref.canonical_id,
@@ -402,7 +413,10 @@ def twelve_data_series(
     meta, values = payload.get("meta"), payload.get("values")
     if not isinstance(meta, dict) or not isinstance(values, list):
         raise _schema("meta ou values ausente")
-    currency, notes = _currency(meta.get("currency"), ref)
+    if meta.get("symbol") not in (None, ref.provider_symbol):
+        raise _schema("símbolo da resposta difere do pedido")
+    # A pair's meta names its currencies in words (currency_base/currency_quote).
+    currency, notes = _currency(meta.get("currency") or _pair_currency(ref), ref)
     if notes:
         raise _schema(notes[0])
 

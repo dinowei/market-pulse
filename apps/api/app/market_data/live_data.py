@@ -66,23 +66,62 @@ class LiveInstrument:
 
 _BR, _US = "America/Sao_Paulo", "America/New_York"
 
-# The instruments with a verified normalizer for at least one approved provider. Anything
-# else (S&P 500, Nasdaq, CDI, IPCA, IFIX, BTC) stays UNAVAILABLE in real mode.
+
+def _b3(canonical_id: str, symbol: str) -> LiveInstrument:
+    return LiveInstrument(canonical_id, "BR", "BRL", _BR, {"brapi": symbol})
+
+
+def _us(canonical_id: str, symbol: str) -> LiveInstrument:
+    providers = ("twelve_data", "massive", "alpha_vantage")
+    return LiveInstrument(canonical_id, "US", "USD", _US, dict.fromkeys(providers, symbol))
+
+
+def _pair(canonical_id: str, market: str, pair: str) -> LiveInstrument:
+    # Twelve Data names a pair BASE/QUOTE; the quote currency is the value's currency.
+    return LiveInstrument(canonical_id, market, pair.split("/")[1], "UTC", {"twelve_data": pair})
+
+
+# The instruments with a verified normalizer for at least one approved provider (ADR-027,
+# widened by ADR-029 after the probes of 2026-10-13). Anything else (S&P 500 and Nasdaq
+# indices, CDI, IPCA, IFIX) stays UNAVAILABLE in real mode. brapi serves B3 quotes on the
+# owner's plan, but its history only for some tickers: the others answer 403 and stay
+# UNAVAILABLE for the chart, with that reason.
 LIVE_INSTRUMENTS: Mapping[str, LiveInstrument] = {
     item.canonical_id: item
     for item in (
-        LiveInstrument("equity.br.b3.petr4", "BR", "BRL", _BR, {"brapi": "PETR4"}),
-        LiveInstrument("index.br.b3.ibovespa", "BR", "BRL", _BR, {"brapi": "^BVSP"}),
+        _b3("equity.br.b3.petr4", "PETR4"),
+        _b3("index.br.b3.ibovespa", "^BVSP"),
+        _b3("equity.br.b3.vale3", "VALE3"),
+        _b3("equity.br.b3.itub4", "ITUB4"),
+        _b3("equity.br.b3.wege3", "WEGE3"),
+        _b3("equity.br.b3.cmin3", "CMIN3"),
+        _b3("etf.br.b3.bova11", "BOVA11"),
+        _b3("fii.br.b3.mxrf11", "MXRF11"),
+        _b3("bdr.br.b3.aapl34", "AAPL34"),
+        _us("equity.us.nasdaq.aapl", "AAPL"),
+        _us("equity.us.nasdaq.msft", "MSFT"),
+        _us("equity.us.nasdaq.nvda", "NVDA"),
+        _us("etf.us.nysearca.spy", "SPY"),
+        # Open Exchange Rates keeps the benchmark rate; Twelve Data adds quote and daily bars.
         LiveInstrument(
-            "equity.us.nasdaq.aapl",
-            "US",
-            "USD",
-            _US,
-            {"twelve_data": "AAPL", "massive": "AAPL", "alpha_vantage": "AAPL"},
+            "fx.global.usd-brl",
+            "FX",
+            "BRL",
+            "UTC",
+            {"open_exchange_rates": "USD", "twelve_data": "USD/BRL"},
         ),
-        LiveInstrument("fx.global.usd-brl", "FX", "BRL", "UTC", {"open_exchange_rates": "USD"}),
+        _pair("fx.global.eur-usd", "FX", "EUR/USD"),
+        _pair("crypto.global.btc-usd", "CRYPTO", "BTC/USD"),
+        _pair("crypto.global.eth-usd", "CRYPTO", "ETH/USD"),
+        _pair("commodity.global.xau-usd", "METAL", "XAU/USD"),
     )
 }
+# Markets that trade around the clock: the day's bar is still forming until 00:00 UTC.
+ROUND_THE_CLOCK = frozenset({"FX", "CRYPTO", "METAL"})
+ROUND_THE_CLOCK_NOTE = (
+    "Mercado de 24 horas: a barra diária vai de 00:00 a 24:00 UTC e a de hoje ainda está "
+    "em formação."
+)
 
 # Conservative levels for the free plans described in the registry; never REAL_TIME.
 PLAN_LEVEL: Mapping[str, DataLevel] = {
@@ -371,6 +410,10 @@ class LiveResult:
     primary: str | None = None
 
 
+def _market_notes(instrument: LiveInstrument) -> tuple[str, ...]:
+    return (ROUND_THE_CLOCK_NOTE,) if instrument.market in ROUND_THE_CLOCK else ()
+
+
 def _ref(instrument: LiveInstrument, provider_id: str) -> InstrumentRef:
     return InstrumentRef(
         instrument.canonical_id, instrument.symbols[provider_id], instrument.currency
@@ -540,12 +583,12 @@ def live_quote(canonical_id: str) -> LiveResult | None:
     """None when the instrument has no live source at all; otherwise a value or a reason."""
 
     instrument = LIVE_INSTRUMENTS.get(canonical_id)
-    if instrument is None or instrument.market == "FX":
+    if instrument is None:
         return None
 
     def fetch(provider_id: str):
         quote = _accept(_fetch_quote(instrument, provider_id))
-        return quote, tuple(quote.quality_notes)
+        return quote, (*quote.quality_notes, *_market_notes(instrument))
 
     return _cached(
         _key("quote", canonical_id),
@@ -616,12 +659,12 @@ def live_series(canonical_id: str) -> LiveResult | None:
     """Unadjusted daily bars, cached as one window and cut per period by the caller."""
 
     instrument = LIVE_INSTRUMENTS.get(canonical_id)
-    if instrument is None or instrument.market == "FX":
+    if instrument is None:
         return None
 
     def fetch(provider_id: str):
         series = _fetch_series(instrument, provider_id)
-        return series.bars, series.notes
+        return series.bars, (*series.notes, *_market_notes(instrument))
 
     return _cached(
         _key("series", canonical_id),

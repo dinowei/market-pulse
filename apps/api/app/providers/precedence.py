@@ -34,6 +34,11 @@ _REASON_PRIORITY = (
     UnavailableReason.DATASET_NOT_APPROVED,
     UnavailableReason.UNAVAILABLE,
 )
+# A refusal of one query (outside the plan, unreadable payload) says nothing about the
+# provider's health, so it does not count toward opening its circuit (ADR-029).
+QUERY_REFUSALS = frozenset(
+    {UnavailableReason.LICENSE_BLOCKED, UnavailableReason.SCHEMA_UNSUPPORTED}
+)
 
 
 @dataclass(frozen=True)
@@ -93,7 +98,7 @@ def serve(
             reason = reason_for_error(error)
             attempts.append(Attempt(provider_id, reason.value))
             reasons.append(reason)
-            if breaker:
+            if breaker and reason not in QUERY_REFUSALS:
                 breaker.record_failure()
             continue
         if breaker:

@@ -21,8 +21,9 @@ def test_catalog_separates_operational_and_future_universes() -> None:
     assert not P0_OPERATIONAL_UNIVERSE.intersection(FUTURE_CANDIDATE_UNIVERSE)
     crypto = next(item for item in MASTER_CATALOG if item.symbol == "BTC-USD")
     assert crypto.catalog_status is CatalogStatus.CANDIDATE
-    assert crypto.coverage_tier is CoverageTier.FUTURE_REVIEW
-    assert crypto.data_support_status is DataSupportStatus.METADATA_ONLY
+    # ADR-029: priced only in the owner's private session (ADR-027), so P1 and pending.
+    assert crypto.coverage_tier is CoverageTier.P1
+    assert crypto.data_support_status is DataSupportStatus.PROVIDER_PENDING
 
 
 def test_search_returns_support_level_and_alias_without_changing_identity() -> None:
@@ -61,10 +62,11 @@ def test_no_catalog_entry_is_priced_without_an_approved_dataset() -> None:
 
 
 @pytest.mark.parametrize("canonical_id", ["equity.br.b3.vale3", "equity.br.b3.cmin3"])
-def test_named_b3_equities_are_metadata_only_and_never_priced(canonical_id: str) -> None:
+def test_named_b3_equities_are_never_priced_outside_the_owner_session(canonical_id: str) -> None:
+    # ADR-023 named them with metadata only; ADR-029 prices them in the owner's session alone.
     entry = next(item for item in MASTER_CATALOG if item.canonical_id == canonical_id)
     assert entry.canonical_id not in P0_OPERATIONAL_UNIVERSE
-    assert entry.data_support_status is DataSupportStatus.METADATA_ONLY
+    assert entry.data_support_status is DataSupportStatus.PROVIDER_PENDING
     quote = client.get(f"/api/v1/market-data/quotes/{canonical_id}").json()
     assert (quote["freshness"], quote["price"]) == ("UNAVAILABLE", None)
     assert quote["unavailable_reason"] == "DATASET_NOT_APPROVED"

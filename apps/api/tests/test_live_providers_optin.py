@@ -9,6 +9,7 @@ refusal maps to a public reason instead of crashing or leaking anything.
 """
 
 import os
+import time
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -212,3 +213,79 @@ def test_massive_daily_bars():
     )
     if series is not None:
         assert all(bar.currency == "USD" for bar in series.bars)
+
+
+# --- ADR-029: the widened universe ------------------------------------------------------------
+
+PAIRS = (
+    InstrumentRef("crypto.global.eth-usd", "ETH/USD", "USD"),
+    InstrumentRef("fx.global.usd-brl", "USD/BRL", "BRL"),
+    InstrumentRef("fx.global.eur-usd", "EUR/USD", "USD"),
+    InstrumentRef("commodity.global.xau-usd", "XAU/USD", "USD"),
+)
+B3 = ("VALE3", "ITUB4", "WEGE3", "CMIN3", "BOVA11", "MXRF11", "AAPL34")
+
+
+def test_twelve_data_pairs_adr029():
+    # Basic plan: 8 credits per minute, and the AAPL test above spent 2 of them.
+    time.sleep(61)
+    for ref in (
+        InstrumentRef("crypto.global.btc-usd", "BTC/USD", "USD"),
+        InstrumentRef("fx.global.usd-brl", "USD/BRL", "BRL"),
+        InstrumentRef("equity.us.nasdaq.nvda", "NVDA", "USD"),
+    ):
+        quote = _call(
+            "twelve_data",
+            f"quote {ref.provider_symbol}",
+            lambda ref=ref: vendors.twelve_data_quote(
+                live_data._send("twelve_data", vendors.twelve_data_quote_request(ref)),
+                ref,
+                dataset="twelve_data.quote",
+                data_level=DataLevel.DELAYED,
+                request_id="optin",
+                now=_now(),
+            ),
+        )
+        if quote is not None:
+            assert quote.price > 0 and quote.currency == ref.currency
+    for ref in PAIRS:
+        series = _call(
+            "twelve_data",
+            f"time_series {ref.provider_symbol}",
+            lambda ref=ref: vendors.twelve_data_series(
+                live_data._send("twelve_data", vendors.twelve_data_series_request(ref, 5)),
+                ref,
+                adjustment=AdjustmentType.UNADJUSTED,
+            ),
+        )
+        if series is not None:
+            assert series.bars and all(bar.currency == ref.currency for bar in series.bars)
+
+
+def test_brapi_b3_universe_adr029():
+    for symbol in B3:
+        ref = InstrumentRef(f"b3.{symbol.lower()}", symbol, "BRL")
+        quote = _call(
+            "brapi",
+            f"quote {symbol}",
+            lambda ref=ref: vendors.brapi_quote(
+                live_data._send("brapi", vendors.brapi_quote_request(ref)),
+                ref,
+                dataset="brapi.v2.stocks.quote",
+                data_level=DataLevel.DELAYED,
+                request_id="optin",
+                now=_now(),
+            ),
+        )
+        if quote is not None:
+            assert quote.price > 0 and quote.currency == "BRL"
+    # Records which tickers the plan serves history for; a 403 is a valid answer here.
+    for symbol in B3:
+        ref = InstrumentRef(f"b3.{symbol.lower()}", symbol, "BRL")
+        _call(
+            "brapi",
+            f"historical {symbol} raw",
+            lambda ref=ref: vendors.brapi_series(
+                live_data._send("brapi", vendors.brapi_series_request(ref, "1mo")), ref
+            ),
+        )

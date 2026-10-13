@@ -369,6 +369,14 @@ PRECEDENCE: Mapping[tuple[ProviderCapability, str], tuple[str, ...]] = {
     (ProviderCapability.HISTORICAL_BARS, "US"): ("twelve_data", "massive", "alpha_vantage"),
     # Massive is not listed: the pages read on 2026-10-11 did not confirm FX in its plans.
     (ProviderCapability.FX_RATES, "FX"): ("open_exchange_rates", "twelve_data", "alpha_vantage"),
+    # ADR-029: pairs priced by Twelve Data on the owner's Basic plan (probed 2026-10-13):
+    # forex quotes and daily bars, crypto against USD and gold spot.
+    (ProviderCapability.LATEST_QUOTE, "FX"): ("twelve_data",),
+    (ProviderCapability.HISTORICAL_BARS, "FX"): ("twelve_data",),
+    (ProviderCapability.LATEST_QUOTE, "CRYPTO"): ("twelve_data",),
+    (ProviderCapability.HISTORICAL_BARS, "CRYPTO"): ("twelve_data",),
+    (ProviderCapability.LATEST_QUOTE, "METAL"): ("twelve_data",),
+    (ProviderCapability.HISTORICAL_BARS, "METAL"): ("twelve_data",),
     (ProviderCapability.DIVIDENDS, "BR"): ("brapi",),
     (ProviderCapability.DIVIDENDS, "US"): ("massive",),
     (ProviderCapability.CORPORATE_ACTIONS, "US"): ("massive", "alpha_vantage"),
