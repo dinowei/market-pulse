@@ -50,7 +50,7 @@ function useAssetData(canonicalId: string) {
   useEffect(() => {
     const controller = new AbortController();
     Promise.all([
-      apiRequest<InstrumentList>("/api/v1/instruments/search?q=.&limit=50", { signal: controller.signal }).catch(() => ({ items: [] as InstrumentSummary[] })),
+      apiRequest<InstrumentList>("/api/v1/instruments/search?q=.&limit=100", { signal: controller.signal }).catch(() => ({ items: [] as InstrumentSummary[] })),
       apiRequest<{ items: BenchmarkItem[] }>("/api/v1/market-data/benchmarks", { signal: controller.signal }).catch(() => ({ items: [] as BenchmarkItem[] })),
     ]).then(([list, benchmarks]) => {
       const usable = list.items.filter((item) => item.support_state === "P0_OPERATIONAL" || item.support_state === "CANDIDATE_FUTURE");

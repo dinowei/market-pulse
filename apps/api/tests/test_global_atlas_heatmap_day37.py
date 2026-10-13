@@ -38,7 +38,9 @@ def test_instruments_lists_the_catalog_with_location_metadata() -> None:
 
 def test_instruments_sort_order_and_pagination() -> None:
     symbols = sorted(entry.symbol.casefold() for entry in MASTER_CATALOG)
-    asc = client.get("/api/v1/instruments", params={"sort": "symbol", "order": "asc"}).json()
+    asc = client.get(
+        "/api/v1/instruments", params={"sort": "symbol", "order": "asc", "limit": 100}
+    ).json()
     assert [item["symbol"].casefold() for item in asc["items"]] == symbols
     first = client.get("/api/v1/instruments", params={"limit": 2, "sort": "symbol", "order": "asc"})
     assert first.json()["meta"]["next_offset"] == 2

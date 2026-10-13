@@ -24,6 +24,7 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.core.redis_client import shared_redis
+from app.instruments.catalog import WIDE_CATALOG
 from app.market_data.normalization import AdjustmentType, MarketBar
 from app.market_data.quality import check_series
 from app.providers import vendors
@@ -115,6 +116,17 @@ LIVE_INSTRUMENTS: Mapping[str, LiveInstrument] = {
         _pair("crypto.global.eth-usd", "CRYPTO", "ETH/USD"),
         _pair("commodity.global.xau-usd", "METAL", "XAU/USD"),
     )
+}
+LIVE_INSTRUMENTS = {
+    **LIVE_INSTRUMENTS,
+    **{
+        entry.canonical_id: (
+            _b3(entry.canonical_id, entry.symbol)
+            if entry.country == "BR"
+            else _us(entry.canonical_id, entry.symbol)
+        )
+        for entry in WIDE_CATALOG
+    },
 }
 # Markets that trade around the clock: the day's bar is still forming until 00:00 UTC.
 ROUND_THE_CLOCK = frozenset({"FX", "CRYPTO", "METAL"})

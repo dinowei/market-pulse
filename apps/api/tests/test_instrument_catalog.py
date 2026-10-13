@@ -45,20 +45,22 @@ def test_no_catalog_entry_is_priced_without_an_approved_dataset() -> None:
         entry.data_support_status is DataSupportStatus.DATA_AVAILABLE_APPROVED
         for entry in MASTER_CATALOG
     )
+    # One listing for the support states: one search per entry would exceed the per-IP
+    # rate limit now that the catalog is wider (ADR-029).
+    listed = client.get("/api/v1/instruments", params={"limit": 100}).json()["items"]
+    states = {item["canonical_id"]: item["support_state"] for item in listed}
     for entry in MASTER_CATALOG:
         quote = client.get(f"/api/v1/market-data/quotes/{entry.canonical_id}").json()
         if entry.canonical_id in P0_OPERATIONAL_UNIVERSE:
             assert quote["data_level"] == "DEMO", entry.canonical_id
         else:
             assert (quote["freshness"], quote["price"]) == ("UNAVAILABLE", None), entry.symbol
-        summary = client.get("/api/v1/instruments/search", params={"q": entry.symbol}).json()
-        states = {item["support_state"] for item in summary["items"]}
         expected = (
             "P0_OPERATIONAL"
             if entry.canonical_id in P0_OPERATIONAL_UNIVERSE
             else "CANDIDATE_FUTURE"
         )
-        assert expected in states, entry.symbol
+        assert states[entry.canonical_id] == expected, entry.symbol
 
 
 @pytest.mark.parametrize("canonical_id", ["equity.br.b3.vale3", "equity.br.b3.cmin3"])

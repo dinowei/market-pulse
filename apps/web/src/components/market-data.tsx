@@ -129,7 +129,7 @@ export function TerminalShell() {
 
   useEffect(() => {
     const controller = new AbortController();
-    apiRequest<InstrumentList>("/api/v1/instruments/search?q=.&limit=50", { signal: controller.signal })
+    apiRequest<InstrumentList>("/api/v1/instruments/search?q=.&limit=100", { signal: controller.signal })
       .then((data) => {
         setInstruments(data.items);
         setSelectedCanonicalId((current) => current || data.items.find((item) => item.support_state === "P0_OPERATIONAL")?.canonical_id || data.items[0]?.canonical_id || "");

@@ -333,6 +333,99 @@ MASTER_CATALOG: tuple[InstrumentCatalogEntry, ...] = (
     ),
 )
 
+
+# ADR-029 (ampliação de 2026-10-13): tickers cujas cotações os planos do responsável
+# serviram numa chamada real. Priced only in the owner's private session (ADR-027).
+_B3_EQUITIES = (
+    ("BBDC4", "Bradesco PN"),
+    ("BBAS3", "Banco do Brasil ON"),
+    ("ABEV3", "Ambev ON"),
+    ("B3SA3", "B3 ON"),
+    ("RENT3", "Localiza ON"),
+    ("SUZB3", "Suzano ON"),
+    ("GGBR4", "Gerdau PN"),
+    ("RDOR3", "Rede D'Or ON"),
+    ("PRIO3", "PRIO ON"),
+    ("BPAC11", "BTG Pactual Unit"),
+    ("ITSA4", "Itaúsa PN"),
+    ("LREN3", "Lojas Renner ON"),
+    ("MGLU3", "Magazine Luiza ON"),
+    ("RADL3", "Raia Drogasil ON"),
+    ("EQTL3", "Equatorial ON"),
+    ("CSAN3", "Cosan ON"),
+    ("VIVT3", "Telefônica Brasil ON"),
+    ("HAPV3", "Hapvida ON"),
+    ("SBSP3", "Sabesp ON"),
+    ("TOTS3", "Totvs ON"),
+    ("BBSE3", "BB Seguridade ON"),
+    ("CMIG4", "Cemig PN"),
+    ("UGPA3", "Ultrapar ON"),
+    ("KLBN11", "Klabin Unit"),
+    ("ENEV3", "Eneva ON"),
+    ("PETR3", "Petrobras ON"),
+)
+_B3_FIIS = (
+    ("HGLG11", "CSHG Logística FII"),
+    ("KNRI11", "Kinea Renda Imobiliária FII"),
+    ("XPML11", "XP Malls FII"),
+    ("VISC11", "Vinci Shopping Centers FII"),
+    ("KNCR11", "Kinea Rendimentos Imobiliários FII"),
+    ("HGRU11", "CSHG Renda Urbana FII"),
+    ("BTLG11", "BTG Pactual Logística FII"),
+    ("XPLG11", "XP Log FII"),
+    ("IRDM11", "Iridium Recebíveis Imobiliários FII"),
+    ("HGBS11", "Hedge Brasil Shopping FII"),
+)
+_B3_ETFS = (("IVVB11", "iShares S&P 500 (BRL) ETF"), ("SMAL11", "iShares Small Cap ETF"))
+_US_EQUITIES = (
+    ("AMZN", "Amazon.com Inc.", "NASDAQ"),
+    ("GOOGL", "Alphabet Inc. Class A", "NASDAQ"),
+    ("META", "Meta Platforms Inc.", "NASDAQ"),
+    ("TSLA", "Tesla Inc.", "NASDAQ"),
+    ("NFLX", "Netflix Inc.", "NASDAQ"),
+    ("AMD", "Advanced Micro Devices Inc.", "NASDAQ"),
+    ("INTC", "Intel Corporation", "NASDAQ"),
+    ("JPM", "JPMorgan Chase & Co.", "NYSE"),
+    ("V", "Visa Inc.", "NYSE"),
+    ("KO", "The Coca-Cola Company", "NYSE"),
+    ("DIS", "The Walt Disney Company", "NYSE"),
+)
+
+
+def _listed(
+    canonical_id: str, symbol: str, name: str, kind: str, exchange: str, country: str
+) -> InstrumentCatalogEntry:
+    brazil = country == "BR"
+    return InstrumentCatalogEntry(
+        canonical_id=canonical_id,
+        symbol=symbol,
+        display_symbol=symbol,
+        name=name,
+        instrument_type=kind,
+        exchange=exchange,
+        venue=exchange,
+        country=country,
+        region=country,
+        currency="BRL" if brazil else "USD",
+        timezone="America/Sao_Paulo" if brazil else "America/New_York",
+        catalog_status=CatalogStatus.CANDIDATE,
+        coverage_tier=CoverageTier.P1,
+        data_support_status=DataSupportStatus.PROVIDER_PENDING,
+    )
+
+
+WIDE_CATALOG: tuple[InstrumentCatalogEntry, ...] = (
+    *(_listed(f"equity.br.b3.{s.lower()}", s, n, "EQUITY", "B3", "BR") for s, n in _B3_EQUITIES),
+    *(_listed(f"fii.br.b3.{s.lower()}", s, n, "FII", "B3", "BR") for s, n in _B3_FIIS),
+    *(_listed(f"etf.br.b3.{s.lower()}", s, n, "ETF", "B3", "BR") for s, n in _B3_ETFS),
+    *(
+        _listed(f"equity.us.{x.lower()}.{s.lower()}", s, n, "EQUITY", x, "US")
+        for s, n, x in _US_EQUITIES
+    ),
+    _listed("etf.us.nasdaq.qqq", "QQQ", "Invesco QQQ Trust", "ETF", "NASDAQ", "US"),
+)
+MASTER_CATALOG = MASTER_CATALOG + WIDE_CATALOG
+
 P0_OPERATIONAL_UNIVERSE = frozenset({"equity.br.b3.petr4", "equity.us.nasdaq.aapl"})
 FUTURE_CANDIDATE_UNIVERSE = frozenset(
     entry.canonical_id
