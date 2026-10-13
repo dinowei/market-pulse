@@ -1,0 +1,33 @@
+/* Markets overview on the dashboard (ADR-029). Loaded with the panorama, after the page. */
+.panorama { display: grid; gap: 1.6rem; margin-top: 2.2rem; }
+.head { align-items: end; display: flex; flex-wrap: wrap; gap: .4rem 1.5rem; justify-content: space-between; }
+.head h2 { margin: 0; }
+.head p { color: var(--pa-text-secondary); font-size: .86rem; margin: 0; max-width: 60ch; }
+.group { display: grid; gap: .7rem; }
+.group h3 { align-items: center; display: flex; font-size: .95rem; gap: .55rem; margin: 0; }
+.group h3::before { background: var(--family); border-radius: 3px; content: ""; height: 1rem; width: .3rem; }
+.br { --family: var(--pa-accent); }
+.us { --family: var(--pa-violet); }
+.fx { --family: var(--pa-cyan); }
+.crypto { --family: var(--pa-focus); }
+.commodities { --family: var(--pa-accent-strong); }
+.rates { --family: var(--pa-text-secondary); }
+.grid { display: grid; gap: .7rem; grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr)); list-style: none; margin: 0; padding: 0; }
+.card { background: var(--pa-bg-surface); border: 1px solid var(--pa-border-hairline); border-radius: var(--pa-radius); display: grid; gap: .3rem; min-width: 0; padding: .85rem .95rem .8rem; position: relative; }
+.card:hover { border-color: var(--pa-accent); }
+.top { align-items: baseline; display: flex; flex-wrap: wrap; gap: .1rem .5rem; justify-content: space-between; }
+.symbol { color: var(--pa-text-primary); font-size: 1rem; font-variation-settings: "wdth" 112; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.symbol::after { content: ""; inset: 0; position: absolute; }
+.name { color: var(--pa-text-secondary); font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.value { font-size: 1.35rem; font-variant-numeric: tabular-nums; font-variation-settings: "wdth" 108; font-weight: 800; letter-spacing: -.01em; }
+.value small { color: var(--pa-text-secondary); font-size: .72rem; font-weight: 600; margin-left: .3rem; }
+.change { font-size: .82rem; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+.spark { display: block; height: 2.6rem; width: 100%; }
+.spark polyline { fill: none; stroke-linejoin: round; stroke-width: 1.8; vector-effect: non-scaling-stroke; }
+.spark .UP { stroke: var(--pa-market-up); }
+.spark .DOWN { stroke: var(--pa-market-down); }
+.spark .FLAT { stroke: var(--pa-market-flat); }
+.meta { color: var(--pa-text-secondary); display: flex; flex-wrap: wrap; font-size: .72rem; gap: .2rem .6rem; }
+.meta > * { position: relative; z-index: 1; }
+.reason { color: var(--pa-text-secondary); font-size: .76rem; }
+.empty { color: var(--pa-text-secondary); font-size: .76rem; margin: .4rem 0; }

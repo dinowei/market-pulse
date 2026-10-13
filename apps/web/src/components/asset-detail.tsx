@@ -45,16 +45,22 @@ function useAssetData(canonicalId: string) {
     return () => controller.abort();
   }, [canonicalId]);
 
-  // Comparison candidates: the operational catalog and the benchmarks, as the API lists them.
+  // Comparison candidates: the catalog the API lists (operational first) and the benchmarks
+  // that are not already catalog instruments (USD/BRL is both).
   useEffect(() => {
     const controller = new AbortController();
     Promise.all([
       apiRequest<InstrumentList>("/api/v1/instruments/search?q=.&limit=50", { signal: controller.signal }).catch(() => ({ items: [] as InstrumentSummary[] })),
       apiRequest<{ items: BenchmarkItem[] }>("/api/v1/market-data/benchmarks", { signal: controller.signal }).catch(() => ({ items: [] as BenchmarkItem[] })),
-    ]).then(([list, benchmarks]) => setOptions([
-      ...list.items.filter((item) => item.support_state === "P0_OPERATIONAL").map((item) => ({ id: item.canonical_id, label: `${item.display_symbol} · ${item.name}` })),
-      ...benchmarks.items.map((item) => ({ id: item.canonical_id, label: `${item.symbol} · ${item.name}` })),
-    ]));
+    ]).then(([list, benchmarks]) => {
+      const usable = list.items.filter((item) => item.support_state === "P0_OPERATIONAL" || item.support_state === "CANDIDATE_FUTURE");
+      const ordered = [...usable.filter((item) => item.support_state === "P0_OPERATIONAL"), ...usable.filter((item) => item.support_state !== "P0_OPERATIONAL")];
+      const catalogIds = new Set(list.items.map((item) => item.canonical_id));
+      setOptions([
+        ...ordered.map((item) => ({ id: item.canonical_id, label: `${item.display_symbol} · ${item.name}` })),
+        ...benchmarks.items.filter((item) => !catalogIds.has(item.canonical_id)).map((item) => ({ id: item.canonical_id, label: `${item.symbol} · ${item.name}` })),
+      ]);
+    });
     return () => controller.abort();
   }, []);
 

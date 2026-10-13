@@ -34,6 +34,12 @@ const ChartWorkspace = dynamic(() => import("./chart-workspace").then((module) =
   loading: () => <div className="card loading-state">Carregando o gráfico…</div>,
 });
 
+// Markets overview by family (ADR-029), below the fold: loaded after the page with its CSS.
+const MarketPanorama = dynamic(() => import("./market-panorama").then((module) => module.MarketPanorama), {
+  ssr: false,
+  loading: () => <p className="muted">Carregando o panorama…</p>,
+});
+
 export function ProvenancePanel({ data }: { data: PublicQuote | PublicHistorySeries }) {
   return (
     <section className="provenance-panel" aria-labelledby="provenance-title">
@@ -113,43 +119,11 @@ export function SeriesModeToggle({ value, onChange }: { value: SeriesMode; onCha
   return <fieldset className="control-group"><legend>Modo de comparação</legend><div className="control-row">{modes.map((mode) => <button type="button" className={mode === value ? "control active" : "control"} aria-pressed={mode === value} key={mode} onClick={() => onChange(mode)}>{mode}</button>)}</div></fieldset>;
 }
 
-function changeCue(percent: string | null | undefined) {
-  if (percent == null) return null;
-  const value = Number(percent);
-  if (!Number.isFinite(value)) return null;
-  return { value, tone: value > 0 ? "direction-up" : value < 0 ? "direction-down" : "direction-flat", glyph: value > 0 ? "▲" : value < 0 ? "▼" : "▬", word: value > 0 ? "alta" : value < 0 ? "queda" : "estável" };
-}
-
-/** Cards for the benchmarks and the operational instruments, exactly as the API serves them. */
-function MarketOverview({ benchmarks, quotes }: { benchmarks: BenchmarkItem[]; quotes: PublicQuote[] }) {
-  const cards = [
-    ...quotes.map((quote) => ({ id: quote.canonical_id, title: quote.name, symbol: quote.symbol, value: quote.price, currency: quote.currency, change: quote.change_percent, level: quote.data_level, freshness: quote.freshness, reason: quote.unavailable_reason, source: quote.provider, href: `/assets?id=${encodeURIComponent(quote.canonical_id)}` })),
-    ...benchmarks.map((item) => ({ id: item.canonical_id, title: item.name, symbol: item.symbol, value: item.value, currency: item.currency, change: item.change_percent, level: item.data_level, freshness: item.freshness, reason: item.unavailable_reason, source: item.source, href: `/compare?ids=${encodeURIComponent(item.canonical_id)}` })),
-  ];
-  if (cards.length === 0) return <p className="muted">Carregando o panorama…</p>;
-  return (
-    <ul className="overview-grid">
-      {cards.map((card) => {
-        const cue = changeCue(card.change);
-        return (
-          <li key={card.id} className="card overview-card">
-            <h3>{card.title}</h3>
-            <span className="value">{card.value == null ? "—" : Number(card.value).toLocaleString("pt-BR", { maximumFractionDigits: Number(card.value) >= 1000 ? 0 : 4 })} <small>{card.value == null ? "" : card.currency}</small></span>
-            {cue ? <span className={cue.tone}>{cue.glyph} {Math.abs(cue.value).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% · {cue.word}</span> : <small>Variação indisponível</small>}
-            <DataStateBadge dataLevel={card.level} freshness={card.freshness} />
-            <small>{card.reason ? formatReason(card.reason) : `Fonte: ${card.source}`}</small>
-            <Link href={card.href}>{card.href.startsWith("/assets") ? `Abrir ${card.symbol}` : `Comparar ${card.symbol}`}</Link>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
 export function TerminalShell() {
   const [selectedCanonicalId, setSelectedCanonicalId] = useState("");
   const [instruments, setInstruments] = useState<InstrumentSummary[]>([]);
   const [benchmarks, setBenchmarks] = useState<BenchmarkItem[]>([]);
+  const [benchmarksFailed, setBenchmarksFailed] = useState(false);
   const [quotes, setQuotes] = useState<Record<string, PublicQuote>>({});
   const [quoteError, setQuoteError] = useState<Record<string, string>>({});
 
@@ -163,7 +137,7 @@ export function TerminalShell() {
       .catch(() => undefined);
     apiRequest<{ items: BenchmarkItem[] }>("/api/v1/market-data/benchmarks", { signal: controller.signal })
       .then((data) => setBenchmarks(data.items))
-      .catch(() => undefined);
+      .catch((error: unknown) => { if (!isAbort(error)) setBenchmarksFailed(true); });
     return () => controller.abort();
   }, []);
 
@@ -177,12 +151,26 @@ export function TerminalShell() {
     }
     return () => controller.abort();
   }, [operational]);
+  // An instrument outside the operational universe gets its quote when it is selected.
+  useEffect(() => {
+    if (!selectedCanonicalId || operational.some((item) => item.canonical_id === selectedCanonicalId)) return;
+    const controller = new AbortController();
+    apiRequest<PublicQuote>(`/api/v1/market-data/quotes/${encodeURIComponent(selectedCanonicalId)}`, { signal: controller.signal })
+      .then((quote) => setQuotes((current) => ({ ...current, [selectedCanonicalId]: quote })))
+      .catch((error: unknown) => { if (!isAbort(error)) setQuoteError((current) => ({ ...current, [selectedCanonicalId]: (error as Error).message })); });
+    return () => controller.abort();
+  }, [selectedCanonicalId, operational]);
 
   const quote = quotes[selectedCanonicalId];
   const selected = instruments.find((item) => item.canonical_id === selectedCanonicalId);
+  // Candidates are priced only where a source serves them (the owner's session, ADR-029);
+  // elsewhere the chart says why it is empty.
+  const candidates = useMemo(() => instruments.filter((item) => item.support_state === "CANDIDATE_FUTURE"), [instruments]);
+  const displays = useMemo(() => Object.fromEntries(instruments.map((item) => [item.canonical_id, item.display_symbol])), [instruments]);
+  const catalogIds = new Set(instruments.map((item) => item.canonical_id));
   const compareOptions = [
-    ...operational.map((item) => ({ id: item.canonical_id, label: `${item.display_symbol} · ${item.name}` })),
-    ...benchmarks.map((item) => ({ id: item.canonical_id, label: `${item.symbol} · ${item.name}` })),
+    ...[...operational, ...candidates].map((item) => ({ id: item.canonical_id, label: `${item.display_symbol} · ${item.name}` })),
+    ...benchmarks.filter((item) => !catalogIds.has(item.canonical_id)).map((item) => ({ id: item.canonical_id, label: `${item.symbol} · ${item.name}` })),
   ];
 
   return <div className="terminal-root">
@@ -196,7 +184,14 @@ export function TerminalShell() {
           <label className="control-group">
             <span className="sr-only">Ativo no gráfico</span>
             <select className="control" value={selectedCanonicalId} onChange={(event) => setSelectedCanonicalId(event.target.value)} aria-label="Ativo no gráfico">
-              {operational.map((item) => <option key={item.canonical_id} value={item.canonical_id}>{item.display_symbol} · {item.name}</option>)}
+              <optgroup label="Universo operacional">
+                {operational.map((item) => <option key={item.canonical_id} value={item.canonical_id}>{item.display_symbol} · {item.name}</option>)}
+              </optgroup>
+              {candidates.length > 0 && (
+                <optgroup label="Outros ativos">
+                  {candidates.map((item) => <option key={item.canonical_id} value={item.canonical_id}>{item.display_symbol} · {item.name}</option>)}
+                </optgroup>
+              )}
             </select>
           </label>
         )}
@@ -210,10 +205,7 @@ export function TerminalShell() {
           <section className="card" aria-labelledby="agenda-title"><h2 id="agenda-title">Agenda e eventos</h2><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE</span></section>
         </div>
       </div>
-      <section aria-labelledby="overview-title">
-        <h2 id="overview-title" style={{ marginTop: "2rem" }}>Panorama</h2>
-        <MarketOverview benchmarks={benchmarks} quotes={operational.map((item) => quotes[item.canonical_id]).filter((item): item is PublicQuote => Boolean(item))} />
-      </section>
+      <MarketPanorama benchmarks={benchmarks} benchmarksFailed={benchmarksFailed} displays={displays} />
     </main>
     <footer><MarketStatusBar data={quote} /><span>{FINANCIAL_DISCLAIMER}</span></footer>
   </div>;

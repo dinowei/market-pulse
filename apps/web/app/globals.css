@@ -207,12 +207,6 @@ h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: -.005em; margin-botto
 }
 .card, .series-panel, .asset-context { min-width: 0; padding: 1.15rem; }
 .panel-heading, .series-heading, .section-heading { align-items: flex-start; display: flex; gap: 1rem; justify-content: space-between; }
-.overview-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); list-style: none; margin: 1rem 0 0; padding: 0; }
-.overview-card { display: grid; gap: .35rem; padding: 1rem 1.1rem; }
-.overview-card h3 { color: var(--pa-text-secondary); font-size: .84rem; font-weight: 600; margin: 0; }
-.overview-card .value { font-size: 1.5rem; font-variation-settings: "wdth" 110; font-weight: 800; letter-spacing: -.02em; }
-.overview-card small { color: var(--pa-text-secondary); font-size: .74rem; }
-.overview-card a { font-size: .8rem; font-weight: 600; }
 .asset-name { color: var(--pa-text-secondary); margin-bottom: .6rem; }
 .asset-price { font-size: 2.1rem; font-variation-settings: "wdth" 112; font-weight: 800; letter-spacing: -.02em; margin-bottom: .3rem; }
 .asset-change { color: var(--pa-text-secondary); font-weight: 600; }

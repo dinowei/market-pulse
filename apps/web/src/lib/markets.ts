@@ -13,7 +13,7 @@ type Freshness = components["schemas"]["Freshness"];
 // approved dataset are named with the reason and never receive a value.
 export type MarketTabId =
   | "overview" | "acoes-br" | "acoes-int" | "indices" | "juros-inflacao" | "cambio"
-  | "fiis" | "etfs-bdrs" | "cripto" | "tesouro" | "credito-privado" | "fundos" | "outros";
+  | "fiis" | "etfs-bdrs" | "cripto" | "commodities" | "tesouro" | "credito-privado" | "fundos" | "outros";
 
 export type UnavailableFamily = { reason: string; items: readonly { label: string; detail: string }[] };
 
@@ -29,6 +29,7 @@ export const MARKET_TABS: readonly MarketTab[] = [
   { id: "fiis", label: "FIIs", short: "FIIs", description: "Fundos imobiliários listados presentes no catálogo." },
   { id: "etfs-bdrs", label: "ETFs e BDRs", short: "ETF/BDR", description: "ETFs e recibos de ações estrangeiras presentes no catálogo." },
   { id: "cripto", label: "Cripto", short: "Cripto", description: "Criptoativos presentes no catálogo." },
+  { id: "commodities", label: "Commodities", short: "Commod.", description: "Metais e outras matérias-primas presentes no catálogo." },
   {
     id: "tesouro", label: "Tesouro Direto", short: "Tesouro", description: "Títulos públicos federais.",
     unavailable: {
@@ -80,6 +81,8 @@ export function tabForInstrument(item: Pick<InstrumentSummary, "instrument_type"
     case "ETF":
     case "BDR": return "etfs-bdrs";
     case "CRYPTO": return "cripto";
+    case "FX": return "cambio";
+    case "COMMODITY": return "commodities";
     case "MUTUAL_FUND": return "fundos";
     default: return "outros";
   }

@@ -32,7 +32,7 @@ test("every family in the user's list has its own logical tab", () => {
 });
 
 test("catalog classes map to tabs and unknown types never disappear", () => {
-  const cases: [string, string | null, string][] = [["FII", "BR", "fiis"], ["ETF", "BR", "etfs-bdrs"], ["BDR", "BR", "etfs-bdrs"], ["CRYPTO", "GLOBAL", "cripto"], ["INDEX", "BR", "indices"], ["MUTUAL_FUND", "BR", "fundos"], ["FUTURE", "BR", "outros"]];
+  const cases: [string, string | null, string][] = [["FII", "BR", "fiis"], ["ETF", "BR", "etfs-bdrs"], ["BDR", "BR", "etfs-bdrs"], ["CRYPTO", "GLOBAL", "cripto"], ["INDEX", "BR", "indices"], ["MUTUAL_FUND", "BR", "fundos"], ["FUTURE", "BR", "outros"], ["FX", "GLOBAL", "cambio"], ["COMMODITY", "GLOBAL", "commodities"]];
   for (const [type, country, tab] of cases) assert.equal(tabForInstrument(instrument("x.y.z", type, country)), tab, type);
   assert.equal(parseMarketTab("cambio"), "cambio");
   assert.equal(parseMarketTab("<script>"), "overview");
