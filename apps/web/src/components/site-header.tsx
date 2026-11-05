@@ -1,7 +1,7 @@
 "use client";
 
-// App shell (ADR-028): sidebar navigation, a top bar with global search and a ticker of the
-// benchmark values the API serves to this session, and the page. Login and sign-up render bare.
+// App shell (ADR-031): floating dock, a glass window with global search, pill tabs and a ticker
+// of the benchmark values the API serves to this session. Login and sign-up render bare.
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
@@ -16,6 +16,7 @@ type BenchmarkItem = components["schemas"]["BenchmarkItem"];
 
 export const SITE_NAV: readonly { href: string; label: string }[] = [
   { href: "/", label: "Início" },
+  { href: "/regions", label: "Regiões" },
   { href: "/terminal", label: "Análise" },
   { href: "/markets", label: "Mercados" },
   { href: "/compare", label: "Comparar" },
@@ -28,7 +29,7 @@ export const SITE_NAV: readonly { href: string; label: string }[] = [
 ];
 
 const NAV_ICON: Record<string, IconName> = {
-  "/": "dashboard", "/terminal": "chart", "/markets": "markets", "/compare": "compare", "/calendar": "calendar", "/heatmap": "heatmap",
+  "/": "dashboard", "/regions": "globe", "/terminal": "chart", "/markets": "markets", "/compare": "compare", "/calendar": "calendar", "/heatmap": "heatmap",
   "/atlas": "globe", "/watchlists": "list", "/portfolios": "wallet", "/account": "user",
 };
 const PERSONAL = new Set(["/watchlists", "/portfolios", "/account"]);
@@ -91,10 +92,10 @@ function DisplayButtons() {
   const next = theme === "dark" ? "light" : "dark";
   return (
     <>
-      <button type="button" className="side-button" aria-label={`Mudar para tema ${next === "light" ? "claro" : "escuro"}`} onClick={() => applyTheme(next)}>
+      <button type="button" className="side-button" title={`Tema ${next === "light" ? "claro" : "escuro"}`} aria-label={`Mudar para tema ${next === "light" ? "claro" : "escuro"}`} onClick={() => applyTheme(next)}>
         <Icon name={next === "light" ? "sun" : "moon"} /><span>Tema {next === "light" ? "claro" : "escuro"}</span>
       </button>
-      <button type="button" className="side-button" aria-pressed={palette === "cvd"} onClick={() => applyPalette(palette === "cvd" ? "default" : "cvd")}>
+      <button type="button" className="side-button" title="Paleta para daltonismo" aria-pressed={palette === "cvd"} onClick={() => applyPalette(palette === "cvd" ? "default" : "cvd")}>
         <Icon name="eye" /><span>Paleta para daltonismo</span>
       </button>
     </>
@@ -120,14 +121,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }
 
-  const link = (item: (typeof SITE_NAV)[number]) => {
-    const active = isActiveRoute(pathname, item.href);
-    return (
-      <Link key={item.href} href={item.href} className="side-link" aria-current={active ? "page" : undefined}>
-        <Icon name={NAV_ICON[item.href]} />{item.label}
-      </Link>
-    );
-  };
+  const active = (item: (typeof SITE_NAV)[number]) => (isActiveRoute(pathname, item.href) ? "page" : undefined);
 
   return (
     <>
@@ -135,21 +129,25 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="app-shell">
         <aside className="sidebar">
           <Link className="brand" href="/"><BrandMark /><span className="brand-name">Market Pulse</span></Link>
-          <nav className="side-nav" aria-label="Navegação principal">
-            <h2>Mercado</h2>
-            {SITE_NAV.filter((item) => !PERSONAL.has(item.href)).map(link)}
-            <h2>Sua área</h2>
-            {SITE_NAV.filter((item) => PERSONAL.has(item.href)).map(link)}
+          <nav className="side-nav" aria-label="Sua área">
+            {SITE_NAV.filter((item) => PERSONAL.has(item.href)).map((item) => (
+              <Link key={item.href} href={item.href} className="dock-link" title={item.label} aria-current={active(item)}><Icon name={NAV_ICON[item.href]} /><span>{item.label}</span></Link>
+            ))}
           </nav>
           <div className="sidebar-foot">
             <DisplayButtons />
-            <Link className="side-button" href="/login"><Icon name="login" /><span>Login</span></Link>
-            <button type="button" className="side-button" aria-label="Sair" onClick={() => void logout()}><Icon name="logout" /><span>Sair</span></button>
+            <Link className="side-button" title="Login" href="/login"><Icon name="login" /><span>Login</span></Link>
+            <button type="button" className="side-button" title="Sair" aria-label="Sair" onClick={() => void logout()}><Icon name="logout" /><span>Sair</span></button>
           </div>
         </aside>
         <div className="app-body">
           <header className="app-topbar">
             <InstrumentSearch onSelect={(id) => router.push(`/assets?id=${encodeURIComponent(id)}`)} />
+            <nav className="pill-nav" aria-label="Navegação principal">
+              {SITE_NAV.filter((item) => !PERSONAL.has(item.href)).map((item) => (
+                <Link key={item.href} href={item.href} className="side-link" aria-current={active(item)}>{item.label}</Link>
+              ))}
+            </nav>
             <MarketTicker />
           </header>
           {error && <p className="site-alert" role="alert">{error}</p>}

@@ -1,27 +1,57 @@
-/* World report (ADR-030): frosted glass on graphite, one tall square per region. */
-.stage { display: grid; gap: 1.1rem; margin-top: 1rem; }
-.hero, .square { backdrop-filter: blur(14px); background: color-mix(in srgb, var(--pa-bg-surface) 82%, transparent); border: 1px solid var(--pa-border-hairline); border-radius: 24px; box-shadow: var(--pa-shadow); }
-.hero { display: grid; gap: .6rem; padding: clamp(1.2rem, 3vw, 2rem); }
-.heroLine { font-size: clamp(1.3rem, 3vw, 2rem); font-variation-settings: "wdth" 112; font-weight: 800; margin: 0; }
-.heroList { display: flex; flex-wrap: wrap; gap: .45rem; list-style: none; margin: .3rem 0 0; padding: 0; }
-.heroList li { background: var(--pa-bg-elevated); border-radius: 999px; font-size: .84rem; font-variant-numeric: tabular-nums; padding: .35rem .8rem; }
-.heroList a { color: var(--pa-text-primary); }
-.grid { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); list-style: none; margin: 0; padding: 0; }
-.square { align-content: start; display: grid; gap: .55rem; min-width: 0; padding: 1.2rem; scroll-margin-top: 6rem; }
-.UP { border-top: 4px solid var(--pa-market-up); }
-.DOWN { border-top: 4px solid var(--pa-market-down); }
-.FLAT { border-top: 4px solid var(--pa-market-flat); }
-.tag { background: var(--pa-bg-elevated); border-radius: 999px; font-size: .8rem; font-weight: 700; justify-self: start; padding: .25rem .75rem; }
-.big { font-size: 2.1rem; font-variant-numeric: tabular-nums; font-variation-settings: "wdth" 110; font-weight: 800; line-height: 1.1; margin: 0; }
-.big small { font-size: .95rem; font-weight: 700; }
-.noValue { color: var(--pa-text-secondary); font-size: .95rem; font-weight: 600; margin: 0; }
-.basis { color: var(--pa-text-secondary); font-size: .76rem; margin: 0; }
-.summary { font-size: .9rem; line-height: 1.45; margin: 0; }
-.news h3 { font-size: .8rem; margin: .2rem 0 .3rem; }
-.news ul { display: grid; gap: .35rem; list-style: none; margin: 0; padding: 0; }
-.news li { font-size: .8rem; line-height: 1.35; }
-.news small { color: var(--pa-text-secondary); }
-.details summary { cursor: pointer; font-size: .82rem; font-weight: 700; }
-.tableWrap { margin-top: .5rem; overflow-x: auto; }
-.tableWrap table { min-width: 24rem; }
+/* World report (ADR-030/031): photo hero and one photo card per region. Text over photos sits
+   on a fixed dark gradient, so it keeps its colors in both themes. */
+.stage { display: grid; gap: 1.5rem; }
+.top { display: grid; gap: 1.25rem; grid-template-columns: minmax(16rem, 1fr) minmax(0, 2.1fr); }
+.rail { display: grid; gap: 1.25rem; align-content: start; }
+.panel { background: var(--pa-bg-surface); border-radius: 22px; box-shadow: var(--pa-shadow); min-width: 0; padding: 1.1rem; }
+.rows { display: grid; gap: .5rem; list-style: none; margin: 0; padding: 0; }
+.newsRow, .quoteRow, .plainNews { background: var(--pa-bg-elevated); border-radius: 14px; font-size: .86rem; padding: .6rem; }
+.newsRow { align-items: center; display: grid; gap: .7rem; grid-template-columns: 4.5rem minmax(0, 1fr); }
+.newsRow img { aspect-ratio: 4 / 3; border-radius: 10px; object-fit: cover; width: 100%; }
+.newsRow a, .plainNews a { color: var(--pa-text-primary); }
+.newsRow small, .plainNews small, .quoteRow small { color: var(--pa-text-secondary); display: block; font-size: .75rem; margin-top: .2rem; }
+.quoteRow { align-items: center; display: flex; justify-content: space-between; gap: .75rem; }
+.quoteRow a { color: var(--pa-text-primary); font-weight: 700; }
+.quoteRow span { text-align: right; }
+.quoteRow small[class*="direction-up"] { color: var(--pa-market-up); }
+.quoteRow small[class*="direction-down"] { color: var(--pa-market-down); }
+.quoteRow small[class*="direction-flat"] { color: var(--pa-market-flat); }
+.hero, .detailHero { background-position: center; background-size: cover; border-radius: 24px; color: #f4f5f7; display: grid; align-content: end; gap: .6rem; padding: clamp(1.25rem, 4vw, 2.6rem); }
+.hero { background-image: linear-gradient(to top, #0f1012 30%, rgba(15, 16, 18, .55)), url(/market/hero.webp); min-height: 26rem; }
+.hero a, .detailHero a, .note a { color: inherit; }
+.chip { background: rgba(15, 16, 18, .8); border-radius: 999px; font-size: .78rem; font-weight: 600; justify-self: start; margin: 0 0 auto; padding: .3rem .8rem; }
+.heroTitle { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.05; margin: 1.5rem 0 0; }
+.heroLine { color: #d3d6db; font-size: 1.05rem; margin: 0; }
+.note { margin: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .6rem; }
+.hero .primary, .hero .secondary { border-radius: 999px; font-size: .9rem; font-weight: 600; padding: .65rem 1.3rem; text-decoration: none; }
+.hero .primary { background: #f4f5f7; color: #16171a; }
+.hero .secondary { background: rgba(255, 255, 255, .14); color: #f4f5f7; }
+.regions h2 { font-size: clamp(1.3rem, 2.5vw, 1.9rem); font-weight: 600; letter-spacing: -.02em; scroll-margin-top: 7rem; }
+.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr)); list-style: none; margin: 0; padding: 0; }
+.card { background: #0f1012; border-radius: 22px; box-shadow: var(--pa-shadow); color: #f4f5f7; min-height: 21rem; min-width: 0; overflow: hidden; position: relative; }
+.card:focus-within { outline: 2px solid var(--pa-focus); outline-offset: 2px; }
+.photo { height: 100%; inset: 0; object-fit: cover; opacity: .85; position: absolute; width: 100%; }
+.cardBody { background: linear-gradient(to top, #0f1012 50%, rgba(15, 16, 18, .1)); display: grid; align-content: end; gap: .35rem; height: 100%; padding: 1rem; position: relative; }
+.cardBody h3 { font-size: 1.2rem; font-weight: 600; letter-spacing: -.01em; margin: 0; }
+.cardLink { color: #f4f5f7; text-decoration: none; }
+.cardLink::after { content: ""; inset: 0; position: absolute; }
+.cardLink:hover { text-decoration: underline; }
+.big { font-size: 1.25rem; font-weight: 700; margin: 0; }
+/* Fixed dark ground in both themes: the dark-theme direction colors apply. */
+.card .big[class*="direction-up"], .detailHero .big[class*="direction-up"] { color: #34d399; }
+.card .big[class*="direction-down"], .detailHero .big[class*="direction-down"] { color: #f87171; }
+.card .big[class*="direction-flat"], .detailHero .big[class*="direction-flat"] { color: #86a3ff; }
+.noValue { color: #d3d6db; font-size: .9rem; font-weight: 600; margin: 0; }
+.clamp { -webkit-box-orient: vertical; color: #d3d6db; display: -webkit-box; font-size: .82rem; -webkit-line-clamp: 3; line-height: 1.4; margin: 0; overflow: hidden; }
+.basis { color: #b4b8c0; font-size: .72rem; margin: 0; }
 .limits { color: var(--pa-text-secondary); font-size: .76rem; margin: 0; padding-left: 1.1rem; }
+.detailHero { min-height: 18rem; }
+.detailHero h1 { margin: 0; }
+.detailHero p { margin: 0; max-width: 60ch; }
+.detailHero .big { font-size: 1.8rem; }
+.basisHero { color: #c9ccd2; font-size: .8rem; }
+.detailGrid { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 1fr); align-items: start; }
+.tableWrap { overflow-x: auto; }
+.tableWrap table { min-width: 24rem; }
+@media (max-width: 900px) { .top, .detailGrid { grid-template-columns: 1fr; } .hero { min-height: 20rem; } }

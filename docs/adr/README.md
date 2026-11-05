@@ -39,6 +39,7 @@
 | [028](028-visual-identity-v3-chart-workspace.md) | Identidade visual v3 e workspace de gráficos (substitui a parte visual da diretriz Particle Atlas e a ADR-014 no workspace) | Accepted | Sim, em `feature/dia-41-sync` | Não |
 | [029](029-owner-real-data-universe.md) | Universo de dados reais do responsável e panorama de mercados | Accepted | Sim, em `feature/dia-41-sync` | Não |
 | [030](030-world-close-report.md) | Relatório mundial de fechamento como página inicial | Accepted | Sim, em `feature/dia-41-sync` | Não |
+| [031](031-obsidian-glass-visual.md) | Visual Obsidian Glass | Accepted | Sim, em `feature/dia-41-sync` | Não |
 
 Alternativas que não viraram decisão estão em
 [DISCARDED_ALTERNATIVES.md](../engineering/DISCARDED_ALTERNATIVES.md).

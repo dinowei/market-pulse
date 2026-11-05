@@ -240,6 +240,7 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     `feature/dia-41-sync`. Pendências novas: H-35 (revisão humana da v3) e a atualização de
     H-34 no [handoff](docs/DAY29_HANDOFF.md).
   - **Banco do staging expira em 2026-11-05 (H-29).**
+  - **Visual Obsidian Glass (ADR-031, 2026-11-05), só no código:** barra flutuante, abas em pílula, Início e `/regions` ligados ao relatório mundial, Entrar e Cadastro novos. **Medido:** 128 testes unitários e E2E de acessibilidade com 42 de 42 (40 na rodada completa e os 2 corrigidos repetidos). Fotos provisórias do Stitch. **Banco do staging suspenso desde 2026-11-05:** a API do staging não sobe até o responsável criar o banco novo.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia
