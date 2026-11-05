@@ -25,7 +25,7 @@ services:
         value: staging
       - key: MARKET_PULSE_DATABASE_URL
         fromDatabase:
-          name: market-pulse-staging-db
+          name: market-pulse-staging-db-2
           property: connectionString
       - key: MARKET_PULSE_REDIS_URL
         fromService:
@@ -76,7 +76,7 @@ services:
 
 databases:
   # Grátis: expira 30 dias após a criação, 1 GB, sem backup (https://render.com/docs/free).
-  - name: market-pulse-staging-db
+  - name: market-pulse-staging-db-2
     plan: free
     region: oregon
     postgresMajorVersion: "16"
