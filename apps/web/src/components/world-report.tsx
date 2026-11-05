@@ -17,6 +17,12 @@ const formatDay = (day: string) => day.split("-").reverse().join("/");
 const IMAGE_IDS = new Set(["brasil", "america-do-sul", "america-do-norte", "estados-unidos", "europa", "asia", "moedas"]);
 const regionImage = (id: string) => `/market/${IMAGE_IDS.has(id) ? id : "hero"}.webp`;
 
+// Lights the glass with the region's colors; the attribute only selects CSS tokens.
+function setAmbient(id: string | null) {
+  if (id) document.documentElement.dataset.ambient = id;
+  else delete document.documentElement.dataset.ambient;
+}
+
 function useWorldReport() {
   const [report, setReport] = useState<WorldReportResponse | null>(null);
   const [failed, setFailed] = useState(false);
@@ -40,7 +46,7 @@ function ChangeLine({ region }: { region: WorldRegion }) {
 
 function RegionCard({ region }: { region: WorldRegion }) {
   return (
-    <li className={styles.card}>
+    <li className={styles.card} onMouseEnter={() => setAmbient(region.id)} onMouseLeave={() => setAmbient(null)} onFocus={() => setAmbient(region.id)} onBlur={() => setAmbient(null)}>
       {/* eslint-disable-next-line @next/next/no-img-element -- decorative, small local webp */}
       <img className={styles.photo} src={regionImage(region.id)} alt="" loading="lazy" />
       <div className={styles.cardBody}>
@@ -119,6 +125,10 @@ export function WorldReport() {
 }
 
 function RegionDetail({ region }: { region: WorldRegion }) {
+  useEffect(() => {
+    setAmbient(region.id);
+    return () => setAmbient(null);
+  }, [region.id]);
   return (
     <>
       <section className={styles.detailHero} style={{ backgroundImage: `linear-gradient(to top, #0f1012 22%, rgba(15, 16, 18, .55)), url(${regionImage(region.id)})` }}>
