@@ -17,11 +17,11 @@ export type ChartTheme = {
 
 export const CHART_THEMES: Record<"dark" | "light", ChartTheme> = {
   dark: {
-    background: "#111a2e",
+    background: "#1b1d20",
     text: "#eef2fb",
     muted: "#a6b2ca",
-    grid: "#24324f",
-    border: "#24324f",
+    grid: "#383b41",
+    border: "#383b41",
     up: "#34d399",
     down: "#f87171",
     accent: "#86a3ff",

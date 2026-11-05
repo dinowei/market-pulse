@@ -3,10 +3,10 @@
 /* ADR-028 (visual identity v3): ink-navy base, cobalt for everything interactive, violet and
    cyan for indicator lines; green and red stay reserved for up and down. */
 :root {
-  --pa-bg-canvas: #0a1020;
-  --pa-bg-surface: #111a2e;
-  --pa-bg-elevated: #18233c;
-  --pa-border-hairline: #24324f;
+  --pa-bg-canvas: #131416;
+  --pa-bg-surface: #1b1d20;
+  --pa-bg-elevated: #24262a;
+  --pa-border-hairline: #383b41;
   --pa-border-control: #64759c;
   --pa-text-primary: #eef2fb;
   --pa-text-secondary: #a6b2ca;
@@ -55,10 +55,10 @@
    app/oklch-tokens-day33.test.ts keeps both in sync and checks WCAG 2.2 AA contrast. */
 @supports (color: oklch(0% 0 0)) {
   :root {
-    --pa-bg-canvas: oklch(17.65% 0.0346 267.28);
-    --pa-bg-surface: oklch(22.04% 0.0416 264.83);
-    --pa-bg-elevated: oklch(25.96% 0.0498 265.12);
-    --pa-border-hairline: oklch(31.93% 0.0554 263.90);
+    --pa-bg-canvas: oklch(19.10% 0.0043 264.47);
+    --pa-bg-surface: oklch(22.99% 0.0065 258.36);
+    --pa-bg-elevated: oklch(26.82% 0.0080 264.43);
+    --pa-border-hairline: oklch(35.17% 0.0112 264.42);
     --pa-border-control: oklch(56.40% 0.0641 266.15);
     --pa-text-primary: oklch(96.07% 0.0128 266.70);
     --pa-text-secondary: oklch(76.20% 0.0370 264.33);
@@ -102,11 +102,11 @@
 }
 
 :root {
-  --pa-header-bg: rgba(10, 16, 32, .84);
+  --pa-header-bg: rgba(23, 24, 27, .84);
   --pa-row-hover: rgba(134, 163, 255, .06);
   --pa-tint: rgba(63, 94, 240, .16);
-  --pa-glow: rgba(63, 94, 240, .22);
-  --pa-glow-2: rgba(185, 160, 255, .10);
+  --pa-glow: rgba(255, 255, 255, .07);
+  --pa-glow-2: rgba(255, 255, 255, .05);
   --pa-shadow: 0 18px 40px -26px rgba(0, 0, 0, .75);
   /* Focus and the skip link never land under the sticky top bar (WCAG 2.4.11). */
   scroll-padding-top: 6rem;

@@ -1,0 +1,27 @@
+/* World report (ADR-030): frosted glass on graphite, one tall square per region. */
+.stage { display: grid; gap: 1.1rem; margin-top: 1rem; }
+.hero, .square { backdrop-filter: blur(14px); background: color-mix(in srgb, var(--pa-bg-surface) 82%, transparent); border: 1px solid var(--pa-border-hairline); border-radius: 24px; box-shadow: var(--pa-shadow); }
+.hero { display: grid; gap: .6rem; padding: clamp(1.2rem, 3vw, 2rem); }
+.heroLine { font-size: clamp(1.3rem, 3vw, 2rem); font-variation-settings: "wdth" 112; font-weight: 800; margin: 0; }
+.heroList { display: flex; flex-wrap: wrap; gap: .45rem; list-style: none; margin: .3rem 0 0; padding: 0; }
+.heroList li { background: var(--pa-bg-elevated); border-radius: 999px; font-size: .84rem; font-variant-numeric: tabular-nums; padding: .35rem .8rem; }
+.heroList a { color: var(--pa-text-primary); }
+.grid { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); list-style: none; margin: 0; padding: 0; }
+.square { align-content: start; display: grid; gap: .55rem; min-width: 0; padding: 1.2rem; scroll-margin-top: 6rem; }
+.UP { border-top: 4px solid var(--pa-market-up); }
+.DOWN { border-top: 4px solid var(--pa-market-down); }
+.FLAT { border-top: 4px solid var(--pa-market-flat); }
+.tag { background: var(--pa-bg-elevated); border-radius: 999px; font-size: .8rem; font-weight: 700; justify-self: start; padding: .25rem .75rem; }
+.big { font-size: 2.1rem; font-variant-numeric: tabular-nums; font-variation-settings: "wdth" 110; font-weight: 800; line-height: 1.1; margin: 0; }
+.big small { font-size: .95rem; font-weight: 700; }
+.noValue { color: var(--pa-text-secondary); font-size: .95rem; font-weight: 600; margin: 0; }
+.basis { color: var(--pa-text-secondary); font-size: .76rem; margin: 0; }
+.summary { font-size: .9rem; line-height: 1.45; margin: 0; }
+.news h3 { font-size: .8rem; margin: .2rem 0 .3rem; }
+.news ul { display: grid; gap: .35rem; list-style: none; margin: 0; padding: 0; }
+.news li { font-size: .8rem; line-height: 1.35; }
+.news small { color: var(--pa-text-secondary); }
+.details summary { cursor: pointer; font-size: .82rem; font-weight: 700; }
+.tableWrap { margin-top: .5rem; overflow-x: auto; }
+.tableWrap table { min-width: 24rem; }
+.limits { color: var(--pa-text-secondary); font-size: .76rem; margin: 0; padding-left: 1.1rem; }

@@ -82,6 +82,7 @@ from app.contracts import (
     WatchlistResponse,
     WebVitalsAcceptedResponse,
     WebVitalsRequest,
+    WorldReportResponse,
 )
 from app.core.client_ip import client_ip
 from app.core.config import get_settings, is_protected_environment, registration_open
@@ -111,6 +112,7 @@ from app.market_data.economic_calendar import (
     valid_timezone,
 )
 from app.market_data.heatmap import market_heatmap
+from app.market_data.live_data import live_news
 from app.market_data.normalization import AdjustmentType
 from app.market_data.public_market_data import public_history, public_quote
 from app.market_data.real_market_data import (
@@ -129,6 +131,7 @@ from app.market_data.refresh_application import (
     RefreshBatchResponse,
     refresh_market_data,
 )
+from app.market_data.world_report import world_report
 from app.portfolios.day27 import (
     PortfolioReadModelNotFound,
     PostgresPortfolioDay27Service,
@@ -644,6 +647,21 @@ def public_heatmap(request: Request, response: Response) -> HeatmapResponse:
     return market_heatmap(
         request_id_for(request),
         quote=lambda canonical_id, request_id: _quote_for(mode, canonical_id, request_id),
+    )
+
+
+@router.get(
+    "/market-data/world-report",
+    response_model=WorldReportResponse,
+    tags=["market-data"],
+)
+def public_world_report(request: Request, response: Response) -> WorldReportResponse:
+    mode = market_data_mode(request)
+    _keep_private(response, mode)
+    return world_report(
+        request_id_for(request),
+        quote=lambda canonical_id, request_id: _quote_for(mode, canonical_id, request_id),
+        news=live_news if mode == REAL_OWNER else (lambda _ticker: ()),
     )
 
 

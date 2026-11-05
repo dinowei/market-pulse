@@ -1,5 +1,5 @@
-import { TerminalShell } from "../src/components/market-data";
+import { WorldReportPage } from "../src/components/world-report-page";
 
 export default function HomePage() {
-  return <TerminalShell />;
+  return <WorldReportPage />;
 }

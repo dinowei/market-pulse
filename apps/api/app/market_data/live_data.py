@@ -723,6 +723,26 @@ def live_fx(canonical_id: str) -> LiveResult | None:
     )
 
 
+NEWS_SECONDS = 3600
+
+
+def live_news(ticker: str) -> tuple[dict[str, str], ...]:
+    """Recent headlines for a ticker; any failure means no headlines, never a made-up one."""
+
+    key = _key("news", ticker)
+    cached = STORE.get(key)
+    if cached:
+        return tuple(json.loads(cached))
+    if not _decide(get_entry("massive"), os.environ).allowed:
+        return ()
+    try:
+        items = vendors.massive_news(_send("massive", vendors.massive_news_request(ticker)))
+    except NormalizationError:
+        return ()
+    STORE.set(key, json.dumps(items), NEWS_SECONDS)
+    return items
+
+
 def limitations(provider_id: str | None, result: LiveResult) -> tuple[str, ...]:
     notes = [PRIVATE_USE_NOTE]
     if provider_id in METHODOLOGY:

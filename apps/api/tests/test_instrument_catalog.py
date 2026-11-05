@@ -49,8 +49,15 @@ def test_no_catalog_entry_is_priced_without_an_approved_dataset() -> None:
     # rate limit now that the catalog is wider (ADR-029).
     listed = client.get("/api/v1/instruments", params={"limit": 100}).json()["items"]
     states = {item["canonical_id"]: item["support_state"] for item in listed}
+    ids = [entry.canonical_id for entry in MASTER_CATALOG]
+    quotes = {}
+    for start in range(0, len(ids), 10):
+        batch = client.post(
+            "/api/v1/market-data/quotes/batch", json={"canonical_ids": ids[start : start + 10]}
+        ).json()
+        quotes.update({item["canonical_id"]: item for item in batch["items"]})
     for entry in MASTER_CATALOG:
-        quote = client.get(f"/api/v1/market-data/quotes/{entry.canonical_id}").json()
+        quote = quotes[entry.canonical_id]
         if entry.canonical_id in P0_OPERATIONAL_UNIVERSE:
             assert quote["data_level"] == "DEMO", entry.canonical_id
         else:

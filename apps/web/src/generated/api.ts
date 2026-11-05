@@ -225,6 +225,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market-data/world-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public World Report */
+        get: operations["public_world_report_api_v1_market_data_world_report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market-data/corporate-actions/{canonical_id}": {
         parameters: {
             query?: never;
@@ -2618,6 +2635,62 @@ export interface components {
             /** Observed At */
             observed_at?: string | null;
         };
+        /** WorldNewsItem */
+        WorldNewsItem: {
+            /** Title */
+            title: string;
+            /** Publisher */
+            publisher: string;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Url */
+            url: string;
+        };
+        /**
+         * WorldRegion
+         * @description One square of the world report (ADR-030): facts from quotes, news shown beside them.
+         */
+        WorldRegion: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "ETF" | "AVERAGE" | "NONE";
+            /** Basis Label */
+            basis_label: string;
+            /** Change Percent */
+            change_percent?: string | null;
+            /** Session Date */
+            session_date?: string | null;
+            /** Summary */
+            summary: string;
+            /** Members With Data */
+            members_with_data: number;
+            /** Members Total */
+            members_total: number;
+            /** Unavailable Reason */
+            unavailable_reason?: string | null;
+            /** Members */
+            members: components["schemas"]["PublicQuote"][];
+            /** News */
+            news: components["schemas"]["WorldNewsItem"][];
+        };
+        /** WorldReportResponse */
+        WorldReportResponse: {
+            /** Regions */
+            regions: components["schemas"]["WorldRegion"][];
+            /** Limitations */
+            limitations: string[];
+            /** Request Id */
+            request_id: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -3008,6 +3081,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HeatmapResponse"];
+                };
+            };
+        };
+    };
+    public_world_report_api_v1_market_data_world_report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorldReportResponse"];
                 };
             };
         };

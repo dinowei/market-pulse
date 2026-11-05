@@ -390,6 +390,25 @@ _US_EQUITIES = (
     ("KO", "The Coca-Cola Company", "NYSE"),
     ("DIS", "The Walt Disney Company", "NYSE"),
 )
+_WORLD_ETFS = (
+    ("EWZ", "iShares MSCI Brazil ETF"),
+    ("ILF", "iShares Latin America 40 ETF"),
+    ("ECH", "iShares MSCI Chile ETF"),
+    ("ARGT", "Global X MSCI Argentina ETF"),
+    ("VGK", "Vanguard FTSE Europe ETF"),
+    ("EWG", "iShares MSCI Germany ETF"),
+    ("EWU", "iShares MSCI United Kingdom ETF"),
+    ("EWJ", "iShares MSCI Japan ETF"),
+    ("FXI", "iShares China Large-Cap ETF"),
+    ("EWY", "iShares MSCI South Korea ETF"),
+    ("INDA", "iShares MSCI India ETF"),
+    ("EWA", "iShares MSCI Australia ETF"),
+    ("EWW", "iShares MSCI Mexico ETF"),
+    ("EWC", "iShares MSCI Canada ETF"),
+    ("XLK", "Technology Select Sector SPDR"),
+    ("XLF", "Financial Select Sector SPDR"),
+    ("XLE", "Energy Select Sector SPDR"),
+)
 
 
 def _listed(
@@ -423,6 +442,8 @@ WIDE_CATALOG: tuple[InstrumentCatalogEntry, ...] = (
         for s, n, x in _US_EQUITIES
     ),
     _listed("etf.us.nasdaq.qqq", "QQQ", "Invesco QQQ Trust", "ETF", "NASDAQ", "US"),
+    # ADR-030: US-listed ETFs that stand in for regions and sectors in the world report.
+    *(_listed(f"etf.us.listed.{s.lower()}", s, n, "ETF", "EUA", "US") for s, n in _WORLD_ETFS),
 )
 MASTER_CATALOG = MASTER_CATALOG + WIDE_CATALOG
 

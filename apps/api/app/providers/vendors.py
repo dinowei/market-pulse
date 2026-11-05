@@ -569,3 +569,33 @@ def massive_bars(payload: Mapping[str, Any], ref: InstrumentRef) -> SeriesResult
         partial=partial,
         notes=("PAGINATED: next_url presente; série incompleta",) if partial else (),
     )
+
+
+def massive_news_request(ticker: str, limit: int = 3) -> ProviderRequest:
+    return ProviderRequest(
+        "massive",
+        "GET",
+        "https://api.massive.com/v2/reference/news",
+        {"ticker": ticker, "limit": str(limit), "order": "desc", "sort": "published_utc"},
+        auth_header="Authorization",
+        auth_scheme="Bearer",
+    )
+
+
+def massive_news(payload: Mapping[str, Any]) -> tuple[dict[str, str], ...]:
+    """Well-formed articles only; one without title, source, date or https link is left out."""
+
+    rows = payload.get("results")
+    if not isinstance(rows, list):
+        raise _schema("results ausente")
+    items = []
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get("publisher"), dict):
+            continue
+        title, name = row.get("title"), row["publisher"].get("name")
+        stamp, url = row.get("published_utc"), row.get("article_url")
+        if not all(isinstance(value, str) and value for value in (title, name, stamp, url)):
+            continue
+        if url.startswith("https://"):
+            items.append({"title": title, "publisher": name, "published_at": stamp, "url": url})
+    return tuple(items)

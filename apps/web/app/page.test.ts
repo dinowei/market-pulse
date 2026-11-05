@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import HomePage from "./page";
+import HomePage from "./terminal/page";
+import WorldHome from "./page";
 import { elements } from "../test-support/chart-fixtures";
 
 test("home renders the terminal without inventing a quote before loading", () => {
@@ -12,4 +13,11 @@ test("home renders the terminal without inventing a quote before loading", () =>
   assert.match(html, /Carregando o catálogo/);
   assert.equal(elements(html, "path").length, 0);
   assert.doesNotMatch(html, /PETR4|108\.00/);
+});
+
+test("home is the world report and shows no number before the API answers", () => {
+  const html = renderToStaticMarkup(createElement(WorldHome));
+  assert.equal(elements(html, "main").length, 1);
+  assert.match(html, /Como o mundo fechou/);
+  assert.doesNotMatch(html, /\d%/);
 });

@@ -378,6 +378,36 @@ class HeatmapGroup(StrictModel):
     tiles: list[PublicQuote]
 
 
+class WorldNewsItem(StrictModel):
+    title: str
+    publisher: str
+    published_at: datetime
+    url: str
+
+
+class WorldRegion(StrictModel):
+    """One square of the world report (ADR-030): facts from quotes, news shown beside them."""
+
+    id: str
+    title: str
+    basis: Literal["ETF", "AVERAGE", "NONE"]
+    basis_label: str
+    change_percent: Decimal | None = None
+    session_date: date | None = None
+    summary: str
+    members_with_data: int
+    members_total: int
+    unavailable_reason: str | None = None
+    members: list[PublicQuote]
+    news: list[WorldNewsItem]
+
+
+class WorldReportResponse(StrictModel):
+    regions: list[WorldRegion]
+    limitations: tuple[str, ...]
+    request_id: str
+
+
 class HeatmapResponse(StrictModel):
     """Basic P0 heatmap (ADR-019). Each tile is a full PublicQuote with its own provenance.
 

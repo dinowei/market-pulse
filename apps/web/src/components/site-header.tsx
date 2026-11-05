@@ -15,7 +15,8 @@ import { InstrumentSearch } from "./instrument-search";
 type BenchmarkItem = components["schemas"]["BenchmarkItem"];
 
 export const SITE_NAV: readonly { href: string; label: string }[] = [
-  { href: "/", label: "Dashboard" },
+  { href: "/", label: "Início" },
+  { href: "/terminal", label: "Análise" },
   { href: "/markets", label: "Mercados" },
   { href: "/compare", label: "Comparar" },
   { href: "/calendar", label: "Calendário" },
@@ -27,7 +28,7 @@ export const SITE_NAV: readonly { href: string; label: string }[] = [
 ];
 
 const NAV_ICON: Record<string, IconName> = {
-  "/": "dashboard", "/markets": "markets", "/compare": "compare", "/calendar": "calendar", "/heatmap": "heatmap",
+  "/": "dashboard", "/terminal": "chart", "/markets": "markets", "/compare": "compare", "/calendar": "calendar", "/heatmap": "heatmap",
   "/atlas": "globe", "/watchlists": "list", "/portfolios": "wallet", "/account": "user",
 };
 const PERSONAL = new Set(["/watchlists", "/portfolios", "/account"]);
