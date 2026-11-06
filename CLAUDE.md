@@ -239,8 +239,7 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     **Commits:** `5b40d2c`, `46e80f0`, `2ebfda4` e `56314c1`, mais a documentação, em
     `feature/dia-41-sync`. Pendências novas: H-35 (revisão humana da v3) e a atualização de
     H-34 no [handoff](docs/DAY29_HANDOFF.md).
-  - **Banco do staging expira em 2026-11-05 (H-29).**
-  - **Visual Obsidian Glass (ADR-031, 2026-11-05), só no código:** barra flutuante, abas em pílula, Início e `/regions` ligados ao relatório mundial, Entrar e Cadastro novos. **Medido:** 128 testes unitários e E2E de acessibilidade com 42 de 42 (40 na rodada completa e os 2 corrigidos repetidos). Fotos provisórias do Stitch. **Banco do staging suspenso desde 2026-11-05:** a API do staging não sobe até o responsável criar o banco novo.
+  - **Visual Obsidian Glass (ADR-031, 2026-11-05), só no código:** barra flutuante, abas em pílula, Início e `/regions` ligados ao relatório mundial, Entrar e Cadastro novos. **Medido:** 128 testes unitários e E2E de acessibilidade com 42 de 42 (40 na rodada completa e os 2 corrigidos repetidos). Fotos provisórias do Stitch. **Banco novo do staging (`market-pulse-staging-db-2`, vence em 2026-12-05):** ligado pelo sync do Blueprint; `/health/ready` com banco ok em 2026-11-06. Sem contas até o responsável se cadastrar de novo.
   - **Menos páginas, mapa 3D e leitura em lote (ADR-032, 2026-11-05), só no código:**
     - `/regions`, `/terminal` e `/markets` saíram, com redirecionamento; o conteúdo foi para o Início e para `/atlas`;
     - heatmap em CSS 3D com dados reais: 142 ativos da B3 (setor e valor de mercado da brapi) e 56 dos EUA (Massive, área pelo valor negociado);
