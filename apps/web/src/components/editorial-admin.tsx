@@ -62,8 +62,8 @@ export function EditorialAdminPanel() {
     catch { setError("Transição recusada: valide o conteúdo e confirme seu papel editorial."); }
   }
 
-  return <main className="editorial-admin-page terminal-root" data-theme="dark">
-    <header className="editorial-admin-header"><div><p className="eyebrow">PARTICLE ATLAS / EDITORIAL</p><h1>Morning Call administrativo</h1></div><button type="button" onClick={() => void load}>Atualizar</button></header>
+  return <main id="main-content" className="editorial-admin-page terminal-root">
+    <header className="editorial-admin-header"><div><p className="eyebrow">Editorial</p><h1>Morning Call administrativo</h1></div><button type="button" onClick={() => void load}>Atualizar</button></header>
     <p className="editorial-admin-disclaimer">Área interna para conteúdo factual. Não constitui recomendação de investimento, oferta ou solicitação de ordem.</p>
     <form className="editorial-admin-form" onSubmit={create}>
       <label>Slug<input value={slug} onChange={(event) => setSlug(event.target.value)} required pattern="[a-z0-9][a-z0-9-]*" /></label>

@@ -4,3 +4,13 @@
 export function useRouter() {
   return { push() {} };
 }
+
+// A static render has no query string: an empty URLSearchParams, never invented params.
+export function useSearchParams() {
+  return new URLSearchParams();
+}
+
+// The dashboard route: the static harness has no router, so tests render as on "/".
+export function usePathname() {
+  return "/";
+}

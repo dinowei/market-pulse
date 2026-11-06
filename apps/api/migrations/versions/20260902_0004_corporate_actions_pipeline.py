@@ -44,6 +44,34 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Older schema versions require effective_date and source_timestamp. Some
+    # legacy corporate actions legitimately have neither value in the newer
+    # model, so derive a deterministic historical date before dropping the
+    # richer columns. The precedence uses event dates first and the persisted
+    # row creation timestamp only as an explicit provenance-backed sentinel.
+    op.execute(
+        "UPDATE corporate_actions SET effective_date = COALESCE("
+        "effective_date, ex_date, payment_date, record_date, announced_date, "
+        "declared_date, created_at::date) WHERE effective_date IS NULL"
+    )
+    op.execute(
+        "UPDATE corporate_actions SET source_timestamp = COALESCE("
+        "source_timestamp, created_at, updated_at) WHERE source_timestamp IS NULL"
+    )
+    op.execute(
+        """DO $$
+        BEGIN
+            IF EXISTS (SELECT 1 FROM corporate_actions
+                       WHERE effective_date IS NULL OR source_timestamp IS NULL) THEN
+                RAISE EXCEPTION 'corporate_actions legacy dates could not be derived';
+            END IF;
+        END $$"""
+    )
+    op.execute(
+        "UPDATE corporate_actions SET amount = COALESCE(amount, gross_amount_per_share, "
+        "net_amount_per_share), ratio = COALESCE(ratio, split_ratio_to / NULLIF(split_ratio_from, 0)), "
+        "declared_date = COALESCE(declared_date, announced_date)"
+    )
     op.execute("DROP TABLE IF EXISTS corporate_actions_quarantine")
     op.execute("DROP INDEX IF EXISTS uq_corporate_actions_external_identity")
     op.execute("ALTER TABLE corporate_actions DROP CONSTRAINT IF EXISTS corporate_actions_ratios_positive_check")

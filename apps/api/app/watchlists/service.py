@@ -59,9 +59,7 @@ class WatchlistStore(Protocol):
 
     def get(self, user_id: str, watchlist_id: str) -> WatchlistResponse: ...
 
-    def create(
-        self, user_id: str, name: str, *, is_system: bool = False
-    ) -> WatchlistResponse: ...
+    def create(self, user_id: str, name: str, *, is_system: bool = False) -> WatchlistResponse: ...
 
     def rename(self, user_id: str, watchlist_id: str, name: str) -> WatchlistResponse: ...
 
@@ -71,9 +69,7 @@ class WatchlistStore(Protocol):
         self, user_id: str, watchlist_id: str, canonical_id: str
     ) -> WatchlistItemResponse: ...
 
-    def remove_item(
-        self, user_id: str, watchlist_id: str, canonical_id: str
-    ) -> None: ...
+    def remove_item(self, user_id: str, watchlist_id: str, canonical_id: str) -> None: ...
 
     def reorder(
         self, user_id: str, watchlist_id: str, canonical_ids: list[str]
@@ -177,16 +173,12 @@ class InMemoryWatchlistService:
         self.watchlists[watchlist.id] = watchlist
         return self._response(watchlist)
 
-    def rename(
-        self, user_id: str, watchlist_id: str, name: str
-    ) -> WatchlistResponse:
+    def rename(self, user_id: str, watchlist_id: str, name: str) -> WatchlistResponse:
         watchlist = self._owned(user_id, watchlist_id)
         if watchlist.is_system:
             raise WatchlistInvalid("System watchlist cannot be renamed")
         if any(
-            w.user_id == user_id
-            and w.id != watchlist_id
-            and w.name.casefold() == name.casefold()
+            w.user_id == user_id and w.id != watchlist_id and w.name.casefold() == name.casefold()
             for w in self.watchlists.values()
         ):
             raise WatchlistConflict
@@ -200,9 +192,7 @@ class InMemoryWatchlistService:
             raise WatchlistInvalid("System watchlist cannot be deleted")
         del self.watchlists[watchlist_id]
 
-    def add_item(
-        self, user_id: str, watchlist_id: str, canonical_id: str
-    ) -> WatchlistItemResponse:
+    def add_item(self, user_id: str, watchlist_id: str, canonical_id: str) -> WatchlistItemResponse:
         watchlist = self._owned(user_id, watchlist_id)
         entry = validate_watchlist_instrument(canonical_id)
         for item_id, existing in watchlist.items:
@@ -237,8 +227,7 @@ class InMemoryWatchlistService:
             raise WatchlistInvalid("Reorder must include every item exactly once")
         by_canonical = {canonical_id: item_id for item_id, canonical_id in watchlist.items}
         watchlist.items = [
-            (by_canonical[canonical_id], canonical_id)
-            for canonical_id in normalized
+            (by_canonical[canonical_id], canonical_id) for canonical_id in normalized
         ]
         watchlist.updated_at = datetime.now(timezone.utc)
         return self._response(watchlist)
@@ -373,9 +362,7 @@ class PostgresWatchlistService:
         with self._connection() as connection:
             return self._row_to_response(self._fetch(connection, user_id, watchlist_id)[0])
 
-    def create(
-        self, user_id: str, name: str, *, is_system: bool = False
-    ) -> WatchlistResponse:
+    def create(self, user_id: str, name: str, *, is_system: bool = False) -> WatchlistResponse:
         try:
             with self._connection() as connection:
                 row = connection.execute(
@@ -388,9 +375,7 @@ class PostgresWatchlistService:
         except psycopg.errors.UniqueViolation as exc:
             raise WatchlistConflict from exc
 
-    def rename(
-        self, user_id: str, watchlist_id: str, name: str
-    ) -> WatchlistResponse:
+    def rename(self, user_id: str, watchlist_id: str, name: str) -> WatchlistResponse:
         with self._connection() as connection:
             result = connection.execute(
                 "UPDATE watchlists SET name=%s,updated_at=now() "
@@ -405,17 +390,14 @@ class PostgresWatchlistService:
     def delete(self, user_id: str, watchlist_id: str) -> None:
         with self._connection() as connection:
             result = connection.execute(
-                "DELETE FROM watchlists "
-                "WHERE id=%s AND user_id=%s AND is_system=FALSE",
+                "DELETE FROM watchlists WHERE id=%s AND user_id=%s AND is_system=FALSE",
                 (watchlist_id, user_id),
             )
             if result.rowcount == 0:
                 raise WatchlistNotFound
             connection.commit()
 
-    def add_item(
-        self, user_id: str, watchlist_id: str, canonical_id: str
-    ) -> WatchlistItemResponse:
+    def add_item(self, user_id: str, watchlist_id: str, canonical_id: str) -> WatchlistItemResponse:
         entry = validate_watchlist_instrument(canonical_id)
         with self._connection() as connection:
             self._fetch(connection, user_id, watchlist_id)
@@ -429,8 +411,7 @@ class PostgresWatchlistService:
                 connection.commit()
                 return _item_response(str(existing[0]), entry, existing[1])
             position = connection.execute(
-                "SELECT COALESCE(MAX(position)+1,0) "
-                "FROM watchlist_items WHERE watchlist_id=%s",
+                "SELECT COALESCE(MAX(position)+1,0) FROM watchlist_items WHERE watchlist_id=%s",
                 (watchlist_id,),
             ).fetchone()[0]
             row = connection.execute(

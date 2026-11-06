@@ -231,9 +231,12 @@ def test_financial_event_rules_require_key_and_reversal_is_append_only() -> None
     )
     assert reversal.status_code == 201
     assert reversal.json()["reversal_of_event_id"] == event_id
-    assert client.post(
-        f"/api/v1/portfolios/{portfolio_id}/events/{event_id}/reversal",
-        headers={"Idempotency-Key": "reverse-deposit-again"},
-    ).status_code == 409
+    assert (
+        client.post(
+            f"/api/v1/portfolios/{portfolio_id}/events/{event_id}/reversal",
+            headers={"Idempotency-Key": "reverse-deposit-again"},
+        ).status_code
+        == 409
+    )
     assert len(client.get(f"/api/v1/portfolios/{portfolio_id}/events").json()) == 3
     clear_overrides()

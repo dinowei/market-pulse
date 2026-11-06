@@ -7,9 +7,11 @@ const appRoot = join(process.cwd(), "app");
 const componentSource = () => readFileSync(join(process.cwd(), "src", "components", "market-data.tsx"), "utf8");
 const cssSource = () => readFileSync(join(appRoot, "globals.css"), "utf8");
 const pageSource = () => readFileSync(join(appRoot, "page.tsx"), "utf8");
+// The shared header (brand and menu) moved to site-header.tsx on 2026-10-11.
+const headerSource = () => readFileSync(join(process.cwd(), "src", "components", "site-header.tsx"), "utf8");
 
 test("Particle Atlas shell exposes the semantic terminal regions", () => {
-  const source = `${pageSource()}\n${componentSource()}`;
+  const source = `${pageSource()}\n${componentSource()}\n${headerSource()}`;
   for (const marker of ["Market Pulse", "Dashboard", "Morning Call", "search", "main", "aside", "footer"]) {
     assert.match(source, new RegExp(marker, "i"));
   }
@@ -26,7 +28,7 @@ test("Particle Atlas tokens cover both themes and financial state semantics", ()
 
 test("state, provenance, period, mode and fallback contracts are represented", () => {
   const source = componentSource();
-  for (const marker of ["DataStateBadge", "ProvenancePanel", "MarketStatusBar", "AssetContextPanel", "PeriodSelector", "SeriesModeToggle", "AccessibleDataTable", "TerminalShell", "DEMO", "UNAVAILABLE", "DataLevel", "Freshness", "INDEX_100", "1D", "MAX", "Fallback tabular"]) {
+  for (const marker of ["DataStateBadge", "ProvenancePanel", "MarketStatusBar", "AssetContextPanel", "PeriodSelector", "SeriesModeToggle", "AccessibleDataTable", "MarketWorkspace", "DEMO", "UNAVAILABLE", "DataLevel", "Freshness", "INDEX_100", "1D", "MAX", "Fallback tabular"]) {
     assert.match(source, new RegExp(marker));
   }
   assert.match(cssSource(), /data-badge-stale/);

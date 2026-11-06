@@ -92,3 +92,11 @@ def test_price_bar_upsert_is_idempotent_and_conflict_is_quarantined() -> None:
     conflict = MarketBar.from_payload(bar("10.2"))
     assert store.upsert(conflict, provider="brapi", dataset="history") == "quarantined"
     assert len(store.items) == 1
+
+
+def test_absent_volume_stays_absent_and_negative_volume_is_invalid() -> None:
+    payload = bar()
+    payload.pop("volume")
+    assert MarketBar.from_payload(payload).volume is None, "an absent value is never zero"
+    with pytest.raises(ValueError, match="INVALID_VOLUME"):
+        MarketBar.from_payload({**bar(), "volume": "-1"})

@@ -58,6 +58,28 @@ Os nomes abaixo vieram da ADR-004 como candidatos históricos. Nenhum plano, end
 
 Fixtures sintéticas internas não são aprovação de provider. Elas podem ser usadas como `DEMO` somente quando determinísticas, rotuladas, sem cópia de dados reais protegidos e sem sugerir mercado atual.
 
+**Uso privado no staging (2026-10-12, [ADR-027](adr/027-owner-private-real-data-staging.md)).**
+
+- **Fontes:** brapi, Twelve Data, Alpha Vantage, Open Exchange Rates e Massive.
+- **Aprovação:** dada pelo responsável só para a sessão dele no staging privado, com o rótulo
+  `OWNER_APPROVED_PRIVATE_STAGING`.
+- **O que não muda:**
+  - o status de revisão acima segue `UNREVIEWED`;
+  - nenhuma linha passa a `PUBLIC_APPROVED`;
+  - nenhuma dessas fontes alimenta exposição pública ou produção antes da revisão dos termos.
+
+**Universo ampliado (2026-10-13, [ADR-029](adr/029-owner-real-data-universe.md)).**
+
+- **Fontes e aprovação:** as mesmas da ADR-027, com o mesmo rótulo e a mesma restrição à
+  sessão do responsável.
+- **Novos dados:**
+  - cotações da brapi para VALE3, ITUB4, WEGE3, CMIN3, BOVA11, MXRF11 e AAPL34;
+  - cotações de MSFT, NVDA e SPY (Twelve Data, Massive e Alpha Vantage, nessa ordem);
+  - cotação e série diária da Twelve Data para USD/BRL, EUR/USD, BTC/USD, ETH/USD e XAU/USD.
+- **Risco registrado:** o registro descreve o plano Basic da Twelve Data como "Internal
+  non-display usage". Exibir esses pares, mesmo só ao responsável, depende da revisão dos
+  termos, e cada novo ativo amplia esse risco.
+
 ## Processo de revisão
 
 1. Definir uma única combinação de provider, plano, endpoint, dataset, finalidade e modalidade.

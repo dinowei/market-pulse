@@ -37,9 +37,7 @@ def test_validator_accepts_factual_vendas_and_requires_source_for_fact() -> None
     ["Compre PETR4 agora", "Venda PETR4", "Mantenha sua posição", "Lucro garantido"],
 )
 def test_validator_blocks_prescriptive_context(text: str) -> None:
-    block = EditorialBlock(
-        content_type=EditorialBlockType.RISK, text=text, sources=(source(),)
-    )
+    block = EditorialBlock(content_type=EditorialBlockType.RISK, text=text, sources=(source(),))
     report = validate_editorial_blocks((block,))
     assert not report.valid
     assert any(v.code == "PRESCRIPTIVE_LANGUAGE" for v in report.violations)
@@ -88,7 +86,9 @@ def test_status_transitions_are_explicit_and_append_only() -> None:
 def test_public_routes_return_only_published_posts(monkeypatch) -> None:
     service = InMemoryEditorialService()
     service.create_draft(
-        slug="draft-post", title="Rascunho", blocks=(),
+        slug="draft-post",
+        title="Rascunho",
+        blocks=(),
     )
     published = service.create_draft(
         slug="morning-call-demo",

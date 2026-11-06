@@ -83,9 +83,12 @@ def test_access_decision_requires_all_dimensions_and_default_denies():
 
 
 def test_provider_dataset_ref_preserves_legacy_simple_decision():
-    assert LicenseService().decide(ProviderDatasetRef(
-        provider="demo", dataset="demo", license_status="UNREVIEWED"
-    )) is LicenseDecision.BLOCK
+    assert (
+        LicenseService().decide(
+            ProviderDatasetRef(provider="demo", dataset="demo", license_status="UNREVIEWED")
+        )
+        is LicenseDecision.BLOCK
+    )
 
 
 def test_provider_normalization_rejects_missing_currency_instead_of_assuming_usd():

@@ -40,7 +40,8 @@ class MarketBar:
     high: Decimal
     low: Decimal
     close: Decimal
-    volume: Decimal
+    # None when the source sends no volume: an absent value is never filled with zero.
+    volume: Decimal | None
     currency: str
     adjustment_type: AdjustmentType
 
@@ -59,7 +60,10 @@ class MarketBar:
         values = {
             field: _decimal(payload.get(field), field) for field in ("open", "high", "low", "close")
         }
-        volume = _decimal(payload.get("volume", "0"), "volume")
+        raw_volume = payload.get("volume")
+        volume = None if raw_volume is None else _decimal(raw_volume, "volume")
+        if volume is not None and volume < 0:
+            raise ValueError("INVALID_VOLUME")
         if min(values.values()) <= 0 or values["low"] > values["high"]:
             raise ValueError("INVALID_OHLC")
         if not values["low"] <= values["open"] <= values["high"]:
