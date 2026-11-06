@@ -2,6 +2,7 @@ import json
 import logging
 import secrets
 from datetime import date, timedelta
+from typing import Literal
 from uuid import uuid4
 
 import psycopg
@@ -26,6 +27,8 @@ from app.auth.service import (
     AuthUnavailable,
 )
 from app.contracts import (
+    AssetProfileResponse,
+    MarketMapResponse,
     AdminSystemResponse,
     AuthUserResponse,
     BatchHistoryRequest,
@@ -130,6 +133,15 @@ from app.market_data.refresh_application import (
     RefreshBatchRequest,
     RefreshBatchResponse,
     refresh_market_data,
+)
+from app.market_data.asset_profile import (
+    empty_asset_profile,
+    real_asset_profile,
+)
+from app.market_data.market_map import (
+    demo_market_map,
+    real_market_map,
+    unavailable_market_map,
 )
 from app.market_data.world_report import world_report
 from app.portfolios.day27 import (
@@ -533,6 +545,10 @@ def _signed_in(request: Request) -> bool:
     return True
 
 
+def get_catalog_entry_or_none(canonical_id: str):
+    return next((entry for entry in get_catalog() if entry.canonical_id == canonical_id), None)
+
+
 def market_data_mode(request: Request) -> str:
     """Real data for the owner's session; never DEMO by accident on a protected environment."""
 
@@ -559,6 +575,13 @@ def _quote_for(mode: str, canonical_id: str, request_id: str) -> PublicQuote:
     if mode == NOT_CONFIGURED:
         return not_configured_quote(canonical_id, request_id)
     return public_quote(canonical_id, request_id)
+
+
+def _list_quote_for(mode: str, canonical_id: str, request_id: str) -> PublicQuote:
+    """Lists of many assets read the market snapshot; the asset page keeps the freshest quote."""
+    if mode == REAL_OWNER:
+        return real_quote(canonical_id, request_id, bulk=True)
+    return _quote_for(mode, canonical_id, request_id)
 
 
 def _series_for(
@@ -613,7 +636,7 @@ def public_quotes_batch(
     items: list[PublicQuote] = []
     for canonical_id in payload.canonical_ids:
         try:
-            items.append(_quote_for(mode, canonical_id, request_id_for(request)))
+            items.append(_list_quote_for(mode, canonical_id, request_id_for(request)))
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="Instrument not found") from exc
     return BatchQuoteResponse(items=items)
@@ -646,8 +669,51 @@ def public_heatmap(request: Request, response: Response) -> HeatmapResponse:
     _keep_private(response, mode)
     return market_heatmap(
         request_id_for(request),
-        quote=lambda canonical_id, request_id: _quote_for(mode, canonical_id, request_id),
+        quote=lambda canonical_id, request_id: _list_quote_for(mode, canonical_id, request_id),
     )
+
+
+@router.get(
+    "/market-data/market-map",
+    response_model=MarketMapResponse,
+    tags=["market-data"],
+)
+def public_market_map(
+    request: Request,
+    response: Response,
+    market: Literal["BR", "US"] = Query("BR"),
+) -> MarketMapResponse:
+    mode = market_data_mode(request)
+    _keep_private(response, mode)
+    request_id = request_id_for(request)
+    if mode == REAL_OWNER:
+        return real_market_map(market, request_id)
+    if mode == SYNTHETIC:
+        return demo_market_map(market, request_id)
+    reason = "SESSION_REQUIRED" if mode == REAL_ANONYMOUS else "PROVIDER_NOT_CONFIGURED"
+    return unavailable_market_map(market, request_id, reason)
+
+
+@router.get(
+    "/market-data/profile/{canonical_id}",
+    response_model=AssetProfileResponse,
+    tags=["market-data"],
+)
+def public_asset_profile(
+    canonical_id: str, request: Request, response: Response
+) -> AssetProfileResponse:
+    mode = market_data_mode(request)
+    _keep_private(response, mode)
+    request_id = request_id_for(request)
+    if get_catalog_entry_or_none(canonical_id) is None:
+        raise HTTPException(status_code=404, detail="Instrument not found")
+    if mode == REAL_OWNER:
+        return real_asset_profile(canonical_id, request_id)
+    reason = {
+        REAL_ANONYMOUS: "SESSION_REQUIRED",
+        NOT_CONFIGURED: "PROVIDER_NOT_CONFIGURED",
+    }.get(mode, "DATASET_NOT_APPROVED")
+    return empty_asset_profile(canonical_id, request_id, reason)
 
 
 @router.get(
@@ -660,7 +726,7 @@ def public_world_report(request: Request, response: Response) -> WorldReportResp
     _keep_private(response, mode)
     return world_report(
         request_id_for(request),
-        quote=lambda canonical_id, request_id: _quote_for(mode, canonical_id, request_id),
+        quote=lambda canonical_id, request_id: _list_quote_for(mode, canonical_id, request_id),
         news=live_news if mode == REAL_OWNER else (lambda _ticker: ()),
     )
 

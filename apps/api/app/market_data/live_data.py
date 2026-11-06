@@ -736,11 +736,228 @@ def live_news(ticker: str) -> tuple[dict[str, str], ...]:
     if not _decide(get_entry("massive"), os.environ).allowed:
         return ()
     try:
-        items = vendors.massive_news(_send("massive", vendors.massive_news_request(ticker)))
+        items = vendors.massive_news(_send("massive", vendors.massive_news_request(ticker)))[:3]
     except NormalizationError:
         return ()
     STORE.set(key, json.dumps(items), NEWS_SECONDS)
     return items
+
+
+# --- Bulk snapshots (ADR-032) ------------------------------------------------------------------
+
+BR_SNAPSHOT_SECONDS = 30 * 60
+US_SNAPSHOT_SECONDS = 3 * 3600
+PROFILE_SECONDS = 12 * 3600
+BR_MAP_SIZE = 140
+_BR_LIST_DATASET = "brapi.quote.list"
+_US_GROUPED_DATASET = "massive.aggs.grouped.1day.unadjusted"
+
+
+@dataclass(frozen=True)
+class Snapshot:
+    data: Mapping[str, Any]
+    freshness: Freshness
+    fetched_at: datetime
+
+
+def _snapshot(
+    name: str, provider_id: str, fresh_seconds: int, fetch: Callable[[], Mapping[str, Any]]
+) -> Snapshot | None:
+    """One stored answer for a whole market; a failed refresh serves the last one as STALE."""
+
+    key = _key("snapshot", name)
+
+    def read() -> dict[str, Any] | None:
+        raw = STORE.get(key)
+        return json.loads(raw) if raw else None
+
+    def served(entry: dict[str, Any], freshness: Freshness) -> Snapshot:
+        return Snapshot(entry["data"], freshness, datetime.fromisoformat(entry["fetched_at"]))
+
+    def is_fresh(entry: dict[str, Any] | None) -> bool:
+        return bool(entry) and _now() < datetime.fromisoformat(entry["fresh_until"])
+
+    entry = read()
+    if is_fresh(entry):
+        return served(entry, Freshness.FRESH)
+    with _key_lock(key):
+        entry = read()
+        if is_fresh(entry):
+            return served(entry, Freshness.FRESH)
+        stale = served(entry, Freshness.STALE) if entry else None
+        if not _decide(get_entry(provider_id), os.environ).allowed:
+            return stale
+        try:
+            data = fetch()
+        except NormalizationError as error:
+            LOGGER.warning(
+                "live_snapshot_failed", extra={"snapshot": name, "reason": error.reason.value}
+            )
+            return stale
+        fetched = _now()
+        entry = {
+            "data": data,
+            "fetched_at": fetched.isoformat(),
+            "fresh_until": (fetched + timedelta(seconds=fresh_seconds)).isoformat(),
+        }
+        STORE.set(key, json.dumps(entry), STALE_SECONDS)
+        return served(entry, Freshness.FRESH)
+
+
+def _catalog_symbols(provider_id: str) -> frozenset[str]:
+    return frozenset(
+        item.symbols[provider_id] for item in LIVE_INSTRUMENTS.values() if provider_id in item.symbols
+    )
+
+
+def _fetch_br_snapshot() -> Mapping[str, Any]:
+    rows = vendors.brapi_list(_send("brapi", vendors.brapi_list_request()))
+    known = _catalog_symbols("brapi")
+    stocks = [
+        row
+        for row in rows
+        if row["type"] == "stock" and row["market_cap"] and not row["symbol"].endswith("F")
+    ]
+    keep = {row["symbol"] for row in stocks[:BR_MAP_SIZE]} | known
+    # The list carries no time: the session comes from one dated quote of the same source.
+    reference = live_quote("equity.br.b3.petr4")
+    stamp = reference.value.source_timestamp if reference and reference.value else None
+    return {
+        "session": stamp.date().isoformat() if stamp else None,
+        "rows": {row["symbol"]: row for row in rows if row["symbol"] in keep},
+    }
+
+
+def br_snapshot() -> Snapshot | None:
+    return _snapshot("br", "brapi", BR_SNAPSHOT_SECONDS, _fetch_br_snapshot)
+
+
+def _session_days(count: int = 8):
+    day = _now().date()
+    for _ in range(count):
+        day -= timedelta(days=1)
+        if day.weekday() < 5:
+            yield day
+
+
+def _fetch_us_snapshot(extra: frozenset[str]) -> Mapping[str, Any]:
+    keep = _catalog_symbols("massive") | extra
+    days: list[tuple[date, dict[str, dict[str, str]]]] = []
+    for day in _session_days():
+        try:
+            bars = vendors.massive_grouped(_send("massive", vendors.massive_grouped_request(day)))
+        except NormalizationError as error:
+            if error.http_status == 403:  # that day is not released on the plan yet
+                continue
+            raise
+        if bars:
+            days.append((day, bars))
+        if len(days) == 2:
+            break
+    if len(days) < 2:
+        raise NormalizationError(UnavailableReason.UNAVAILABLE, "sem dois pregões recentes")
+    (session, last), (previous_day, previous) = days
+    rows = {
+        ticker: {**bar, "previous_close": previous.get(ticker, {}).get("close")}
+        for ticker, bar in last.items()
+        if ticker in keep
+    }
+    return {"session": session.isoformat(), "previous_session": previous_day.isoformat(), "rows": rows}
+
+
+def us_snapshot(extra: frozenset[str] = frozenset()) -> Snapshot | None:
+    return _snapshot("us", "massive", US_SNAPSHOT_SECONDS, lambda: _fetch_us_snapshot(extra))
+
+
+def bulk_quote(canonical_id: str) -> LiveResult | None:
+    """The quote out of a market snapshot, or None when only a per-symbol call can answer it."""
+
+    instrument = LIVE_INSTRUMENTS.get(canonical_id)
+    if instrument is None:
+        return None
+    if instrument.market == "BR" and "brapi" in instrument.symbols:
+        provider, dataset, snapshot = "brapi", _BR_LIST_DATASET, br_snapshot()
+    elif instrument.market == "US" and "massive" in instrument.symbols:
+        provider, dataset, snapshot = "massive", _US_GROUPED_DATASET, _shared_us_snapshot()
+    else:
+        return None
+    if snapshot is None or not snapshot.data.get("session"):
+        return None
+    row = snapshot.data["rows"].get(instrument.symbols[provider])
+    if row is None:
+        return None
+    price = Decimal(row.get("price") or row["close"])
+    change = percent = previous = None
+    if provider == "brapi":
+        percent = Decimal(row["change_percent"]) if row.get("change_percent") else None
+    elif row.get("previous_close"):
+        previous = Decimal(row["previous_close"])
+        change = price - previous
+        percent = change / previous * Decimal("100")
+    quote = CanonicalQuote(
+        canonical_id=canonical_id,
+        provider=provider,
+        dataset=dataset,
+        price=price,
+        currency=instrument.currency,
+        previous_close=previous,
+        change=change,
+        change_percent=percent,
+        volume=Decimal(row["volume"]) if row.get("volume") else None,
+        session_date=date.fromisoformat(snapshot.data["session"]),
+        ingested_at=snapshot.fetched_at,
+        data_level=PLAN_LEVEL[provider],
+        request_id="live",
+    )
+    return LiveResult(quote, provider, False, snapshot.freshness, snapshot.fetched_at, None)
+
+
+# Filled by market_map at import time: the US universe stored in the one shared snapshot.
+US_MAP_TICKERS: list[frozenset[str]] = [frozenset()]
+
+
+def _shared_us_snapshot() -> Snapshot | None:
+    return us_snapshot(US_MAP_TICKERS[0])
+
+
+# --- Per-asset profile (ADR-032): everything the sources say about one asset, cached long ------
+
+
+def live_profile(canonical_id: str) -> Mapping[str, Any]:
+    """Raw provider sections by name. A source that fails or refuses is simply absent."""
+
+    instrument = LIVE_INSTRUMENTS.get(canonical_id)
+    if instrument is None:
+        return {}
+    key = _key("profile", canonical_id)
+    cached = STORE.get(key)
+    if cached:
+        return json.loads(cached)
+    sections: dict[str, Any] = {}
+
+    def ask(name: str, provider_id: str, request: vendors.ProviderRequest) -> None:
+        if not _decide(get_entry(provider_id), os.environ).allowed:
+            return
+        try:
+            sections[name] = _send(provider_id, request)
+        except NormalizationError as error:
+            LOGGER.info(
+                "live_profile_missing", extra={"section": name, "reason": error.reason.value}
+            )
+
+    if "brapi" in instrument.symbols:
+        ask("brapi", "brapi", vendors.brapi_profile_request(instrument.symbols["brapi"]))
+    if "twelve_data" in instrument.symbols:
+        ref = _ref(instrument, "twelve_data")
+        ask("twelve_quote", "twelve_data", vendors.twelve_data_quote_request(ref))
+    if "massive" in instrument.symbols:
+        ticker = instrument.symbols["massive"]
+        ask("massive_details", "massive", vendors.massive_details_request(ticker))
+        ask("massive_dividends", "massive", vendors.massive_dividends_request(ticker))
+    if sections:
+        # The transport reads numbers as Decimal: they are stored as text and parsed on the way out.
+        STORE.set(key, json.dumps(sections, default=str), PROFILE_SECONDS)
+    return sections
 
 
 def limitations(provider_id: str | None, result: LiveResult) -> tuple[str, ...]:

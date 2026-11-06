@@ -99,11 +99,14 @@ def unavailable_quote(
     )
 
 
-def real_quote(canonical_id: str, request_id: str) -> PublicQuote:
+def real_quote(canonical_id: str, request_id: str, *, bulk: bool = False) -> PublicQuote:
+    """`bulk` lists read the market snapshot first: one call instead of one per symbol."""
     entry = _catalog_entry(canonical_id)
     if entry is None:
         raise KeyError(canonical_id)
-    result = live_data.live_quote(canonical_id)
+    result = (live_data.bulk_quote(canonical_id) if bulk else None) or live_data.live_quote(
+        canonical_id
+    )
     if result is None:
         return unavailable_quote(
             entry, request_id, UnavailableReason.DATASET_NOT_APPROVED, NO_PROVIDER

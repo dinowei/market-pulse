@@ -383,6 +383,75 @@ class WorldNewsItem(StrictModel):
     publisher: str
     published_at: datetime
     url: str
+    description: str | None = None
+
+
+class MarketMapTile(StrictModel):
+    symbol: str
+    name: str
+    canonical_id: str | None = None
+    price: Decimal
+    currency: str
+    change_percent: Decimal | None = None
+    volume: Decimal | None = None
+    market_cap: Decimal | None = None
+    size_value: Decimal
+
+
+class MarketMapSector(StrictModel):
+    sector: str
+    tiles: list[MarketMapTile]
+
+
+class MarketMapResponse(StrictModel):
+    """A market as a treemap (ADR-032): real sectors and sizes when a source declares them."""
+
+    market: Literal["BR", "US"]
+    sizing: Literal["MARKET_CAP", "TRADED_VALUE", "EQUAL"]
+    sectors: list[MarketMapSector]
+    provider: str
+    dataset: str
+    data_level: DataLevel
+    freshness: Freshness
+    session_date: date | None = None
+    timestamp_collected: datetime | None = None
+    is_demo: bool
+    limitations: list[str]
+    unavailable_reason: str | None = None
+    request_id: str
+
+
+class AssetFact(StrictModel):
+    key: str
+    label: str
+    value: str
+    kind: Literal["MONEY", "NUMBER", "INTEGER", "PERCENT", "TEXT", "DATE"]
+    group: str
+    source: str
+
+
+class AssetDividend(StrictModel):
+    label: str
+    amount: Decimal
+    currency: str
+    ex_date: date | None = None
+    pay_date: date | None = None
+    source: str
+
+
+class AssetProfileResponse(StrictModel):
+    """What the sources say about one asset (ADR-032), each fact with its source."""
+
+    canonical_id: str
+    facts: list[AssetFact]
+    summary: str | None = None
+    summary_source: str | None = None
+    website: str | None = None
+    dividends: list[AssetDividend]
+    news: list[WorldNewsItem]
+    limitations: list[str]
+    unavailable_reason: str | None = None
+    request_id: str
 
 
 class WorldRegion(StrictModel):

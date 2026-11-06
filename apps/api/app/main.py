@@ -1,4 +1,5 @@
 from fastapi import FastAPI, status
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -46,6 +47,7 @@ if settings.demo_enabled:
 # Request order (ADR-009): RequestId -> SecurityHeaders -> CORS -> CSRF -> RateLimit.
 # CSRF runs before the rate limit so forged requests are refused without Redis and
 # without consuming quota; security headers wrap every response, errors included.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(CSRFMiddleware)
 app.add_middleware(

@@ -505,6 +505,8 @@ def test_anonymous_visitors_get_session_required_and_no_provider_call(net):
 def test_the_owner_session_gets_real_data_without_shared_caching(net, monkeypatch):
     monkeypatch.setattr(routers, "_signed_in", lambda request: True)
     net.routes["brapi.dev/api/v2/stocks/quote"] = brapi_quote_payload()
+    net.routes["brapi.dev/api/quote/list"] = {"stocks": []}
+    net.routes["api.massive.com/v2/aggs/grouped"] = {"results": []}
     client = TestClient(app)
     response = client.get("/api/v1/market-data/quotes/equity.br.b3.petr4")
     assert response.json()["provider"] == "brapi" and response.json()["is_demo"] is False

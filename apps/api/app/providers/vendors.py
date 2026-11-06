@@ -10,6 +10,9 @@ normalizer: the plan decides whether a feed is delayed or end of day.
 
 from __future__ import annotations
 
+import re
+import urllib.parse
+
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
@@ -27,6 +30,10 @@ from app.providers.canonical import (
 from app.providers.models import DataLevel, ProviderError
 
 UTC = timezone.utc
+
+
+def quote_path(symbol: str) -> str:
+    return urllib.parse.quote(symbol, safe="")
 
 
 @dataclass(frozen=True)
@@ -571,7 +578,7 @@ def massive_bars(payload: Mapping[str, Any], ref: InstrumentRef) -> SeriesResult
     )
 
 
-def massive_news_request(ticker: str, limit: int = 3) -> ProviderRequest:
+def massive_news_request(ticker: str, limit: int = 10) -> ProviderRequest:
     return ProviderRequest(
         "massive",
         "GET",
@@ -580,6 +587,15 @@ def massive_news_request(ticker: str, limit: int = 3) -> ProviderRequest:
         auth_header="Authorization",
         auth_scheme="Bearer",
     )
+
+
+# Headlines and summaries are third-party text. The product never carries a buy or sell call
+# (financial content policy), so an article that makes one is left out, whoever wrote it.
+_RECOMMENDATION = re.compile(
+    r"\b(should you|buy|buying|sell|selling|hold|overweight|underweight|outperform|underperform"
+    r"|price target|compelling|stocks? to|top picks?|compra|venda|preço-alvo)\b",
+    re.IGNORECASE,
+)
 
 
 def massive_news(payload: Mapping[str, Any]) -> tuple[dict[str, str], ...]:
@@ -596,6 +612,125 @@ def massive_news(payload: Mapping[str, Any]) -> tuple[dict[str, str], ...]:
         stamp, url = row.get("published_utc"), row.get("article_url")
         if not all(isinstance(value, str) and value for value in (title, name, stamp, url)):
             continue
-        if url.startswith("https://"):
-            items.append({"title": title, "publisher": name, "published_at": stamp, "url": url})
+        summary = row.get("description")
+        summary = summary.strip() if isinstance(summary, str) else ""
+        if url.startswith("https://") and not _RECOMMENDATION.search(f"{title} {summary}"):
+            item = {"title": title, "publisher": name, "published_at": stamp, "url": url}
+            if summary:
+                item["description"] = summary[:280]
+            items.append(item)
     return tuple(items)
+
+
+# --- Bulk reads (ADR-032): one call answers for a whole market, sparing the per-symbol quotas ---
+
+
+def brapi_list_request(limit: int = 2000) -> ProviderRequest:
+    return ProviderRequest(
+        "brapi",
+        "GET",
+        "https://brapi.dev/api/quote/list",
+        {"limit": str(limit), "sortBy": "market_cap_basic", "sortOrder": "desc"},
+        auth_header="Authorization",
+        auth_scheme="Bearer",
+    )
+
+
+def brapi_list(payload: Mapping[str, Any]) -> tuple[dict[str, Any], ...]:
+    """Well-formed rows only. In this endpoint `change` is the day's percent change."""
+
+    rows = payload.get("stocks")
+    if not isinstance(rows, list):
+        raise _schema("stocks ausente")
+    items = []
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get("stock"), str):
+            continue
+        price = _dec(row.get("close"), "close", required=False)
+        if price is None or price <= 0:
+            continue
+        items.append(
+            {
+                "symbol": row["stock"],
+                "name": row.get("name") if isinstance(row.get("name"), str) else row["stock"],
+                "price": str(price),
+                "change_percent": _text(_dec(row.get("change"), "change", required=False)),
+                "volume": _text(_dec(row.get("volume"), "volume", required=False)),
+                "market_cap": _text(_dec(row.get("market_cap"), "market_cap", required=False)),
+                "sector": row.get("sector") if isinstance(row.get("sector"), str) else None,
+                "type": row.get("type"),
+            }
+        )
+    return tuple(items)
+
+
+def _text(value: Decimal | None) -> str | None:
+    return None if value is None else str(value)
+
+
+def massive_grouped_request(day: date) -> ProviderRequest:
+    return ProviderRequest(
+        "massive",
+        "GET",
+        f"https://api.massive.com/v2/aggs/grouped/locale/us/market/stocks/{day.isoformat()}",
+        {"adjusted": "false"},
+        auth_header="Authorization",
+        auth_scheme="Bearer",
+    )
+
+
+def massive_grouped(payload: Mapping[str, Any]) -> dict[str, dict[str, str]]:
+    """Ticker -> the day's unadjusted bar. A day without session has no results at all."""
+
+    rows = payload.get("results") or []
+    if not isinstance(rows, list):
+        raise _schema("results ausente")
+    bars: dict[str, dict[str, str]] = {}
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get("T"), str):
+            continue
+        close = _dec(row.get("c"), "c", required=False)
+        if close is None or close <= 0:
+            continue
+        bars[row["T"]] = {
+            "close": str(close),
+            "open": _text(_dec(row.get("o"), "o", required=False)),
+            "high": _text(_dec(row.get("h"), "h", required=False)),
+            "low": _text(_dec(row.get("l"), "l", required=False)),
+            "volume": _text(_dec(row.get("v"), "v", required=False)),
+            "vwap": _text(_dec(row.get("vw"), "vw", required=False)),
+            "trades": _text(_dec(row.get("n"), "n", required=False)),
+        }
+    return bars
+
+
+def brapi_profile_request(symbol: str) -> ProviderRequest:
+    return ProviderRequest(
+        "brapi",
+        "GET",
+        f"https://brapi.dev/api/quote/{quote_path(symbol)}",
+        {"modules": "summaryProfile,defaultKeyStatistics", "dividends": "true"},
+        auth_header="Authorization",
+        auth_scheme="Bearer",
+    )
+
+
+def massive_details_request(ticker: str) -> ProviderRequest:
+    return ProviderRequest(
+        "massive",
+        "GET",
+        f"https://api.massive.com/v3/reference/tickers/{quote_path(ticker)}",
+        auth_header="Authorization",
+        auth_scheme="Bearer",
+    )
+
+
+def massive_dividends_request(ticker: str, limit: int = 8) -> ProviderRequest:
+    return ProviderRequest(
+        "massive",
+        "GET",
+        "https://api.massive.com/v3/reference/dividends",
+        {"ticker": ticker, "limit": str(limit), "order": "desc", "sort": "ex_dividend_date"},
+        auth_header="Authorization",
+        auth_scheme="Bearer",
+    )
