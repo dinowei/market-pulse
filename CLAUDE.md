@@ -241,6 +241,14 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     H-34 no [handoff](docs/DAY29_HANDOFF.md).
   - **Banco do staging expira em 2026-11-05 (H-29).**
   - **Visual Obsidian Glass (ADR-031, 2026-11-05), só no código:** barra flutuante, abas em pílula, Início e `/regions` ligados ao relatório mundial, Entrar e Cadastro novos. **Medido:** 128 testes unitários e E2E de acessibilidade com 42 de 42 (40 na rodada completa e os 2 corrigidos repetidos). Fotos provisórias do Stitch. **Banco do staging suspenso desde 2026-11-05:** a API do staging não sobe até o responsável criar o banco novo.
+  - **Menos páginas, mapa 3D e leitura em lote (ADR-032, 2026-11-05), só no código:**
+    - `/regions`, `/terminal` e `/markets` saíram, com redirecionamento; o conteúdo foi para o Início e para `/atlas`;
+    - heatmap em CSS 3D com dados reais: 142 ativos da B3 (setor e valor de mercado da brapi) e 56 dos EUA (Massive, área pelo valor negociado);
+    - Comparar mantido: as páginas chamavam a API sem a sessão, e a base 100 agora parte da primeira data comum;
+    - `/market-data/profile/{id}`: fatos das fontes na página do ativo;
+    - notícia de terceiro com chamada de compra ou venda é descartada.
+
+    **Medido:** backend com 513 passed e 18 skipped; frontend com 136 testes, lint, typecheck e build; maior bundle com 193,3 KB gzip; E2E: 36 de 38 na rodada completa e, depois do ajuste dos 2 restantes, 8 de 8 na repetição parcial. Dados reais conferidos sem login por script com as chaves locais, não pela tela com sessão.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia

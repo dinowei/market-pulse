@@ -40,6 +40,7 @@
 | [029](029-owner-real-data-universe.md) | Universo de dados reais do responsável e panorama de mercados | Accepted | Sim, em `feature/dia-41-sync` | Não |
 | [030](030-world-close-report.md) | Relatório mundial de fechamento como página inicial | Accepted | Sim, em `feature/dia-41-sync` | Não |
 | [031](031-obsidian-glass-visual.md) | Visual Obsidian Glass | Accepted | Sim, em `feature/dia-41-sync` | Não |
+| [032](032-consolidation-bulk-market-data.md) | Menos páginas, mapa 3D e leitura em lote dos provedores | Accepted | Sim, em `feature/dia-41-sync` | Não |
 
 Alternativas que não viraram decisão estão em
 [DISCARDED_ALTERNATIVES.md](../engineering/DISCARDED_ALTERNATIVES.md).
