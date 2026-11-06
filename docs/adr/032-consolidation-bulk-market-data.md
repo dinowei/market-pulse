@@ -17,8 +17,23 @@ Medido em 2026-11-05 com as chaves do responsável: `brapi /quote/list` traz num
 - **`/market-data/profile/{id}`:** todos os fatos das fontes sobre o ativo, com a fonte de cada um, cacheados por 12 horas.
 - **Heatmap:** CSS 3D, sem biblioteca nova; tabela equivalente, controles por teclado e modo plano.
 - **Comparar:** fica, porque há histórico real. Base 100 na primeira data comum entre as séries, porque as fontes têm profundidades diferentes.
-- **Notícias:** artigo de terceiro com chamada de compra ou venda é descartado pelo filtro `_RECOMMENDATION`.
+- **Notícias:** artigo de terceiro com chamada de compra ou venda é descartado pelo filtro `_RECOMMENDATION`, que lê expressões e não palavras soltas, como pede a seção 3 da política de conteúdo ("sell-off" passa, "stocks to buy" não). Do campo `insights` da Massive fica só o tom de uma palavra para o ticker, atribuído à fonte; o `sentiment_reasoning` é descartado, porque argumenta a favor ou contra comprar.
+- **Imagens:** foto da notícia e logo vêm direto da fonte, com `referrerPolicy="no-referrer"` e troca por imagem local em caso de falha. Logos só de `icons.brapi.dev` e `api.twelvedata.com`.
+- **Ranking do dia:** `/market-data/movers`. B3 calculado da lista da brapi; EUA pelo `TOP_GAINERS_LOSERS` do Alpha Vantage, guardado por 6 horas.
+- **Telas privadas:** Favoritos, Carteiras, Calendário e Conta seguem o desenho do Stitch só com o que a API entrega. Valores de carteira são formatados sobre o texto decimal, sem ponto flutuante (`decimal-text.ts`).
 - **Fluidez:** cache em memória com revalidação em segundo plano, limpo no login e no logout; GZip nas respostas da API.
+
+## Medido e deixado de fora
+
+Em 2026-11-06, com as chaves do responsável:
+
+- Alpha Vantage `OVERVIEW`: resposta de endpoint pago.
+- Twelve Data `profile` e `statistics`: 403, salvo para AAPL, o símbolo de demonstração. Mostrar só para uma ação seria enganoso.
+- Massive `vX/reference/financials`: 404.
+
+Do desenho do Stitch ficaram de fora, por não existirem na API ou por contrariarem a política: botões de compra e venda, simulador de Markowitz com "recomendação algorítmica", alfa, VaR, índice de Sharpe, "Compra Forte", painel de bancos centrais, 2FA, plano, alertas e relatórios.
+
+O calendário econômico segue com eventos sintéticos, marcados como DEMO: nenhuma fonte aprovada cobre esse dado.
 
 ## Consequências
 

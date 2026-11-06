@@ -247,7 +247,9 @@ Somente fatos verificados. Não promova hipótese a decisão nesta seção.
     - `/market-data/profile/{id}`: fatos das fontes na página do ativo;
     - notícia de terceiro com chamada de compra ou venda é descartada.
 
-    **Medido:** backend com 513 passed e 18 skipped; frontend com 136 testes, lint, typecheck e build; maior bundle com 193,3 KB gzip; E2E: 36 de 38 na rodada completa e, depois do ajuste dos 2 restantes, 8 de 8 na repetição parcial. Dados reais conferidos sem login por script com as chaves locais, não pela tela com sessão.
+    - Favoritos, Carteiras, Calendário e Conta refeitos sobre a API; ranking do dia (`/market-data/movers`), logos, fotos e tom das notícias.
+
+    **Falta (bloqueado pela conta):** o responsável abrir o cadastro no painel do Render, criar a conta e o agente religar os dados reais; depois, conferir tudo com login.
 - **Plano de 40 dias (decisão do usuário, 2026-10-05):**
   - **Fase 2 (Dias 31–40):** registrada como **planejada** na seção "Fase 2" do
     [roadmap](docs/ROADMAP_30_DAYS.md). Só começa após o Dia 30 fechado, e cada dia
