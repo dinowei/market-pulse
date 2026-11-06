@@ -13,7 +13,15 @@ from collections.abc import Iterable
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from app.contracts import DataLevel, Freshness, MarketMapResponse, MarketMapSector, MarketMapTile
+from app.contracts import (
+    DataLevel,
+    Freshness,
+    MarketMapResponse,
+    MarketMapSector,
+    MarketMapTile,
+    MarketMover,
+    MarketMoversResponse,
+)
 from app.instruments.catalog import get_catalog
 from app.market_data import live_data
 from app.market_data.public_market_data import public_quote
@@ -132,6 +140,10 @@ US_LIMITATIONS = (
 )
 
 
+def _logo(url: object) -> str | None:
+    return url if isinstance(url, str) and url.startswith("https://icons.brapi.dev/") else None
+
+
 def _catalog_ids() -> dict[str, str]:
     return {entry.symbol: entry.canonical_id for entry in get_catalog()}
 
@@ -187,6 +199,7 @@ def _real_br(request_id: str) -> MarketMapResponse:
                 volume=Decimal(row["volume"]) if row["volume"] else None,
                 market_cap=cap,
                 size_value=cap,
+                logo_url=_logo(row.get("logo")),
             )
         )
     session = snapshot.data.get("session")
@@ -287,5 +300,90 @@ def demo_market_map(market: str, request_id: str) -> MarketMapResponse:
         is_demo=True,
         limitations=["Dados sintéticos de demonstração: não são cotações reais."],
         unavailable_reason=None if grouped else "DATASET_NOT_APPROVED",
+        request_id=request_id,
+    )
+
+
+MOVERS_SIZE = 5
+BR_MOVERS_LIMITATIONS = (
+    "Ranking pelos números do dia entre as maiores empresas da B3 (brapi), sem filtro de opinião.",
+    "Maior alta ou queda não indica o que vai acontecer. Não é recomendação de investimento.",
+)
+US_MOVERS_LIMITATIONS = (
+    "Listas do Alpha Vantage para todo o mercado americano, inclusive ações de baixo preço e "
+    "ETFs alavancados, que costumam ter as maiores variações.",
+    "Maior alta ou queda não indica o que vai acontecer. Não é recomendação de investimento.",
+)
+
+
+def unavailable_movers(market: str, request_id: str, reason: str) -> MarketMoversResponse:
+    return MarketMoversResponse(
+        market=market,
+        gainers=[],
+        losers=[],
+        most_active=[],
+        provider="none",
+        dataset="none",
+        data_level=DataLevel.DELAYED,
+        freshness=Freshness.UNAVAILABLE,
+        limitations=[],
+        unavailable_reason=reason,
+        request_id=request_id,
+    )
+
+
+def real_movers(market: str, request_id: str) -> MarketMoversResponse:
+    ids = _catalog_ids()
+    snapshot = live_data.br_snapshot() if market == "BR" else live_data.us_movers()
+    if snapshot is None:
+        return unavailable_movers(market, request_id, "UNAVAILABLE")
+
+    def item(row: dict, currency: str) -> MarketMover:
+        return MarketMover(
+            symbol=row["symbol"],
+            canonical_id=ids.get(row["symbol"]),
+            price=Decimal(row["price"]) if row.get("price") else None,
+            currency=currency,
+            change_percent=Decimal(row["change_percent"]) if row.get("change_percent") else None,
+            volume=Decimal(row["volume"]) if row.get("volume") else None,
+        )
+
+    if market == "US":
+        lists = {name: snapshot.data[name] for name in ("gainers", "losers", "most_active")}
+        currency, provider, dataset = "USD", "alpha_vantage", "alpha_vantage.top_gainers_losers"
+        limitations, level = US_MOVERS_LIMITATIONS, DataLevel.EOD
+    else:
+        rows = [
+            row
+            for row in snapshot.data["rows"].values()
+            if row["type"] == "stock"
+            and row.get("market_cap")
+            and row.get("change_percent")
+            and not row["symbol"].endswith("F")
+        ]
+        by_change = sorted(rows, key=lambda row: Decimal(row["change_percent"]))
+        lists = {
+            "gainers": [row for row in reversed(by_change) if Decimal(row["change_percent"]) > 0],
+            "losers": [row for row in by_change if Decimal(row["change_percent"]) < 0],
+            "most_active": sorted(
+                (row for row in rows if row.get("volume")),
+                key=lambda row: Decimal(row["volume"]) * Decimal(row["price"]),
+                reverse=True,
+            ),
+        }
+        currency, provider, dataset = "BRL", "brapi", "brapi.quote.list"
+        limitations, level = BR_MOVERS_LIMITATIONS, DataLevel.DELAYED
+    return MarketMoversResponse(
+        market=market,
+        gainers=[item(row, currency) for row in lists["gainers"][:MOVERS_SIZE]],
+        losers=[item(row, currency) for row in lists["losers"][:MOVERS_SIZE]],
+        most_active=[item(row, currency) for row in lists["most_active"][:MOVERS_SIZE]],
+        provider=provider,
+        dataset=dataset,
+        data_level=level,
+        freshness=snapshot.freshness,
+        session_date=snapshot.data.get("session"),
+        timestamp_collected=snapshot.fetched_at,
+        limitations=list(limitations),
         request_id=request_id,
     )

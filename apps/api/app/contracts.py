@@ -384,6 +384,8 @@ class WorldNewsItem(StrictModel):
     published_at: datetime
     url: str
     description: str | None = None
+    image_url: str | None = None
+    sentiment: Literal["positive", "negative", "neutral"] | None = None
 
 
 class MarketMapTile(StrictModel):
@@ -396,6 +398,7 @@ class MarketMapTile(StrictModel):
     volume: Decimal | None = None
     market_cap: Decimal | None = None
     size_value: Decimal
+    logo_url: str | None = None
 
 
 class MarketMapSector(StrictModel):
@@ -416,6 +419,33 @@ class MarketMapResponse(StrictModel):
     session_date: date | None = None
     timestamp_collected: datetime | None = None
     is_demo: bool
+    limitations: list[str]
+    unavailable_reason: str | None = None
+    request_id: str
+
+
+class MarketMover(StrictModel):
+    symbol: str
+    canonical_id: str | None = None
+    price: Decimal | None = None
+    currency: str
+    change_percent: Decimal | None = None
+    volume: Decimal | None = None
+
+
+class MarketMoversResponse(StrictModel):
+    """Who moved most in the session, ranked by the numbers alone (ADR-032)."""
+
+    market: Literal["BR", "US"]
+    gainers: list[MarketMover]
+    losers: list[MarketMover]
+    most_active: list[MarketMover]
+    provider: str
+    dataset: str
+    data_level: DataLevel
+    freshness: Freshness
+    session_date: date | None = None
+    timestamp_collected: datetime | None = None
     limitations: list[str]
     unavailable_reason: str | None = None
     request_id: str
@@ -447,6 +477,7 @@ class AssetProfileResponse(StrictModel):
     summary: str | None = None
     summary_source: str | None = None
     website: str | None = None
+    logo_url: str | None = None
     dividends: list[AssetDividend]
     news: list[WorldNewsItem]
     limitations: list[str]

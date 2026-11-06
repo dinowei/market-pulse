@@ -29,6 +29,7 @@ from app.auth.service import (
 from app.contracts import (
     AssetProfileResponse,
     MarketMapResponse,
+    MarketMoversResponse,
     AdminSystemResponse,
     AuthUserResponse,
     BatchHistoryRequest,
@@ -141,7 +142,9 @@ from app.market_data.asset_profile import (
 from app.market_data.market_map import (
     demo_market_map,
     real_market_map,
+    real_movers,
     unavailable_market_map,
+    unavailable_movers,
 )
 from app.market_data.world_report import world_report
 from app.portfolios.day27 import (
@@ -692,6 +695,28 @@ def public_market_map(
         return demo_market_map(market, request_id)
     reason = "SESSION_REQUIRED" if mode == REAL_ANONYMOUS else "PROVIDER_NOT_CONFIGURED"
     return unavailable_market_map(market, request_id, reason)
+
+
+@router.get(
+    "/market-data/movers",
+    response_model=MarketMoversResponse,
+    tags=["market-data"],
+)
+def public_market_movers(
+    request: Request,
+    response: Response,
+    market: Literal["BR", "US"] = Query("BR"),
+) -> MarketMoversResponse:
+    mode = market_data_mode(request)
+    _keep_private(response, mode)
+    request_id = request_id_for(request)
+    if mode == REAL_OWNER:
+        return real_movers(market, request_id)
+    reason = {
+        REAL_ANONYMOUS: "SESSION_REQUIRED",
+        NOT_CONFIGURED: "PROVIDER_NOT_CONFIGURED",
+    }.get(mode, "DATASET_NOT_APPROVED")
+    return unavailable_movers(market, request_id, reason)
 
 
 @router.get(

@@ -157,18 +157,24 @@ def _dividend(label: Any, amount: Any, currency: Any, ex: Any, pay: Any, source:
 def real_asset_profile(canonical_id: str, request_id: str) -> AssetProfileResponse:
     sections = live_data.live_profile(canonical_id)
     facts: list[AssetFact] = []
-    summary = summary_source = website = None
+    summary = summary_source = website = logo = None
     dividends: list[AssetDividend] = []
     instrument = live_data.LIVE_INSTRUMENTS.get(canonical_id)
 
     if "brapi" in sections:
         data = _first_result(sections["brapi"])
-        profile = data.get("summaryProfile") if isinstance(data.get("summaryProfile"), Mapping) else {}
+        profile = (
+            data.get("summaryProfile") if isinstance(data.get("summaryProfile"), Mapping) else {}
+        )
         stats = data.get("defaultKeyStatistics")
         stats = stats if isinstance(stats, Mapping) else {}
         facts += _facts(data, BRAPI_QUOTE, "brapi")
         facts += _facts(stats, BRAPI_STATS, "brapi")
         facts += _facts(profile, BRAPI_COMPANY, "brapi")
+        if isinstance(data.get("logourl"), str) and data["logourl"].startswith(
+            "https://icons.brapi.dev/"
+        ):
+            logo = data["logourl"]
         if isinstance(profile.get("longBusinessSummary"), str):
             summary, summary_source = profile["longBusinessSummary"], "brapi"
         if isinstance(profile.get("website"), str) and profile["website"].startswith("https://"):
@@ -198,8 +204,15 @@ def real_asset_profile(canonical_id: str, request_id: str) -> AssetProfileRespon
         facts += [fact for fact in _facts(data, MASSIVE_DETAILS, "massive") if fact.key not in have]
         if isinstance(data.get("description"), str) and not summary:
             summary, summary_source = data["description"], "massive"
-        if isinstance(data.get("homepage_url"), str) and data["homepage_url"].startswith("https://"):
+        if isinstance(data.get("homepage_url"), str) and data["homepage_url"].startswith(
+            "https://"
+        ):
             website = website or data["homepage_url"]
+    twelve_logo = sections.get("twelve_logo")
+    if isinstance(twelve_logo, Mapping) and str(twelve_logo.get("url", "")).startswith(
+        "https://api.twelvedata.com/logo/"
+    ):
+        logo = logo or twelve_logo["url"]
     if "massive_dividends" in sections and isinstance(sections["massive_dividends"], Mapping):
         rows = sections["massive_dividends"].get("results")
         for row in rows if isinstance(rows, list) else []:
@@ -217,7 +230,9 @@ def real_asset_profile(canonical_id: str, request_id: str) -> AssetProfileRespon
 
     news: list[WorldNewsItem] = []
     if instrument is not None and "massive" in instrument.symbols:
-        news = [WorldNewsItem(**item) for item in live_data.live_news(instrument.symbols["massive"])]
+        news = [
+            WorldNewsItem(**item) for item in live_data.live_news(instrument.symbols["massive"])
+        ]
     empty = not (facts or summary or dividends or news)
     return AssetProfileResponse(
         canonical_id=canonical_id,
@@ -225,6 +240,7 @@ def real_asset_profile(canonical_id: str, request_id: str) -> AssetProfileRespon
         summary=summary,
         summary_source=summary_source,
         website=website,
+        logo_url=logo,
         dividends=dividends,
         news=news,
         limitations=list(LIMITATIONS),

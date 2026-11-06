@@ -736,7 +736,8 @@ def live_news(ticker: str) -> tuple[dict[str, str], ...]:
     if not _decide(get_entry("massive"), os.environ).allowed:
         return ()
     try:
-        items = vendors.massive_news(_send("massive", vendors.massive_news_request(ticker)))[:3]
+        payload = _send("massive", vendors.massive_news_request(ticker))
+        items = vendors.massive_news(payload, ticker)[:3]
     except NormalizationError:
         return ()
     STORE.set(key, json.dumps(items), NEWS_SECONDS)
@@ -806,7 +807,9 @@ def _snapshot(
 
 def _catalog_symbols(provider_id: str) -> frozenset[str]:
     return frozenset(
-        item.symbols[provider_id] for item in LIVE_INSTRUMENTS.values() if provider_id in item.symbols
+        item.symbols[provider_id]
+        for item in LIVE_INSTRUMENTS.values()
+        if provider_id in item.symbols
     )
 
 
@@ -862,7 +865,11 @@ def _fetch_us_snapshot(extra: frozenset[str]) -> Mapping[str, Any]:
         for ticker, bar in last.items()
         if ticker in keep
     }
-    return {"session": session.isoformat(), "previous_session": previous_day.isoformat(), "rows": rows}
+    return {
+        "session": session.isoformat(),
+        "previous_session": previous_day.isoformat(),
+        "rows": rows,
+    }
 
 
 def us_snapshot(extra: frozenset[str] = frozenset()) -> Snapshot | None:
@@ -912,6 +919,18 @@ def bulk_quote(canonical_id: str) -> LiveResult | None:
     return LiveResult(quote, provider, False, snapshot.freshness, snapshot.fetched_at, None)
 
 
+def us_movers() -> Snapshot | None:
+    """Alpha Vantage's daily lists: one call, kept for hours, inside its 25 calls per day."""
+    return _snapshot(
+        "us_movers",
+        "alpha_vantage",
+        6 * 3600,
+        lambda: vendors.alpha_vantage_movers(
+            _send("alpha_vantage", vendors.alpha_vantage_movers_request())
+        ),
+    )
+
+
 # Filled by market_map at import time: the US universe stored in the one shared snapshot.
 US_MAP_TICKERS: list[frozenset[str]] = [frozenset()]
 
@@ -954,6 +973,9 @@ def live_profile(canonical_id: str) -> Mapping[str, Any]:
         ticker = instrument.symbols["massive"]
         ask("massive_details", "massive", vendors.massive_details_request(ticker))
         ask("massive_dividends", "massive", vendors.massive_dividends_request(ticker))
+    if canonical_id.startswith("equity.") and "twelve_data" in instrument.symbols:
+        logo = vendors.twelve_data_logo_request(instrument.symbols["twelve_data"])
+        ask("twelve_logo", "twelve_data", logo)
     if sections:
         # The transport reads numbers as Decimal: they are stored as text and parsed on the way out.
         STORE.set(key, json.dumps(sections, default=str), PROFILE_SECONDS)

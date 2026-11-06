@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import re
 import urllib.parse
-
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
@@ -591,15 +590,29 @@ def massive_news_request(ticker: str, limit: int = 10) -> ProviderRequest:
 
 # Headlines and summaries are third-party text. The product never carries a buy or sell call
 # (financial content policy), so an article that makes one is left out, whoever wrote it.
+# Phrases, not loose words: "sell-off" or "on hold" describe the market and stay (policy, §3).
 _RECOMMENDATION = re.compile(
-    r"\b(should you|buy|buying|sell|selling|hold|overweight|underweight|outperform|underperform"
-    r"|price target|compelling|stocks? to|top picks?|compra|venda|preço-alvo)\b",
+    r"\b(should you|time to (buy|sell)"
+    r"|(buy|sell|hold)(ing)? (now|the dip|rating|this|these|it\b)"
+    r"|buying opportunity|compelling (buy|opportunity)|strong (buy|sell)"
+    r"|a (good |great )?(buy|sell)\b"
+    r"|(stocks?|shares?|etfs?|funds?) to (buy|sell|own|avoid)"
+    r"|(he's|she's|they're|is) (buying|selling)"
+    r"|top picks?|price target|upgrades? to|downgrades? to|overweight|underweight"
+    r"|recomendação de compra|preço-alvo|hora de (comprar|vender))\b",
     re.IGNORECASE,
 )
+_SENTIMENTS = frozenset({"positive", "negative", "neutral"})
 
 
-def massive_news(payload: Mapping[str, Any]) -> tuple[dict[str, str], ...]:
-    """Well-formed articles only; one without title, source, date or https link is left out."""
+def massive_news(
+    payload: Mapping[str, Any], ticker: str | None = None
+) -> tuple[dict[str, str], ...]:
+    """Well-formed articles only; one without title, source, date or https link is left out.
+
+    The source's reasoning text is dropped: it argues for or against buying. Only its one-word
+    tone for this ticker is kept, shown as the source's.
+    """
 
     rows = payload.get("results")
     if not isinstance(rows, list):
@@ -618,6 +631,16 @@ def massive_news(payload: Mapping[str, Any]) -> tuple[dict[str, str], ...]:
             item = {"title": title, "publisher": name, "published_at": stamp, "url": url}
             if summary:
                 item["description"] = summary[:280]
+            image = row.get("image_url")
+            if isinstance(image, str) and image.startswith("https://"):
+                item["image_url"] = image
+            for insight in row.get("insights") or ():
+                if (
+                    isinstance(insight, dict)
+                    and insight.get("ticker") == ticker
+                    and insight.get("sentiment") in _SENTIMENTS
+                ):
+                    item["sentiment"] = insight["sentiment"]
             items.append(item)
     return tuple(items)
 
@@ -659,6 +682,7 @@ def brapi_list(payload: Mapping[str, Any]) -> tuple[dict[str, Any], ...]:
                 "market_cap": _text(_dec(row.get("market_cap"), "market_cap", required=False)),
                 "sector": row.get("sector") if isinstance(row.get("sector"), str) else None,
                 "type": row.get("type"),
+                "logo": row.get("logo") if isinstance(row.get("logo"), str) else None,
             }
         )
     return tuple(items)
@@ -734,3 +758,55 @@ def massive_dividends_request(ticker: str, limit: int = 8) -> ProviderRequest:
         auth_header="Authorization",
         auth_scheme="Bearer",
     )
+
+
+def twelve_data_logo_request(symbol: str) -> ProviderRequest:
+    return ProviderRequest(
+        "twelve_data",
+        "GET",
+        "https://api.twelvedata.com/logo",
+        {"symbol": symbol},
+        auth_header="Authorization",
+        auth_scheme="apikey",
+    )
+
+
+def alpha_vantage_movers_request() -> ProviderRequest:
+    return ProviderRequest(
+        "alpha_vantage",
+        "GET",
+        "https://www.alphavantage.co/query",
+        {"function": "TOP_GAINERS_LOSERS"},
+        auth_query_param="apikey",
+    )
+
+
+def alpha_vantage_movers(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """The source's three lists, up to five rows each. A plan or quota notice has no lists."""
+
+    if not isinstance(payload.get("top_gainers"), list):
+        raise _schema("top_gainers ausente")
+
+    def rows(name: str) -> list[dict[str, str | None]]:
+        items = []
+        for row in payload.get(name) or ():
+            if not isinstance(row, dict) or not isinstance(row.get("ticker"), str):
+                continue
+            percent = str(row.get("change_percentage") or "").rstrip("%")
+            items.append(
+                {
+                    "symbol": row["ticker"],
+                    "price": _text(_dec(row.get("price"), "price", required=False)),
+                    "change_percent": _text(_dec(percent, "change_percentage", required=False)),
+                    "volume": _text(_dec(row.get("volume"), "volume", required=False)),
+                }
+            )
+        return items[:5]
+
+    updated = payload.get("last_updated")
+    return {
+        "session": updated[:10] if isinstance(updated, str) else None,
+        "gainers": rows("top_gainers"),
+        "losers": rows("top_losers"),
+        "most_active": rows("most_actively_traded"),
+    }
