@@ -4,6 +4,8 @@ import type { components } from "../generated/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { clearApiCache } from "../lib/api-client";
+import "../lib/use-cached-api";
 import { authErrorMessage, PASSWORD_RULE_HINT, validateCredentials } from "../lib/auth-validation";
 
 type AuthUserResponse = components["schemas"]["AuthUserResponse"];
@@ -41,6 +43,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       }
       const user = (await response.json()) as AuthUserResponse;
       if (!user.email) throw new Error("AUTH_FAILED");
+      clearApiCache();
       router.push(isRegister ? "/login" : "/");
     } catch {
       setError(authErrorMessage(mode, 0));

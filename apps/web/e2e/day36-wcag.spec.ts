@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 // Day 36: automated WCAG 2.2 AA gate on every route and both themes. Axe does not replace
 // the manual review (directive section 20); the report lists what was checked by hand.
-const ROUTES = ["/", "/terminal", "/login", "/register", "/watchlists", "/portfolios", "/compare", "/calendar", "/heatmap", "/atlas", "/assets?id=equity.br.b3.petr4", "/markets", "/markets?tab=indices", "/account", "/editorial/admin", "/admin/system"];
+const ROUTES = ["/", "/login", "/register", "/watchlists", "/portfolios", "/compare", "/calendar", "/heatmap", "/atlas", "/atlas?tab=indices", "/assets?id=equity.br.b3.petr4", "/account", "/editorial/admin", "/admin/system"];
 const THEMES = ["dark", "light"] as const;
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
@@ -48,7 +48,7 @@ test("reflow: no route scrolls sideways at 320 CSS px (WCAG 1.4.10)", async ({ p
   }
 });
 
-const KEY_ROUTES = ["/", "/assets?id=equity.br.b3.petr4", "/markets", "/compare", "/portfolios", "/account", "/atlas", "/heatmap"];
+const KEY_ROUTES = ["/", "/assets?id=equity.br.b3.petr4", "/compare", "/portfolios", "/account", "/atlas", "/heatmap"];
 
 // 375 (phone), 640 (a 1280 px window at 200% zoom), 768 and 1024 (tablet).
 test("responsive: key routes never scroll sideways from phone to tablet widths", async ({ page }) => {
@@ -65,11 +65,10 @@ test("responsive: key routes never scroll sideways from phone to tablet widths",
 
 // Directive §18: motion marks a transition and then stops; nothing keeps running.
 test("Particle Atlas motion stops after the transition", async ({ page }) => {
-  for (const route of ["/markets", "/assets?id=equity.br.b3.petr4"]) {
+  for (const route of ["/atlas", "/assets?id=equity.br.b3.petr4"]) {
     await settle(page, route);
-    await page.waitForTimeout(3_000);
-    const running = await page.evaluate(() => document.getAnimations().filter((animation) => animation.playState === "running").length);
-    expect(running, `${route} still animating`).toBe(0);
+    // The motion starts when the data lands, so it is given time to finish; it must then stop.
+    await expect.poll(() => page.evaluate(() => document.getAnimations().filter((animation) => animation.playState === "running").length), { message: `${route} still animating`, timeout: 20_000 }).toBe(0);
   }
 });
 
@@ -91,7 +90,7 @@ test("keyboard: every focusable control on the dashboard shows a visible focus i
 });
 
 test("markets tabs follow the WAI-ARIA keyboard pattern and keep the tab in the URL", async ({ page }) => {
-  await settle(page, "/markets");
+  await settle(page, "/atlas");
   await page.getByRole("tab", { name: /Visão geral/ }).focus();
   await page.keyboard.press("ArrowRight");
   const equities = page.getByRole("tab", { name: /Ações Brasil/ });
@@ -106,7 +105,11 @@ test("markets tabs follow the WAI-ARIA keyboard pattern and keep the tab in the 
 test("reduced motion keeps the information: the chart still has its table", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await settle(page, "/compare");
-  const table = page.locator("table");
+  const opener = page.getByText("Ver os valores em tabela");
   const error = page.getByRole("alert");
-  await expect(table.or(error).first()).toBeVisible();
+  await expect(opener.or(error).first()).toBeVisible();
+  if (await opener.isVisible()) {
+    await opener.click();
+    await expect(page.locator("table").first()).toBeVisible();
+  }
 });

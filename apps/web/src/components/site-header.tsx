@@ -4,10 +4,11 @@
 // of the benchmark values the API serves to this session. Login and sign-up render bare.
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 
 import type { components } from "../generated/api";
-import { API_BASE, apiRequest, isAbort } from "../lib/api-client";
+import { API_BASE, clearApiCache } from "../lib/api-client";
+import { useCachedApi } from "../lib/use-cached-api";
 import { applyPalette, applyTheme, currentPalette, currentTheme, subscribePalette, subscribeTheme } from "../lib/theme";
 import { Icon, type IconName } from "./icons";
 import { InstrumentSearch } from "./instrument-search";
@@ -16,20 +17,17 @@ type BenchmarkItem = components["schemas"]["BenchmarkItem"];
 
 export const SITE_NAV: readonly { href: string; label: string }[] = [
   { href: "/", label: "Início" },
-  { href: "/regions", label: "Regiões" },
-  { href: "/terminal", label: "Análise" },
-  { href: "/markets", label: "Mercados" },
+  { href: "/heatmap", label: "Heatmap" },
+  { href: "/atlas", label: "Ativos" },
   { href: "/compare", label: "Comparar" },
   { href: "/calendar", label: "Calendário" },
-  { href: "/heatmap", label: "Heatmap" },
-  { href: "/atlas", label: "Global Atlas" },
   { href: "/watchlists", label: "Watchlists" },
   { href: "/portfolios", label: "Carteiras" },
   { href: "/account", label: "Conta" },
 ];
 
 const NAV_ICON: Record<string, IconName> = {
-  "/": "dashboard", "/regions": "globe", "/terminal": "chart", "/markets": "markets", "/compare": "compare", "/calendar": "calendar", "/heatmap": "heatmap",
+  "/": "dashboard", "/compare": "compare", "/calendar": "calendar", "/heatmap": "heatmap",
   "/atlas": "globe", "/watchlists": "list", "/portfolios": "wallet", "/account": "user",
 };
 const PERSONAL = new Set(["/watchlists", "/portfolios", "/account"]);
@@ -53,14 +51,8 @@ function formatValue(value: string): string {
 
 /** Benchmark values the API serves to this session; nothing is shown that it did not send. */
 export function MarketTicker() {
-  const [items, setItems] = useState<BenchmarkItem[] | null>(null);
-  useEffect(() => {
-    const controller = new AbortController();
-    apiRequest<{ items: BenchmarkItem[] }>("/api/v1/market-data/benchmarks", { signal: controller.signal })
-      .then((data) => setItems(data.items))
-      .catch((error: unknown) => { if (!isAbort(error)) setItems([]); });
-    return () => controller.abort();
-  }, []);
+  const { data, failed } = useCachedApi<{ items: BenchmarkItem[] }>("/api/v1/market-data/benchmarks", 5 * 60_000);
+  const items = data?.items ?? (failed ? [] : null);
   if (!items) return <ul className="ticker ticker-note" aria-label="Referências de mercado"><li>Carregando referências…</li></ul>;
   const live = items.filter((item) => item.value != null && item.freshness !== "UNAVAILABLE");
   if (live.length === 0) {
@@ -86,15 +78,21 @@ export function MarketTicker() {
   );
 }
 
-function DisplayButtons() {
+/** Always in sight at the top: both options are named and the current one is marked. */
+function ThemeSwitch() {
   const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => "dark" as const);
+  return (
+    <div className="theme-switch" role="group" aria-label="Tema">
+      <button type="button" aria-pressed={theme === "light"} onClick={() => applyTheme("light")}><Icon name="sun" />Claro</button>
+      <button type="button" aria-pressed={theme === "dark"} onClick={() => applyTheme("dark")}><Icon name="moon" />Escuro</button>
+    </div>
+  );
+}
+
+function DisplayButtons() {
   const palette = useSyncExternalStore(subscribePalette, currentPalette, () => "default" as const);
-  const next = theme === "dark" ? "light" : "dark";
   return (
     <>
-      <button type="button" className="side-button" title={`Tema ${next === "light" ? "claro" : "escuro"}`} aria-label={`Mudar para tema ${next === "light" ? "claro" : "escuro"}`} onClick={() => applyTheme(next)}>
-        <Icon name={next === "light" ? "sun" : "moon"} /><span>Tema {next === "light" ? "claro" : "escuro"}</span>
-      </button>
       <button type="button" className="side-button" title="Paleta para daltonismo" aria-pressed={palette === "cvd"} onClick={() => applyPalette(palette === "cvd" ? "default" : "cvd")}>
         <Icon name="eye" /><span>Paleta para daltonismo</span>
       </button>
@@ -115,6 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     try {
       const response = await fetch(`${API_BASE}/api/v1/auth/logout`, { method: "POST", credentials: "include" });
       if (!response.ok) throw new Error("Logout unavailable");
+      clearApiCache();
       router.push("/login");
     } catch {
       setError("Não foi possível encerrar a sessão. Tente novamente.");
@@ -148,6 +147,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Link key={item.href} href={item.href} className="side-link" aria-current={active(item)}>{item.label}</Link>
               ))}
             </nav>
+            <ThemeSwitch />
             <MarketTicker />
           </header>
           {error && <p className="site-alert" role="alert">{error}</p>}

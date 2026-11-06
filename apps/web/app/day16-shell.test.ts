@@ -28,7 +28,7 @@ test("Particle Atlas tokens cover both themes and financial state semantics", ()
 
 test("state, provenance, period, mode and fallback contracts are represented", () => {
   const source = componentSource();
-  for (const marker of ["DataStateBadge", "ProvenancePanel", "MarketStatusBar", "AssetContextPanel", "PeriodSelector", "SeriesModeToggle", "AccessibleDataTable", "TerminalShell", "DEMO", "UNAVAILABLE", "DataLevel", "Freshness", "INDEX_100", "1D", "MAX", "Fallback tabular"]) {
+  for (const marker of ["DataStateBadge", "ProvenancePanel", "MarketStatusBar", "AssetContextPanel", "PeriodSelector", "SeriesModeToggle", "AccessibleDataTable", "MarketWorkspace", "DEMO", "UNAVAILABLE", "DataLevel", "Freshness", "INDEX_100", "1D", "MAX", "Fallback tabular"]) {
     assert.match(source, new RegExp(marker));
   }
   assert.match(cssSource(), /data-badge-stale/);

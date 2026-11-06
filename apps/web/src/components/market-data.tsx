@@ -119,7 +119,8 @@ export function SeriesModeToggle({ value, onChange }: { value: SeriesMode; onCha
   return <fieldset className="control-group"><legend>Modo de comparação</legend><div className="control-row">{modes.map((mode) => <button type="button" className={mode === value ? "control active" : "control"} aria-pressed={mode === value} key={mode} onClick={() => onChange(mode)}>{mode}</button>)}</div></fieldset>;
 }
 
-export function TerminalShell() {
+// The chart, the asset context and the Morning Call, on the home page (ADR-032).
+export function MarketWorkspace() {
   const [selectedCanonicalId, setSelectedCanonicalId] = useState("");
   const [instruments, setInstruments] = useState<InstrumentSummary[]>([]);
   const [benchmarks, setBenchmarks] = useState<BenchmarkItem[]>([]);
@@ -144,10 +145,11 @@ export function TerminalShell() {
   const operational = useMemo(() => instruments.filter((item) => item.support_state === "P0_OPERATIONAL"), [instruments]);
   useEffect(() => {
     const controller = new AbortController();
-    for (const item of operational) {
-      apiRequest<PublicQuote>(`/api/v1/market-data/quotes/${encodeURIComponent(item.canonical_id)}`, { signal: controller.signal })
-        .then((quote) => setQuotes((current) => ({ ...current, [item.canonical_id]: quote })))
-        .catch((error: unknown) => { if (!isAbort(error)) setQuoteError((current) => ({ ...current, [item.canonical_id]: (error as Error).message })); });
+    for (let start = 0; start < operational.length; start += 10) {
+      const chunk = operational.slice(start, start + 10).map((item) => item.canonical_id);
+      apiRequest<{ items: PublicQuote[] }>("/api/v1/market-data/quotes/batch", { method: "POST", body: JSON.stringify({ canonical_ids: chunk }), signal: controller.signal })
+        .then((batch) => setQuotes((current) => ({ ...current, ...Object.fromEntries(batch.items.map((quote) => [quote.canonical_id, quote])) })))
+        .catch((error: unknown) => { if (!isAbort(error)) setQuoteError((current) => ({ ...current, ...Object.fromEntries(chunk.map((id) => [id, (error as Error).message])) })); });
     }
     return () => controller.abort();
   }, [operational]);
@@ -174,11 +176,11 @@ export function TerminalShell() {
   ];
 
   return <div className="terminal-root">
-    <main id="main-content" className="page">
+    <section id="analise" aria-labelledby="analise-title">
       <div className="page-head">
         <div>
-          <h1>Observatório de mercado</h1>
-          <p className="muted">Gráfico com ferramentas de análise, cotações com procedência e o panorama das referências. Conteúdo informativo; DEMO e UNAVAILABLE sempre identificados.</p>
+          <h2 id="analise-title">Gráfico e análise</h2>
+          <p className="muted">Gráfico com ferramentas de análise e cotações com procedência. Conteúdo informativo; DEMO e UNAVAILABLE sempre identificados.</p>
         </div>
         {operational.length > 0 && (
           <label className="control-group">
@@ -202,11 +204,11 @@ export function TerminalShell() {
           <AssetContextPanel quote={quote} loading={Boolean(selectedCanonicalId) && !quote && !quoteError[selectedCanonicalId]} error={quoteError[selectedCanonicalId]} selectedId={selectedCanonicalId} />
           {/* Morning Call: the latest published summary, reviewed by a human before it appears. */}
           <div className="card" id="morning-call"><MorningCallPanel /></div>
-          <section className="card" aria-labelledby="agenda-title"><h2 id="agenda-title">Agenda e eventos</h2><p className="muted">Nenhum evento carregado. Sem notícia inventada.</p><span className="state-label">UNAVAILABLE</span></section>
+          <section className="card" aria-labelledby="agenda-title"><h2 id="agenda-title">Agenda e eventos</h2><p className="muted">Eventos econômicos no <Link href="/calendar">Calendário</Link>.</p></section>
         </div>
       </div>
       <MarketPanorama benchmarks={benchmarks} benchmarksFailed={benchmarksFailed} displays={displays} />
-    </main>
+    </section>
     <footer><MarketStatusBar data={quote} /><span>{FINANCIAL_DISCLAIMER}</span></footer>
   </div>;
 }

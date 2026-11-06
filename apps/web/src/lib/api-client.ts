@@ -4,6 +4,15 @@ import { parseRetryAfter } from "../components/rate-limit-notice";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
+const cacheClearers = new Set<() => void>();
+export function subscribeCacheClear(clear: () => void): void {
+  cacheClearers.add(clear);
+}
+/** Login and logout change what the API answers: nothing loaded before may be shown after. */
+export function clearApiCache(): void {
+  for (const clear of cacheClearers) clear();
+}
+
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,

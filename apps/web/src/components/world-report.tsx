@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { components } from "../generated/api";
-import { apiRequest, isAbort } from "../lib/api-client";
+import { useCachedApi } from "../lib/use-cached-api";
 import { formatAmount, percentCue, shortReason } from "../lib/panorama";
 import { regionChange, worldHeadline } from "../lib/world-report";
 import { DataStateBadge } from "./data-table";
@@ -24,16 +23,15 @@ function setAmbient(id: string | null) {
 }
 
 function useWorldReport() {
-  const [report, setReport] = useState<WorldReportResponse | null>(null);
-  const [failed, setFailed] = useState(false);
+  const { data, failed, refresh } = useCachedApi<WorldReportResponse>("/api/v1/market-data/world-report", 5 * 60_000);
+  // Headlines share a small per-minute quota: a first load may bring only some; ask once more.
+  const incomplete = Boolean(data?.regions.some((region) => region.id !== "moedas" && region.news.length === 0));
   useEffect(() => {
-    const controller = new AbortController();
-    apiRequest<WorldReportResponse>("/api/v1/market-data/world-report", { signal: controller.signal })
-      .then(setReport)
-      .catch((error: unknown) => { if (!isAbort(error)) setFailed(true); });
-    return () => controller.abort();
-  }, []);
-  return { report, failed };
+    if (!incomplete) return undefined;
+    const timer = setTimeout(refresh, 75_000);
+    return () => clearTimeout(timer);
+  }, [incomplete, refresh]);
+  return { report: data ?? null, failed };
 }
 
 const FAILED = "Não foi possível carregar o relatório. A API pode estar iniciando; tente de novo em um minuto.";
@@ -44,13 +42,13 @@ function ChangeLine({ region }: { region: WorldRegion }) {
   return <p className={styles.noValue}>{region.members_with_data > 0 ? "Veja cada ativo" : `Sem valor: ${shortReason(region.unavailable_reason)}`}</p>;
 }
 
-function RegionCard({ region }: { region: WorldRegion }) {
+function RegionCard({ region, open, onToggle }: { region: WorldRegion; open: boolean; onToggle: () => void }) {
   return (
-    <li className={styles.card} onMouseEnter={() => setAmbient(region.id)} onMouseLeave={() => setAmbient(null)} onFocus={() => setAmbient(region.id)} onBlur={() => setAmbient(null)}>
+    <li className={open ? `${styles.card} ${styles.open}` : styles.card} onMouseEnter={() => setAmbient(region.id)} onMouseLeave={() => setAmbient(null)} onFocus={() => setAmbient(region.id)} onBlur={() => setAmbient(null)}>
       {/* eslint-disable-next-line @next/next/no-img-element -- decorative, small local webp */}
       <img className={styles.photo} src={regionImage(region.id)} alt="" loading="lazy" />
       <div className={styles.cardBody}>
-        <h3><Link className={styles.cardLink} href={`/regions?id=${encodeURIComponent(region.id)}`}>{region.title}</Link></h3>
+        <h3><button type="button" className={styles.cardLink} aria-expanded={open} aria-controls="region-detail" onClick={onToggle}>{region.title}</button></h3>
         <ChangeLine region={region} />
         <p className={styles.clamp}>{region.summary}</p>
         <p className={styles.basis}>{region.basis_label}</p>
@@ -69,10 +67,13 @@ function SessionNote({ report }: { report: WorldReportResponse }) {
 
 export function WorldReport() {
   const { report, failed } = useWorldReport();
+  const [openId, setOpenId] = useState<string | null>(null);
   if (failed) return <p className="state-note" role="alert">{FAILED}</p>;
   if (!report) return <p className="muted">Carregando o relatório…</p>;
+  const openRegion = report.regions.find((region) => region.id === openId);
   const news = report.regions.flatMap((region) => region.news.map((item) => ({ ...item, region: region.id }))).slice(0, 3);
-  const session = report.regions.map((region) => region.session_date).filter(Boolean).sort().at(-1);
+  // Currencies and crypto trade around the clock: the close of the day is the markets' close.
+  const session = report.regions.filter((region) => region.id !== "moedas").map((region) => region.session_date).filter(Boolean).sort().at(-1);
   const currencies = report.regions.find((region) => region.id === "moedas")?.members.slice(0, 4) ?? [];
   return (
     <div className={styles.stage}>
@@ -112,12 +113,13 @@ export function WorldReport() {
           <p className={styles.heroTitle}>Como o mundo fechou</p>
           <p className={styles.heroLine}>{worldHeadline(report.regions)}</p>
           <SessionNote report={report} />
-          <div className={styles.actions}><a className={styles.primary} href="#regioes">Ver regiões</a><Link className={styles.secondary} href="/terminal">Abrir análise</Link></div>
+          <div className={styles.actions}><a className={styles.primary} href="#regioes">Ver regiões</a><a className={styles.secondary} href="#analise">Abrir análise</a></div>
         </section>
       </div>
       <section aria-labelledby="regioes" className={styles.regions}>
         <h2 id="regioes">Como o mundo fechou por região</h2>
-        <ul className={styles.grid}>{report.regions.map((region) => <RegionCard key={region.id} region={region} />)}</ul>
+        <ul className={styles.grid}>{report.regions.map((region) => <RegionCard key={region.id} region={region} open={region.id === openId} onToggle={() => setOpenId(region.id === openId ? null : region.id)} />)}</ul>
+        <div id="region-detail" aria-live="polite">{openRegion && <RegionDetail key={openRegion.id} region={openRegion} />}</div>
       </section>
       <Limits report={report} />
     </div>
@@ -130,16 +132,16 @@ function RegionDetail({ region }: { region: WorldRegion }) {
     return () => setAmbient(null);
   }, [region.id]);
   return (
-    <>
+    <div className={styles.detail}>
       <section className={styles.detailHero} style={{ backgroundImage: `linear-gradient(to top, #0f1012 22%, rgba(15, 16, 18, .55)), url(${regionImage(region.id)})` }}>
-        <h1>{region.title}</h1>
+        <h3 className={styles.detailTitle}>{region.title}</h3>
         <ChangeLine region={region} />
         <p className={styles.basisHero}>{region.basis_label}{region.session_date ? `, pregão de ${formatDay(region.session_date)}` : ""}</p>
         <p>{region.summary}</p>
       </section>
       <div className={styles.detailGrid}>
         <section className={styles.panel} aria-labelledby="region-assets">
-          <h2 id="region-assets">Ativos acompanhados</h2>
+          <h4 id="region-assets">Ativos acompanhados</h4>
           <div className={styles.tableWrap}>
             <table>
               <caption className="sr-only">Ativos acompanhados em {region.title}</caption>
@@ -161,29 +163,12 @@ function RegionDetail({ region }: { region: WorldRegion }) {
           </div>
         </section>
         <section className={styles.panel} aria-labelledby="region-news">
-          <h2 id="region-news">Notícias do período</h2>
+          <h4 id="region-news">Notícias do período</h4>
           {region.news.length === 0 && <p className="muted">Nenhuma manchete disponível para esta região.</p>}
-          <ul className={styles.rows}>{region.news.map((item) => <li key={item.url} className={styles.plainNews}><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a><small>{item.publisher}</small></li>)}</ul>
+          <ul className={styles.rows}>{region.news.map((item) => <li key={item.url} className={styles.plainNews}><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a><small>{item.publisher}</small>{item.description && <p className={styles.newsText}>{item.description}</p>}</li>)}</ul>
         </section>
       </div>
-    </>
-  );
-}
-
-export function RegionsView() {
-  const id = useSearchParams().get("id");
-  const { report, failed } = useWorldReport();
-  if (failed) return <p className="state-note" role="alert">{FAILED}</p>;
-  if (!report) return <p className="muted">Carregando as regiões…</p>;
-  const region = report.regions.find((item) => item.id === id);
-  return (
-    <div className={styles.stage}>
-      {region ? <><Link href="/regions">Todas as regiões</Link><RegionDetail region={region} /></> : <>
-        <h1>Regiões</h1>
-        <SessionNote report={report} />
-        <ul className={styles.grid}>{report.regions.map((item) => <RegionCard key={item.id} region={item} />)}</ul>
-      </>}
-      <Limits report={report} />
+      <p><Link href={`/compare?ids=${encodeURIComponent(region.members.slice(0, 10).map((quote) => quote.canonical_id).join(","))}`}>Comparar os ativos de {region.title}</Link></p>
     </div>
   );
 }

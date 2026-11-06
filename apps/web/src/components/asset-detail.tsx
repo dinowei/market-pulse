@@ -11,6 +11,7 @@ import { CANONICAL_ID } from "../lib/canonical-id";
 import { DEFAULT_BENCHMARK_ID } from "../lib/comparison-defaults";
 import { FINANCIAL_DISCLAIMER } from "../lib/disclaimers";
 import { AssetEvents } from "./asset-events";
+import { AssetFacts } from "./asset-facts";
 import { DataStateBadge, PriceChange, ProvenancePanel } from "./market-data";
 
 // The canvas chart workspace (ADR-028) loads after the page; it carries its own table view.
@@ -151,7 +152,7 @@ export function AssetDetail({ canonicalId }: { canonicalId: string }) {
       <section className="asset-page-panel" aria-labelledby="asset-title">
         <h1 id="asset-title">Ativo não encontrado</h1>
         <p className="muted">O identificador <code>{canonicalId}</code> não está no catálogo do Market Pulse.</p>
-        <Link href="/">Voltar ao dashboard</Link>
+        <Link href="/">Voltar ao início</Link>
       </section>
     );
   }
@@ -196,6 +197,7 @@ export function AssetDetail({ canonicalId }: { canonicalId: string }) {
       </div>
 
       <AssetEvents canonicalId={canonicalId} />
+      <AssetFacts canonicalId={canonicalId} currency={quote?.value?.currency ?? instrument?.currency ?? ""} />
       <p className="financial-disclaimer">{FINANCIAL_DISCLAIMER}</p>
     </>
   );
@@ -209,7 +211,7 @@ export function AssetFromQuery() {
     return (
       <section className="asset-page-panel" aria-labelledby="asset-title">
         <h1 id="asset-title">Página de ativo</h1>
-        <p className="muted">Escolha um ativo pela busca do <Link href="/">dashboard</Link> ou pelo <Link href="/atlas">Global Atlas</Link>.</p>
+        <p className="muted">Escolha um ativo pela busca no topo da página ou em <Link href="/atlas">Ativos</Link>.</p>
       </section>
     );
   }

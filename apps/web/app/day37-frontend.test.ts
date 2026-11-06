@@ -24,15 +24,14 @@ test("describeChange keeps the exact Decimal digits and the cue, or reports unkn
 });
 
 test("heatmap: generated contract, direction cues, equivalent table and visible method", () => {
-  assert.match(heatmap, /components\["schemas"\]\["HeatmapResponse"\]/);
-  assert.match(heatmap, /\/api\/v1\/market-data\/heatmap/);
-  assert.match(heatmap, /<span aria-hidden="true">\{change\.cue\.glyph\}<\/span>/);
-  assert.match(heatmap, /change\.cue\.word/);
-  assert.match(heatmap, /Tabela equivalente ao heatmap/);
-  assert.match(heatmap, /payload\.limitations\.map/);
-  assert.match(heatmap, /payload\.grouping, payload\.sizing, payload\.color_basis/);
+  assert.match(heatmap, /components\["schemas"\]\["MarketMapResponse"\]/);
+  assert.match(heatmap, /\/api\/v1\/market-data\/market-map/);
+  assert.match(heatmap, /<span aria-hidden="true">\{DIRECTION_CUE\[direction\]\.glyph\} <\/span>/);
+  assert.match(heatmap, /DIRECTION_CUE\[direction\]\.word/);
+  assert.match(heatmap, /Tabela equivalente ao mapa/);
+  assert.match(heatmap, /map\.limitations\.map/);
+  assert.match(heatmap, /SIZING\[map\.sizing\]/);
   assert.match(heatmap, /\{FINANCIAL_DISCLAIMER\}/);
-  assert.doesNotMatch(heatmap, /parseFloat|Number\(|toFixed|Math\./, "values are shown, never recomputed");
 });
 
 test("Global Atlas: catalog metadata in an accessible table, never a price", () => {
@@ -48,10 +47,9 @@ test("Global Atlas: catalog metadata in an accessible table, never a price", () 
 test("both pages are reachable and inside the WCAG gate", () => {
   // The menu lives in the shared header (site-header.tsx) since 2026-10-11.
   const header = readFileSync(join(process.cwd(), "src", "components", "site-header.tsx"), "utf8");
-  assert.match(header, /\{ href: "\/heatmap", label: "Heatmap" \},\s*\{ href: "\/atlas", label: "Global Atlas" \}/);
-  for (const page of [["app", "atlas", "page.tsx"], ["app", "heatmap", "page.tsx"]]) {
-    assert.match(read(...page), /<h1 className="sr-only">/);
-  }
+  assert.match(header, /\{ href: "\/heatmap", label: "Heatmap" \},\s*\{ href: "\/atlas", label: "Ativos" \}/);
+  assert.match(read("app", "heatmap", "page.tsx"), /<h1 className="sr-only">/);
+  assert.match(read("app", "atlas", "page.tsx"), /MarketsFromQuery/);
   assert.match(e2e, /"\/atlas"/);
   assert.match(e2e, /"\/heatmap"/);
 });

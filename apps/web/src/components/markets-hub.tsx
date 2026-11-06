@@ -133,7 +133,7 @@ export function MarketsHub({ initialTab = "overview" }: { initialTab?: MarketTab
 
   const openTab = useCallback((id: MarketTabId, focus = false) => {
     setTab(id);
-    window.history.replaceState(null, "", id === "overview" ? "/markets" : `/markets?tab=${id}`);
+    window.history.replaceState(null, "", id === "overview" ? "/atlas" : `/atlas?tab=${id}`);
     if (focus) tabRefs.current.get(id)?.focus();
   }, []);
 
@@ -158,9 +158,8 @@ export function MarketsHub({ initialTab = "overview" }: { initialTab?: MarketTab
   return (
     <section className="markets-panel" aria-labelledby="markets-title">
       <div className="section-heading">
-        <div><p className="eyebrow">Mercados</p><h1 id="markets-title">Mercados por família</h1></div>
+        <div><h1 id="markets-title">Ativos e mercados</h1></div>
         <div className="markets-actions">
-          <Link href="/">Dashboard</Link>
           <button type="button" className="control" onClick={() => { setLoading(true); setRefreshKey((key) => key + 1); }} disabled={loading}>{loading ? "Atualizando…" : "Atualizar dados"}</button>
           <button type="button" className="control" aria-pressed={art} onClick={() => setArt((value) => !value)}>Arte do pulso: {art ? "ligada" : "desligada"}</button>
         </div>

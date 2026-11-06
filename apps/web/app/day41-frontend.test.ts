@@ -75,7 +75,7 @@ test("T5: asset classes come from the data; unserved classes are shown as unavai
   assert.equal(classLabel("fii"), "FIIs");
   assert.equal(classLabel("WARRANT"), "WARRANT", "unknown types keep the API name");
   assert.deepEqual(UNAVAILABLE_CLASSES.map((item) => item.label), ["Fundos", "Renda fixa"]);
-  for (const name of ["global-atlas", "market-heatmap"]) assert.match(component(name), /<AssetClassFilter /, name);
+  assert.match(component("global-atlas"), /<AssetClassFilter /);
   assert.match(component("asset-class-filter"), /indisponível — \{item\.reason\}/);
 });
 

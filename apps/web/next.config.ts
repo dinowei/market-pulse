@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
   agentRules: false,
   // ADR-008: in staging/production the browser talks only to the web origin, so the
   // session cookie stays first-party; local development keeps calling the API directly.
+  async redirects() {
+    return [
+      { source: "/regions", destination: "/", permanent: false },
+      { source: "/terminal", destination: "/", permanent: false },
+      { source: "/markets", destination: "/atlas", permanent: false },
+    ];
+  },
   async rewrites() {
     return apiProxyRewrites(process.env.MARKET_PULSE_API_PROXY_ORIGIN);
   },

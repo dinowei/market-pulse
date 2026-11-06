@@ -29,7 +29,7 @@ test("benchmarks are references: blue plus a dashed stroke and a text label, nev
   assert.equal(seriesRole("equity.br.b3.petr4"), "asset");
   assert.match(seriesRoleLabel("benchmark"), /benchmark/);
   assert.match(css, /\.chart-benchmark \{ stroke: var\(--pa-market-flat\); stroke-dasharray:/);
-  assert.match(comparison, /className="series-legend"/);
+  assert.match(comparison, /className="compare-summary"/);
   assert.match(comparison, /linha tracejada/);
   assert.match(comparison, /max_points: DISPLAY_MAX_POINTS/);
 });

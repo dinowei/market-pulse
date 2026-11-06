@@ -225,6 +225,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market-data/market-map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Market Map */
+        get: operations["public_market_map_api_v1_market_data_market_map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market-data/profile/{canonical_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Asset Profile */
+        get: operations["public_asset_profile_api_v1_market_data_profile__canonical_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market-data/world-report": {
         parameters: {
             query?: never;
@@ -1277,6 +1311,65 @@ export interface components {
              */
             checked_at: string;
         };
+        /** AssetDividend */
+        AssetDividend: {
+            /** Label */
+            label: string;
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            /** Ex Date */
+            ex_date?: string | null;
+            /** Pay Date */
+            pay_date?: string | null;
+            /** Source */
+            source: string;
+        };
+        /** AssetFact */
+        AssetFact: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "MONEY" | "NUMBER" | "INTEGER" | "PERCENT" | "TEXT" | "DATE";
+            /** Group */
+            group: string;
+            /** Source */
+            source: string;
+        };
+        /**
+         * AssetProfileResponse
+         * @description What the sources say about one asset (ADR-032), each fact with its source.
+         */
+        AssetProfileResponse: {
+            /** Canonical Id */
+            canonical_id: string;
+            /** Facts */
+            facts: components["schemas"]["AssetFact"][];
+            /** Summary */
+            summary?: string | null;
+            /** Summary Source */
+            summary_source?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Dividends */
+            dividends: components["schemas"]["AssetDividend"][];
+            /** News */
+            news: components["schemas"]["WorldNewsItem"][];
+            /** Limitations */
+            limitations: string[];
+            /** Unavailable Reason */
+            unavailable_reason?: string | null;
+            /** Request Id */
+            request_id: string;
+        };
         /** AuthUserResponse */
         AuthUserResponse: {
             /** Id */
@@ -1809,6 +1902,70 @@ export interface components {
          * @enum {string}
          */
         MarkerSourceType: "LEDGER_EVENT" | "CORPORATE_ACTION";
+        /**
+         * MarketMapResponse
+         * @description A market as a treemap (ADR-032): real sectors and sizes when a source declares them.
+         */
+        MarketMapResponse: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "BR" | "US";
+            /**
+             * Sizing
+             * @enum {string}
+             */
+            sizing: "MARKET_CAP" | "TRADED_VALUE" | "EQUAL";
+            /** Sectors */
+            sectors: components["schemas"]["MarketMapSector"][];
+            /** Provider */
+            provider: string;
+            /** Dataset */
+            dataset: string;
+            data_level: components["schemas"]["DataLevel"];
+            freshness: components["schemas"]["Freshness"];
+            /** Session Date */
+            session_date?: string | null;
+            /** Timestamp Collected */
+            timestamp_collected?: string | null;
+            /** Is Demo */
+            is_demo: boolean;
+            /** Limitations */
+            limitations: string[];
+            /** Unavailable Reason */
+            unavailable_reason?: string | null;
+            /** Request Id */
+            request_id: string;
+        };
+        /** MarketMapSector */
+        MarketMapSector: {
+            /** Sector */
+            sector: string;
+            /** Tiles */
+            tiles: components["schemas"]["MarketMapTile"][];
+        };
+        /** MarketMapTile */
+        MarketMapTile: {
+            /** Symbol */
+            symbol: string;
+            /** Name */
+            name: string;
+            /** Canonical Id */
+            canonical_id?: string | null;
+            /** Price */
+            price: string;
+            /** Currency */
+            currency: string;
+            /** Change Percent */
+            change_percent?: string | null;
+            /** Volume */
+            volume?: string | null;
+            /** Market Cap */
+            market_cap?: string | null;
+            /** Size Value */
+            size_value: string;
+        };
         /** PageMeta */
         PageMeta: {
             /** Limit */
@@ -2648,6 +2805,8 @@ export interface components {
             published_at: string;
             /** Url */
             url: string;
+            /** Description */
+            description?: string | null;
         };
         /**
          * WorldRegion
@@ -3081,6 +3240,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HeatmapResponse"];
+                };
+            };
+        };
+    };
+    public_market_map_api_v1_market_data_market_map_get: {
+        parameters: {
+            query?: {
+                market?: "BR" | "US";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketMapResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_asset_profile_api_v1_market_data_profile__canonical_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canonical_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
