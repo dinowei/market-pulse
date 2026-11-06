@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, useSyncExternalStore } from "react";
 
 import type { components } from "../generated/api";
 import { apiRequest, httpStatus, isAbort } from "../lib/api-client";
+import { applyPalette, applyTheme, currentPalette, currentTheme, subscribePalette, subscribeTheme } from "../lib/theme";
+import styles from "./private-pages.module.css";
 
 type AuthUser = components["schemas"]["AuthUserResponse"];
 
@@ -30,9 +32,15 @@ export function AccountPanel() {
   const [acknowledged, setAcknowledged] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [lists, setLists] = useState<number | null>(null);
+  const [portfolios, setPortfolios] = useState<number | null>(null);
+  const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => "dark" as const);
+  const palette = useSyncExternalStore(subscribePalette, currentPalette, () => "default" as const);
 
   useEffect(() => {
     const controller = new AbortController();
+    apiRequest<{ items: unknown[] }>("/api/v1/watchlists", { signal: controller.signal }).then((data) => setLists(data.items.length)).catch(() => undefined);
+    apiRequest<{ items: unknown[] }>("/api/v1/portfolios", { signal: controller.signal }).then((data) => setPortfolios(data.items.length)).catch(() => undefined);
     apiRequest<AuthUser>("/api/v1/auth/me", { signal: controller.signal })
       .then(setUser)
       .catch((error: unknown) => { if (!isAbort(error)) { if (httpStatus(error) === 401) setSignedOut(true); else setLoadError(errorMessage(error, "carregar sua conta")); } });
@@ -78,19 +86,49 @@ export function AccountPanel() {
 
   const canDelete = confirmation === DELETE_CONFIRMATION && acknowledged && !busy;
   return (
-    <section className="account-panel" aria-labelledby="account-title">
-      <p className="eyebrow">Conta e privacidade</p>
-      <h1 id="account-title">Minha conta</h1>
-      <dl className="meta-grid compact"><div><dt>E-mail</dt><dd>{user.email}</dd></div><div><dt>Situação</dt><dd>{user.status}</dd></div></dl>
+    <div className={styles.page}>
+      <section className={styles.profile} aria-labelledby="account-title">
+        <span className={styles.avatar} aria-hidden="true">{user.email.charAt(0).toUpperCase()}</span>
+        <div>
+          <h1 id="account-title">Minha conta</h1>
+          <p>{user.email}</p>
+          <p>Situação: {user.status}</p>
+        </div>
+      </section>
 
-      <section aria-labelledby="export-title">
+      <div className={styles.twoCols}>
+        <section className={styles.glass} aria-labelledby="display-title">
+          <h2 id="display-title">Exibição</h2>
+          <p className="muted">Fica salvo neste navegador.</p>
+          <h3>Tema</h3>
+          <div className={styles.pills} role="group" aria-label="Tema">
+            <button type="button" aria-pressed={theme === "light"} onClick={() => applyTheme("light")}>Claro</button>
+            <button type="button" aria-pressed={theme === "dark"} onClick={() => applyTheme("dark")}>Escuro</button>
+          </div>
+          <h3>Cores de alta e queda</h3>
+          <div className={styles.pills} role="group" aria-label="Paleta">
+            <button type="button" aria-pressed={palette === "default"} onClick={() => applyPalette("default")}>Padrão</button>
+            <button type="button" aria-pressed={palette === "cvd"} onClick={() => applyPalette("cvd")}>Para daltonismo</button>
+          </div>
+        </section>
+
+        <section className={styles.glass} aria-labelledby="saved-title">
+          <h2 id="saved-title">Suas listas e carteiras</h2>
+          <ul className={styles.links}>
+            <li><Link href="/watchlists"><small>Favoritos e listas</small><strong>{lists === null ? "—" : `${lists} ${lists === 1 ? "lista" : "listas"}`}</strong></Link></li>
+            <li><Link href="/portfolios"><small>Carteiras informativas</small><strong>{portfolios === null ? "—" : `${portfolios} ${portfolios === 1 ? "carteira" : "carteiras"}`}</strong></Link></li>
+          </ul>
+        </section>
+      </div>
+
+      <section className={styles.glass} aria-labelledby="export-title">
         <h2 id="export-title">Exportar meus dados</h2>
         <p className="muted">Gera um arquivo JSON com sua conta, watchlists, carteiras e eventos, com valores em texto decimal exato.</p>
         <button type="button" className="control" disabled={busy} onClick={() => void exportData()}>Exportar meus dados</button>
         <p role="status" aria-live="polite" className="muted">{exportMessage}</p>
       </section>
 
-      <section aria-labelledby="delete-title" className="account-danger">
+      <section aria-labelledby="delete-title" className={`${styles.glass} account-danger`}>
         <h2 id="delete-title">Excluir conta</h2>
         <p>A exclusão é <strong>irreversível</strong>. Ela:</p>
         <ul>
@@ -107,6 +145,6 @@ export function AccountPanel() {
         </form>
         {deleteError && <p className="state-note" role="alert">{deleteError}</p>}
       </section>
-    </section>
+    </div>
   );
 }

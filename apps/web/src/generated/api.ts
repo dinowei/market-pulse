@@ -242,6 +242,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/market-data/movers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public Market Movers */
+        get: operations["public_market_movers_api_v1_market_data_movers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/market-data/profile/{canonical_id}": {
         parameters: {
             query?: never;
@@ -1359,6 +1376,8 @@ export interface components {
             summary_source?: string | null;
             /** Website */
             website?: string | null;
+            /** Logo Url */
+            logo_url?: string | null;
             /** Dividends */
             dividends: components["schemas"]["AssetDividend"][];
             /** News */
@@ -1965,6 +1984,56 @@ export interface components {
             market_cap?: string | null;
             /** Size Value */
             size_value: string;
+            /** Logo Url */
+            logo_url?: string | null;
+        };
+        /** MarketMover */
+        MarketMover: {
+            /** Symbol */
+            symbol: string;
+            /** Canonical Id */
+            canonical_id?: string | null;
+            /** Price */
+            price?: string | null;
+            /** Currency */
+            currency: string;
+            /** Change Percent */
+            change_percent?: string | null;
+            /** Volume */
+            volume?: string | null;
+        };
+        /**
+         * MarketMoversResponse
+         * @description Who moved most in the session, ranked by the numbers alone (ADR-032).
+         */
+        MarketMoversResponse: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "BR" | "US";
+            /** Gainers */
+            gainers: components["schemas"]["MarketMover"][];
+            /** Losers */
+            losers: components["schemas"]["MarketMover"][];
+            /** Most Active */
+            most_active: components["schemas"]["MarketMover"][];
+            /** Provider */
+            provider: string;
+            /** Dataset */
+            dataset: string;
+            data_level: components["schemas"]["DataLevel"];
+            freshness: components["schemas"]["Freshness"];
+            /** Session Date */
+            session_date?: string | null;
+            /** Timestamp Collected */
+            timestamp_collected?: string | null;
+            /** Limitations */
+            limitations: string[];
+            /** Unavailable Reason */
+            unavailable_reason?: string | null;
+            /** Request Id */
+            request_id: string;
         };
         /** PageMeta */
         PageMeta: {
@@ -2807,6 +2876,10 @@ export interface components {
             url: string;
             /** Description */
             description?: string | null;
+            /** Image Url */
+            image_url?: string | null;
+            /** Sentiment */
+            sentiment?: ("positive" | "negative" | "neutral") | null;
         };
         /**
          * WorldRegion
@@ -3262,6 +3335,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MarketMapResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_market_movers_api_v1_market_data_movers_get: {
+        parameters: {
+            query?: {
+                market?: "BR" | "US";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketMoversResponse"];
                 };
             };
             /** @description Validation Error */

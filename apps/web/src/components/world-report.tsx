@@ -36,6 +36,15 @@ function useWorldReport() {
 
 const FAILED = "Não foi possível carregar o relatório. A API pode estar iniciando; tente de novo em um minuto.";
 
+// The source's one-word reading of the article, not an opinion of this site.
+const TONE = { positive: "tom positivo na fonte", negative: "tom negativo na fonte", neutral: "tom neutro na fonte" } as const;
+
+function NewsThumb({ src, fallback }: { src?: string | null; fallback: string }) {
+  const [failed, setFailed] = useState(false);
+  // eslint-disable-next-line @next/next/no-img-element -- publisher images on many hosts; no referrer is sent
+  return <img src={src && !failed ? src : fallback} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
+}
+
 function ChangeLine({ region }: { region: WorldRegion }) {
   const change = regionChange(region.change_percent);
   if (change) return <p className={`${styles.big} direction-${change.direction.toLowerCase()}`}><span aria-hidden="true">{change.glyph}</span> {change.value} <span className="sr-only">{change.word}</span></p>;
@@ -85,9 +94,8 @@ export function WorldReport() {
             <ul className={styles.rows}>
               {news.map((item) => (
                 <li key={item.url} className={styles.newsRow}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- decorative, small local webp */}
-                  <img src={regionImage(item.region)} alt="" loading="lazy" />
-                  <div><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a><small>{item.publisher}</small></div>
+                  <NewsThumb src={item.image_url} fallback={regionImage(item.region)} />
+                  <div><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a><small>{item.publisher}{item.sentiment && ` · ${TONE[item.sentiment]}`}</small></div>
                 </li>
               ))}
             </ul>
@@ -165,7 +173,7 @@ function RegionDetail({ region }: { region: WorldRegion }) {
         <section className={styles.panel} aria-labelledby="region-news">
           <h4 id="region-news">Notícias do período</h4>
           {region.news.length === 0 && <p className="muted">Nenhuma manchete disponível para esta região.</p>}
-          <ul className={styles.rows}>{region.news.map((item) => <li key={item.url} className={styles.plainNews}><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a><small>{item.publisher}</small>{item.description && <p className={styles.newsText}>{item.description}</p>}</li>)}</ul>
+          <ul className={styles.rows}>{region.news.map((item) => <li key={item.url} className={styles.plainNews}><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a><small>{item.publisher}{item.sentiment && ` · ${TONE[item.sentiment]}`}</small>{item.description && <p className={styles.newsText}>{item.description}</p>}</li>)}</ul>
         </section>
       </div>
       <p><Link href={`/compare?ids=${encodeURIComponent(region.members.slice(0, 10).map((quote) => quote.canonical_id).join(","))}`}>Comparar os ativos de {region.title}</Link></p>

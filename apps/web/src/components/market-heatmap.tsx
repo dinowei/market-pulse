@@ -9,6 +9,7 @@ import { formatAmount, shortReason } from "../lib/panorama";
 import { DIRECTION_CUE, priceDirection } from "../lib/price-direction";
 import { blockHeight, changeStep, squarify, type Rect } from "../lib/treemap";
 import { useCachedApi } from "../lib/use-cached-api";
+import { Logo } from "./asset-facts";
 import { DataStateBadge } from "./data-table";
 import styles from "./market-heatmap.module.css";
 
@@ -71,7 +72,7 @@ function TileDetail({ placed }: { placed: Placed | null }) {
   const direction = priceDirection(tile.change_percent);
   return (
     <dl className={styles.detail}>
-      <div><dt>Ativo</dt><dd><strong>{tile.symbol}</strong> {tile.name !== tile.symbol && tile.name}</dd></div>
+      <div><dt>Ativo</dt><dd>{tile.logo_url && <Logo key={tile.logo_url} src={tile.logo_url} />} <strong>{tile.symbol}</strong> {tile.name !== tile.symbol && tile.name}</dd></div>
       <div><dt>Setor</dt><dd>{sector}</dd></div>
       <div><dt>Preço</dt><dd>{tile.currency} {formatAmount(tile.price)}</dd></div>
       <div><dt>Dia</dt><dd className={direction ? `direction-${direction.toLowerCase()}` : ""}>{direction && <span aria-hidden="true">{DIRECTION_CUE[direction].glyph} </span>}{percentText(tile.change_percent)}{direction && ` ${DIRECTION_CUE[direction].word}`}</dd></div>

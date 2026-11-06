@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import type { components } from "../generated/api";
 import { formatAmount, shortReason } from "../lib/panorama";
@@ -15,6 +16,15 @@ const compact = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFra
 const whole = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
 const decimal = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 const formatDay = (day: string) => day.split("-").reverse().join("/");
+
+const TONE = { positive: "tom positivo na fonte", negative: "tom negativo na fonte", neutral: "tom neutro na fonte" } as const;
+
+export function Logo({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  // eslint-disable-next-line @next/next/no-img-element -- small logo from the source; no referrer is sent
+  return <img className="asset-logo" src={src} alt="" width={32} height={32} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
+}
 
 function factText(fact: Fact, currency: string): string {
   const number = Number(fact.value);
@@ -37,7 +47,7 @@ export function AssetFacts({ canonicalId, currency }: { canonicalId: string; cur
   const groups = GROUP_ORDER.map((name) => [name, data.facts.filter((fact) => fact.group === name)] as const).filter(([, facts]) => facts.length > 0);
   return (
     <section className="asset-page-panel asset-facts" aria-labelledby="asset-facts-title">
-      <h2 id="asset-facts-title">Dados das fontes</h2>
+      <h2 id="asset-facts-title" className="asset-facts-title">{data.logo_url && <Logo src={data.logo_url} />}Dados das fontes</h2>
       {groups.map(([name, facts]) => (
         <div key={name}>
           <h3>{name}</h3>
@@ -58,7 +68,7 @@ export function AssetFacts({ canonicalId, currency }: { canonicalId: string; cur
       {data.news.length > 0 && (
         <div>
           <h3>Notícias recentes</h3>
-          <ul className="asset-news">{data.news.map((item) => <li key={item.url}><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a> <small>{item.publisher}</small>{item.description && <p>{item.description}</p>}</li>)}</ul>
+          <ul className="asset-news">{data.news.map((item) => <li key={item.url}><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a> <small>{item.publisher}{item.sentiment && ` · ${TONE[item.sentiment]}`}</small>{item.description && <p>{item.description}</p>}</li>)}</ul>
         </div>
       )}
       <ul className="limitation-note">{data.limitations.map((text) => <li key={text}>{text}</li>)}</ul>

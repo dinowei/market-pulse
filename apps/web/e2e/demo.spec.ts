@@ -58,6 +58,7 @@ test("principal: login, chart, watchlist, portfolio, Morning Call and logout", a
   await page.getByRole("link", { name: "Watchlists", exact: true }).click();
   const growth = page.getByRole("region", { name: "Growth Demo" });
   await growth.getByRole("button", { name: /Lista selecionada|Selecionar lista/ }).click();
+  await page.getByText("Adicionar por identificador").click();
   await page.getByLabel("Adicionar por canonical_id").fill("demo.equity.mpxd3");
   await page.getByRole("button", { name: "Adicionar", exact: true }).click();
   await expect(growth.getByText("MPXD3", { exact: true })).toBeVisible();
@@ -70,7 +71,6 @@ test("principal: login, chart, watchlist, portfolio, Morning Call and logout", a
   await favorites.getByRole("button", { name: "Remover MPXC3", exact: true }).click();
   await growth.getByRole("button", { name: "Remover MPXD3", exact: true }).click();
 
-  await page.getByRole("link", { name: "Voltar ao terminal" }).click();
   await page.getByRole("link", { name: "Carteiras", exact: true }).click();
   await expect(page.getByLabel("Carteira", { exact: true })).toContainText("Alpha Demo");
   await expect(page.getByRole("table", { name: "Saldos reconstruídos do ledger" })).toContainText("8020");
@@ -81,7 +81,6 @@ test("principal: login, chart, watchlist, portfolio, Morning Call and logout", a
   await expect(page.getByRole("img", { name: /Evolução patrimonial.*DEMO/ })).toBeVisible();
   await expect(page.getByRole("table", { name: "Fallback tabular da equity curve" }).locator("tbody tr")).toHaveCount(5);
 
-  await page.getByRole("link", { name: "Voltar ao terminal" }).click();
   await page.getByRole("link", { name: "Morning Call", exact: true }).click();
   const editorial = page.getByRole("region", { name: "Resumo operacional" });
   await expect(editorial.getByRole("heading", { name: /Morning Call DEMO/ })).toBeVisible();
